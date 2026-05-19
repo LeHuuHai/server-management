@@ -7,10 +7,10 @@ import (
 )
 
 type BatchResult struct {
-	Success     []string
-	Failed      []string
-	Success_cnt int
-	Failed_cnt  int
+	Success    []string
+	Failed     []string
+	SuccessCnt int
+	FailedCnt  int
 }
 
 type ServerRepository interface {
