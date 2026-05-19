@@ -9,10 +9,11 @@ type ServerRequestDTO struct {
 }
 
 type ServerResponseDTO struct {
-	ServerID    string
-	ServerName  string
-	IPv4        string
-	Status      string
-	CreatedTime time.Time
-	LastUpdated time.Time
+	ServerID          string
+	ServerName        string
+	IPv4              string
+	Status            string
+	CreatedTime       time.Time
+	MetadataUpdatedAt time.Time
+	LastPingAt        time.Time
 }
