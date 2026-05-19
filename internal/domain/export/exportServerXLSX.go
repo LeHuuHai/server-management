@@ -1,13 +1,17 @@
 package export
 
 import (
+	"context"
+	"io"
 	"strconv"
 
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/xuri/excelize/v2"
 )
 
-func ExportServerXLSX(data []model.Server) (*excelize.File, error) {
+type ServerXLSXExporter struct{}
+
+func (e *ServerXLSXExporter) Export(ctx context.Context, writer io.Writer, data []model.Server) error {
 	f := excelize.NewFile()
 	sheet := "Servers"
 	f.SetSheetName("Sheet1", sheet)
@@ -32,5 +36,5 @@ func ExportServerXLSX(data []model.Server) (*excelize.File, error) {
 		f.SetCellValue(sheet, "H"+row, item.LastPingAt.Format("2006-01-02 15:04:05"))
 	}
 
-	return f, nil
+	return f.Write(writer)
 }

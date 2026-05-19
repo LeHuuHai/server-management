@@ -17,3 +17,9 @@ type ServerResponseDTO struct {
 	MetadataUpdatedAt time.Time
 	LastPingAt        time.Time
 }
+
+type ServerImport struct {
+	ServerID   string
+	ServerName string
+	IPv4       string
+}

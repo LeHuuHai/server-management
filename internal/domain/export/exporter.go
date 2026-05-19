@@ -1,21 +1,10 @@
 package export
 
-type FileType string
-
-const (
-	FileXLSX FileType = "xlsx"
+import (
+	"context"
+	"io"
 )
 
-type DataType string
-
-const (
-	DataServer DataType = "server"
-)
-
-type ExportFunc func([]any) any
-
-type Exporter struct {
-	FileType   FileType
-	DataType   DataType
-	ExportFunc ExportFunc
+type Exporter interface {
+	Export(ctx context.Context, writer io.Writer, data any) error
 }
