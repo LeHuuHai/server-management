@@ -29,28 +29,29 @@ paths:
       parameters:
         - name: from
           in: query
+          required: true
           schema:
             type: integer
             default: 0
 
         - name: to
           in: query
+          required: true
           schema:
             type: integer
             default: 10
 
         - name: sort_field
           in: query
+          required: true
           schema:
             type: string
 
-        - name: sort_order
+        - name: desc
           in: query
+          required: true
           schema:
-            type: string
-            enum:
-              - ASC
-              - DESC
+            type: boolean
 
       responses:
         "200":
@@ -113,43 +114,6 @@ paths:
           $ref: "#/components/responses/InternalError"
 
   /servers/{server_id}:
-    get:
-      tags:
-        - Server
-      summary: Get server detail
-      operationId: GetServer
-
-      security:
-        - bearerAuth:
-            - server:read
-
-      parameters:
-        - name: server_id
-          in: path
-          required: true
-          schema:
-            type: string
-
-      responses:
-        "200":
-          description: Server detail
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Server"
-        
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-
-        "403":
-          $ref: "#/components/responses/Forbidden"
-
-        "404":
-          $ref: "#/components/responses/NotFound"
-
-        "500":
-          $ref: "#/components/responses/InternalError"
-
     patch:
       tags:
         - Server
@@ -257,7 +221,7 @@ paths:
                   format: binary
 
       responses:
-        "202":
+        "200":
           description: Import accepted
           content:
             application/json:
@@ -290,28 +254,29 @@ paths:
       parameters:
         - name: from
           in: query
+          required: true
           schema:
             type: integer
             default: 0
 
         - name: to
           in: query
+          required: true
           schema:
             type: integer
             default: 10
 
         - name: sort_field
           in: query
+          required: true
           schema:
             type: string
 
-        - name: sort_order
+        - name: desc
           in: query
+          required: true
           schema:
-            type: string
-            enum:
-              - ASC
-              - DESC
+            type: boolean
 
       responses:
         "200":
@@ -362,11 +327,15 @@ components:
             - OFF
             - UNKNOWN
 
-        created_time:
+        created_at:
           type: string
           format: date-time
 
-        last_updated:
+        metadata_updated_at:
+          type: string
+          format: date-time
+
+        last_ping_at:
           type: string
           format: date-time
 
@@ -391,7 +360,6 @@ components:
     UpdateServerRequest:
       type: object
       properties:
-
         server_name:
           type: string
 
@@ -412,6 +380,11 @@ components:
     
     ImportServerResponse:
       type: object
+      required:
+        - total_success
+        - id_success
+        - total_failed
+        - id_failed
       properties:
         total_success:
           type: integer
