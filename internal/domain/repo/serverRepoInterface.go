@@ -9,7 +9,7 @@ import (
 type ServerRepositoryInterface interface {
 	Create(ctx context.Context, s *model.Server) error
 
-	Update(ctx context.Context, id string, fields map[string]any) error
+	Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error)
 
 	Delete(ctx context.Context, id string) error
 

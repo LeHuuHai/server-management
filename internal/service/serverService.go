@@ -8,6 +8,7 @@ import (
 
 	"github.com/LeHuuHai/server-management/internal/domain/export"
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
+	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/model"
 )
 
@@ -19,7 +20,7 @@ type ServerService struct {
 func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) error {
 	ip := net.ParseIP(server.IPv4)
 	if ip == nil || ip.To4() == nil {
-		return ErrInvalidIP
+		return apperr.ErrInvalidIP
 	}
 	return s.repo.Create(ctx, server)
 }
@@ -30,15 +31,11 @@ func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerF
 	case model.SortByName,
 		model.SortByCreatedAt:
 	default:
-		filter.SortField = model.SortByName
+		return nil, apperr.ErrInvalidSort
 	}
 	// pagination
-	if filter.To-filter.From <= 0 {
-		filter.From = 0
-		filter.To = 10
-	}
-	if filter.From < 0 {
-		filter.From = 0
+	if filter.To-filter.From <= 0 || filter.From < 0 || filter.To <= 0 {
+		return nil, apperr.ErrInvalidPagination
 	}
 	if filter.To-filter.From > 100 {
 		filter.To = filter.From + 100
@@ -51,10 +48,10 @@ func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerF
 	return res, nil
 }
 
-func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) error {
+func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
 	ip := net.ParseIP(server.IPv4)
 	if ip == nil || ip.To4() == nil {
-		return ErrInvalidIP
+		return nil, apperr.ErrInvalidIP
 	}
 	fields := map[string]any{}
 	if server.ServerName != "" {

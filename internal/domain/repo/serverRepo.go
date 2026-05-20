@@ -2,8 +2,11 @@ package repo
 
 import (
 	"context"
+	"errors"
 
+	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/model"
+	"github.com/jackc/pgx/v5/pgconn"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -13,26 +16,41 @@ type ServerRepo struct {
 }
 
 func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
-	return r.db.WithContext(ctx).
+	err := r.db.WithContext(ctx).
 		Create(s).
 		Error
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			switch pgErr.Code {
+			// unique_violation
+			case "23505":
+				return apperr.ErrDuplicateServer
+			}
+		}
+		return err
+	}
+	return nil
 }
 
-func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) error {
+func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
+	var updated model.Server
+
 	res := r.db.WithContext(ctx).
-		Model(&model.Server{}).
+		Model(&updated).
+		Clauses(clause.Returning{}).
 		Where("server_id = ? AND is_deleted = false", id).
 		Updates(fields)
 
 	if res.Error != nil {
-		return res.Error
+		return nil, res.Error
 	}
 
 	if res.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return nil, apperr.ErrRecordNotFound
 	}
 
-	return nil
+	return &updated, nil
 }
 
 func (r *ServerRepo) Delete(ctx context.Context, id string) error {
@@ -46,7 +64,7 @@ func (r *ServerRepo) Delete(ctx context.Context, id string) error {
 	}
 
 	if res.RowsAffected == 0 {
-		return gorm.ErrRecordNotFound
+		return apperr.ErrRecordNotFound
 	}
 
 	return nil
