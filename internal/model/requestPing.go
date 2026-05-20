@@ -1,6 +1,7 @@
 package model
 
 type RequestPing struct {
-	ID int
-	IP string
+	ServerID   string
+	ServerName string
+	IP         string
 }
