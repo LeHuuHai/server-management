@@ -11,6 +11,14 @@ import (
 
 type ServerXLSXExporter struct{}
 
+func (e *ServerXLSXExporter) FileName() string {
+	return "servers.xlsx"
+}
+
+func (e *ServerXLSXExporter) ContentType() string {
+	return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+}
+
 func (e *ServerXLSXExporter) Export(ctx context.Context, writer io.Writer, data []model.Server) error {
 	f := excelize.NewFile()
 	sheet := "Servers"
