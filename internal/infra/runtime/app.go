@@ -1,4 +1,4 @@
-package app
+package runtime
 
 import (
 	"github.com/LeHuuHai/server-management/config"
@@ -13,6 +13,7 @@ import (
 )
 
 type App struct {
+	Config      *config.Config
 	DB          *gorm.DB
 	ESClient    *elasticsearch.Client
 	SyncWriter  *kafka.Writer
@@ -46,6 +47,7 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	return &App{
+		Config:      cfg,
 		DB:          db,
 		ESClient:    esclient,
 		SyncWriter:  syncWriter,
