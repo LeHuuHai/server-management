@@ -7,11 +7,18 @@ import (
 	"github.com/joho/godotenv"
 )
 
-type Config struct {
+type MasterConfig struct {
+	App   AppConfig
 	DB    PostgresConfig
 	Redis RedisConfig
 	Kafka KafkaConfig
 	ES    ElasticsearchConfig
+}
+
+type AppConfig struct {
+	Port      int
+	Host      string
+	CyclePing int
 }
 
 type PostgresConfig struct {
@@ -40,7 +47,7 @@ type ElasticsearchConfig struct {
 	EsPassword string
 }
 
-func Load() (*Config, error) {
+func Load() (*MasterConfig, error) {
 	err := godotenv.Load()
 	if err != nil {
 		panic("Error loading .env file")
@@ -56,7 +63,22 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
+	if err != nil {
+		return nil, err
+	}
+
+	appCyclePing, err := strconv.Atoi(os.Getenv("APP_CYCLE_PING"))
+	if err != nil {
+		return nil, err
+	}
+
+	return &MasterConfig{
+		App: AppConfig{
+			Port:      appPort,
+			Host:      os.Getenv("APP_HOST"),
+			CyclePing: appCyclePing,
+		},
 		DB: PostgresConfig{
 			PgHost:     os.Getenv("DB_HOST"),
 			PgUsername: os.Getenv("DB_USER"),

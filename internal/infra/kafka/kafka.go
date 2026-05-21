@@ -9,7 +9,7 @@ import (
 )
 
 // return sync writer and async writer
-func Connect(config *config.Config) (*kafka.Writer, *kafka.Writer, error) {
+func Connect(config *config.MasterConfig) (*kafka.Writer, *kafka.Writer, error) {
 	brokersString := config.Kafka.KafkaBroker
 	brokers := strings.Split(brokersString, ",")
 	topic := config.Kafka.KafkaTopic

@@ -13,7 +13,7 @@ import (
 )
 
 type App struct {
-	Config      *config.Config
+	Config      *config.MasterConfig
 	DB          *gorm.DB
 	ESClient    *elasticsearch.Client
 	SyncWriter  *kafka.Writer
@@ -21,7 +21,7 @@ type App struct {
 	RdbClient   *redis.Client
 }
 
-func New(cfg *config.Config) (*App, error) {
+func New(cfg *config.MasterConfig) (*App, error) {
 	// load config
 	cfg, err := config.Load()
 	if err != nil {

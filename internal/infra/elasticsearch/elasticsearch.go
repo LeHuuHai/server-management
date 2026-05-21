@@ -7,7 +7,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-func Connect(config *config.Config) (*elasticsearch.Client, error) {
+func Connect(config *config.MasterConfig) (*elasticsearch.Client, error) {
 	cfg := elasticsearch.Config{
 		Addresses: strings.Split(config.ES.EsURL, ","),
 		Username:  config.ES.EsUsername,

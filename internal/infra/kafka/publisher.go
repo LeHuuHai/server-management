@@ -6,11 +6,11 @@ import (
 	"github.com/segmentio/kafka-go"
 )
 
-type publisher struct {
+type kafkaPublisher struct {
 	writer *kafka.Writer
 }
 
-func (p *publisher) Publish(ctx context.Context, msg []byte) error {
+func (p *kafkaPublisher) Publish(ctx context.Context, msg []byte) error {
 	err := p.writer.WriteMessages(
 		ctx,
 		kafka.Message{
@@ -23,6 +23,6 @@ func (p *publisher) Publish(ctx context.Context, msg []byte) error {
 	return nil
 }
 
-func NewPublisher(w *kafka.Writer) *publisher {
-	return &publisher{writer: w}
+func NewPublisher(w *kafka.Writer) *kafkaPublisher {
+	return &kafkaPublisher{writer: w}
 }

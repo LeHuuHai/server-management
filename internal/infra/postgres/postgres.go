@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Connect(config *config.Config) (*gorm.DB, error) {
+func Connect(config *config.MasterConfig) (*gorm.DB, error) {
 	// đọc biến môi trường từ os
 	host := config.DB.PgHost
 	user := config.DB.PgUsername

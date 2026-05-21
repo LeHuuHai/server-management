@@ -8,7 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func Connect(config *config.Config) (*redis.Client, error) {
+func Connect(config *config.MasterConfig) (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
 		Addr:     config.Redis.RedisURL,
 		Password: config.Redis.RedisPassword,
