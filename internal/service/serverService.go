@@ -2,19 +2,16 @@ package service
 
 import (
 	"context"
-	"io"
 	"net"
 	"time"
 
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
-	"github.com/LeHuuHai/server-management/internal/file/export"
 	"github.com/LeHuuHai/server-management/internal/model"
 )
 
 type ServerService struct {
-	repo     repo.ServerRepositoryInterface
-	exporter export.Exporter
+	repo repo.ServerRepositoryInterface
 }
 
 func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) error {
@@ -94,17 +91,8 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 	return res, nil
 }
 
-func (s *ServerService) ExportServer(ctx context.Context, filter model.ListServerFilter, exporter export.Exporter, writer io.Writer) error {
-	servers, err := s.ListServer(ctx, filter)
-	if err != nil {
-		return err
-	}
-	return exporter.Export(ctx, writer, servers.Servers)
-}
-
-func NewServerService(r repo.ServerRepositoryInterface, e export.Exporter) *ServerService {
+func NewServerService(r repo.ServerRepositoryInterface) *ServerService {
 	return &ServerService{
-		repo:     r,
-		exporter: e,
+		repo: r,
 	}
 }
