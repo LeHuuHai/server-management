@@ -2,9 +2,9 @@ package app
 
 import (
 	"github.com/LeHuuHai/server-management/config"
-	database "github.com/LeHuuHai/server-management/internal/infra/db"
 	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
+	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
 	rdb "github.com/LeHuuHai/server-management/internal/infra/redis"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/redis/go-redis/v9"
@@ -28,7 +28,7 @@ func New(cfg *config.Config) (*App, error) {
 	}
 
 	// infra
-	db, err := database.Connect(cfg)
+	db, err := pg.Connect(cfg)
 	if err != nil {
 		return nil, err
 	}

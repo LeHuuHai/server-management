@@ -1,4 +1,4 @@
-package xlsx
+package xlsximport
 
 import (
 	"context"
