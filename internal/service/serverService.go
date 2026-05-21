@@ -5,13 +5,15 @@ import (
 	"net"
 	"time"
 
+	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/model"
 )
 
 type ServerService struct {
-	repo repo.ServerRepositoryInterface
+	repo       repo.ServerRepositoryInterface
+	inmemCache cache.ServerMetadataCacheInterface
 }
 
 func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) error {
@@ -19,7 +21,17 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) 
 	if ip == nil || ip.To4() == nil {
 		return apperr.ErrInvalidIP
 	}
-	return s.repo.Create(ctx, server)
+	err := s.repo.Create(ctx, server)
+	if err != nil {
+		return err
+	}
+	// cache
+	s.inmemCache.Create(ctx, model.ServerMetadata{
+		ServerID:   server.ServerID,
+		ServerName: server.ServerName,
+		IPv4:       server.IPv4,
+	})
+	return nil
 }
 
 func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
@@ -58,11 +70,27 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) 
 		fields["ipv4"] = server.IPv4
 	}
 	fields["metadata_updated_at"] = time.Now()
-	return s.repo.Update(ctx, server.ServerID, fields)
+	newServer, err := s.repo.Update(ctx, server.ServerID, fields)
+	if err != nil {
+		return nil, err
+	}
+
+	// cache
+	s.inmemCache.Update(ctx, model.ServerMetadata{
+		ServerID:   newServer.ServerID,
+		ServerName: newServer.ServerName,
+		IPv4:       newServer.IPv4,
+	})
+	return newServer, nil
 }
 
 func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error {
-	return s.repo.Delete(ctx, serverID)
+	err := s.repo.Delete(ctx, serverID)
+	if err != nil {
+		return err
+	}
+	s.inmemCache.Delete(ctx, serverID)
+	return nil
 }
 
 func (s *ServerService) ImportServer(ctx context.Context, serversData []model.ServerImport) (*model.CreateBatchServerResult, error) {
@@ -88,11 +116,22 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 	}
 	res.Failed = append(res.Failed, invalid...)
 	res.FailedCnt += len(invalid)
+	// cache
+	serverInmems := make([]model.ServerMetadata, len(valid))
+	for idx, server := range valid {
+		serverInmems[idx] = model.ServerMetadata{
+			ServerID:   server.ServerID,
+			ServerName: server.ServerName,
+			IPv4:       server.IPv4,
+		}
+	}
+	s.inmemCache.BatchCreate(ctx, serverInmems)
 	return res, nil
 }
 
-func NewServerService(r repo.ServerRepositoryInterface) *ServerService {
+func NewServerService(r repo.ServerRepositoryInterface, c cache.ServerMetadataCacheInterface) *ServerService {
 	return &ServerService{
-		repo: r,
+		repo:       r,
+		inmemCache: c,
 	}
 }
