@@ -1,4 +1,4 @@
-package deserialize
+package xlsx
 
 import (
 	"context"
@@ -9,9 +9,9 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type ServerXLSXImporter struct{}
+type serverXLSXImporter struct{}
 
-func (i *ServerXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) ([]model.ServerImport, error) {
+func (i *serverXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) ([]model.ServerImport, error) {
 	file, err := excelize.OpenReader(reader)
 	if err != nil {
 		return nil, err
@@ -49,4 +49,8 @@ func (i *ServerXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) 
 	}
 
 	return servers, nil
+}
+
+func NewServerXLSXImporter() *serverXLSXImporter {
+	return &serverXLSXImporter{}
 }

@@ -3,11 +3,11 @@ package service
 import (
 	"context"
 
-	"github.com/LeHuuHai/server-management/internal/domain/kafka"
+	"github.com/LeHuuHai/server-management/internal/domain/mq"
 )
 
 type PublishPingService struct {
-	publisher *kafka.Publisher
+	publisher mq.Publisher
 }
 
 func (p *PublishPingService) PublishRequestPing(ctx context.Context, req []byte) error {
@@ -18,7 +18,7 @@ func (p *PublishPingService) PublishRequestPing(ctx context.Context, req []byte)
 	return nil
 }
 
-func NewPublishPingService(p *kafka.Publisher) *PublishPingService {
+func NewPublishPingService(p mq.Publisher) *PublishPingService {
 	return &PublishPingService{
 		publisher: p,
 	}

@@ -1,4 +1,4 @@
-package mail
+package smtp
 
 import (
 	"context"
@@ -8,24 +8,24 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-type GomailSender struct {
+type gomailSender struct {
 	dialer *gomail.Dialer
 	conn   gomail.SendCloser
 	mu     sync.Mutex
 }
 
-func NewGomailSender(d *gomail.Dialer) (*GomailSender, error) {
+func NewGomailSender(d *gomail.Dialer) (*gomailSender, error) {
 	conn, err := d.Dial()
 	if err != nil {
 		return nil, err
 	}
-	return &GomailSender{
+	return &gomailSender{
 		dialer: d,
 		conn:   conn,
 	}, nil
 }
 
-func (s *GomailSender) Send(ctx context.Context, mail model.Mail) error {
+func (s *gomailSender) Send(ctx context.Context, mail model.Mail) error {
 	msg := gomail.NewMessage()
 	msg.SetHeader("From", mail.From)
 	msg.SetHeader("To", mail.To...)
@@ -37,7 +37,7 @@ func (s *GomailSender) Send(ctx context.Context, mail model.Mail) error {
 	return s.sendWithRetry(msg)
 }
 
-func (s *GomailSender) sendWithRetry(m *gomail.Message) error {
+func (s *gomailSender) sendWithRetry(m *gomail.Message) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -58,7 +58,7 @@ func (s *GomailSender) sendWithRetry(m *gomail.Message) error {
 	return gomail.Send(s.conn, m)
 }
 
-func (s *GomailSender) Close() error {
+func (s *gomailSender) Close() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

@@ -1,4 +1,4 @@
-package export
+package xlsx
 
 import (
 	"context"
@@ -9,17 +9,17 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type ServerXLSXExporter struct{}
+type serverXLSXExporter struct{}
 
-func (e *ServerXLSXExporter) FileName() string {
+func (e *serverXLSXExporter) FileName() string {
 	return "servers.xlsx"
 }
 
-func (e *ServerXLSXExporter) ContentType() string {
+func (e *serverXLSXExporter) ContentType() string {
 	return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 }
 
-func (e *ServerXLSXExporter) Export(ctx context.Context, writer io.Writer, data []model.Server) error {
+func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data []model.Server) error {
 	f := excelize.NewFile()
 	sheet := "Servers"
 	f.SetSheetName("Sheet1", sheet)
@@ -45,4 +45,8 @@ func (e *ServerXLSXExporter) Export(ctx context.Context, writer io.Writer, data 
 	}
 
 	return f.Write(writer)
+}
+
+func NewServerXLSXExporter() *serverXLSXExporter {
+	return &serverXLSXExporter{}
 }

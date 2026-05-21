@@ -1,4 +1,4 @@
-package repo
+package pg
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type ServerRepo struct {
+type serverRepo struct {
 	db *gorm.DB
 }
 
-func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
+func (r *serverRepo) Create(ctx context.Context, s *model.Server) error {
 	err := r.db.WithContext(ctx).
 		Create(s).
 		Error
@@ -33,7 +33,7 @@ func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
 	return nil
 }
 
-func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
+func (r *serverRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
 	var updated model.Server
 
 	res := r.db.WithContext(ctx).
@@ -53,7 +53,7 @@ func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]an
 	return &updated, nil
 }
 
-func (r *ServerRepo) Delete(ctx context.Context, id string) error {
+func (r *serverRepo) Delete(ctx context.Context, id string) error {
 	res := r.db.WithContext(ctx).
 		Model(&model.Server{}).
 		Where("server_id = ? AND is_deleted = false", id).
@@ -70,7 +70,7 @@ func (r *ServerRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *ServerRepo) List(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
+func (r *serverRepo) List(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
 	var servers []model.Server
 	var total int64
 
@@ -97,7 +97,7 @@ func (r *ServerRepo) List(ctx context.Context, filter model.ListServerFilter) (*
 	}, err
 }
 
-func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*model.CreateBatchServerResult, error) {
+func (r *serverRepo) CreateBatch(ctx context.Context, servers []model.Server) (*model.CreateBatchServerResult, error) {
 	res := &model.CreateBatchServerResult{
 		Success:    make([]string, 0),
 		Failed:     make([]string, 0),
@@ -123,6 +123,6 @@ func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 	return res, nil
 }
 
-func NewServerRepository(db *gorm.DB) *ServerRepo {
-	return &ServerRepo{db: db}
+func NewServerRepository(db *gorm.DB) *serverRepo {
+	return &serverRepo{db: db}
 }
