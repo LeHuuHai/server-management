@@ -18,8 +18,16 @@ import (
 // impl ServerInterface
 type ServerHandler struct {
 	service     *service.ServerService
-	exporter    export.Exporter
+	exporter    export.ServerExporter
 	deserialize deserialize.ServerDeserializer
+}
+
+func NewServerHandler(s *service.ServerService, e export.ServerExporter, d deserialize.ServerDeserializer) *ServerHandler {
+	return &ServerHandler{
+		service:     s,
+		exporter:    e,
+		deserialize: d,
+	}
 }
 
 // Get list servers
@@ -138,7 +146,7 @@ func (handler *ServerHandler) ExportServers(c *gin.Context, params api.ExportSer
 
 // Import server
 // (POST /servers/import)
-func (handler *ServerHandler) ImportServers(c *gin.Context) {
+func (handler *ServerHandler) ImportServer(c *gin.Context) {
 	fileHeader, err := c.FormFile("file")
 	if err != nil {
 		c.JSON(400, gin.H{
