@@ -18,7 +18,7 @@ func (p *PublishService) Publish(ctx context.Context, topic string, msg []byte) 
 	return nil
 }
 
-func NewPublishPingService(p mq.Publisher) *PublishService {
+func NewPublishService(p mq.Publisher) *PublishService {
 	return &PublishService{
 		publisher: p,
 	}
