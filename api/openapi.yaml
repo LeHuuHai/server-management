@@ -299,6 +299,51 @@ paths:
         "500":
           $ref: "#/components/responses/InternalError"
 
+  /servers/report:
+    get:
+      tags:
+        - Server
+      summary: Get report servers
+      operationId: GetReportServers
+
+      security:
+        - bearerAuth:
+            - server:report
+
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+
+      responses:
+        "200":
+          description: Get report servers successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReportServerResponse"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
 
 components:
   schemas:
@@ -401,6 +446,36 @@ components:
           type: array
           items:
             type: string
+    
+    ReportServerResponse:
+      type: object
+      required:
+        - result
+      properties:
+        result:
+          type: array
+          items:
+            $ref: "#/components/schemas/ReportServerItem"
+
+    ReportServerItem:
+      type: object
+      required: 
+        - server_id
+        - start_ping_at
+        - last_ping_at
+        - uptime_ratio
+      properties:
+        server_id:
+          type: string
+        start_ping_at:
+          type: string
+          format: date-time
+        last_ping_at:
+          type: string
+          format: date-time
+        uptime_ratio:
+          type: number
+          format: double
 
     ErrorResponse:
       type: object
