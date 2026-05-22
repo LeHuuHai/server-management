@@ -10,4 +10,5 @@ var (
 	ErrRecordNotFound    = errors.New("record not found")
 	ErrInvalidImportData = errors.New("file have invalid data or format")
 	ErrInvalidTimeRange  = errors.New("invalid time range")
+	ErrInvalidEmail      = errors.New("invalid email")
 )

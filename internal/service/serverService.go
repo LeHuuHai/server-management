@@ -15,7 +15,6 @@ import (
 type ServerService struct {
 	repo       repo.ServerRepositoryInterface
 	inmemCache cache.ServerMetadataCacheInterface
-	aggregator *es.Aggregator
 }
 
 func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) error {
@@ -131,13 +130,6 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 	return res, nil
 }
 
-func (s *ServerService) ReportServer(ctx context.Context, from time.Time, to time.Time) ([]model.ServerUptimeAgg, error) {
-	if from.After(to) {
-		return nil, apperr.ErrInvalidTimeRange
-	}
-	return s.aggregator.Aggregation(ctx, from, to)
-}
-
 func NewServerService(
 	r repo.ServerRepositoryInterface,
 	c cache.ServerMetadataCacheInterface,
@@ -146,6 +138,5 @@ func NewServerService(
 	return &ServerService{
 		repo:       r,
 		inmemCache: c,
-		aggregator: a,
 	}
 }

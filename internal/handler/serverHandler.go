@@ -17,16 +17,18 @@ import (
 
 // impl ServerInterface
 type ServerHandler struct {
-	service     *service.ServerService
-	exporter    export.ServerExporter
-	deserialize deserialize.ServerDeserializer
+	service       *service.ServerService
+	reportService *service.ReportServerService
+	exporter      export.ServerExporter
+	deserialize   deserialize.ServerDeserializer
 }
 
-func NewServerHandler(s *service.ServerService, e export.ServerExporter, d deserialize.ServerDeserializer) *ServerHandler {
+func NewServerHandler(s *service.ServerService, r *service.ReportServerService, e export.ServerExporter, d deserialize.ServerDeserializer) *ServerHandler {
 	return &ServerHandler{
-		service:     s,
-		exporter:    e,
-		deserialize: d,
+		service:       s,
+		reportService: r,
+		exporter:      e,
+		deserialize:   d,
 	}
 }
 
@@ -246,12 +248,20 @@ func (handler *ServerHandler) UpdateServer(c *gin.Context, serverId string) {
 	})
 }
 
-// Get report servers
-// (GET /servers/report)
-func (handler *ServerHandler) GetReportServers(c *gin.Context, params api.GetReportServersParams) {
-	res, err := handler.service.ReportServer(c.Request.Context(), params.From, params.To)
+// Generate server report
+// (POST /servers/report)
+func (handler *ServerHandler) GenerateServerReport(c *gin.Context) {
+	var request model.GenServerReportRequest
+	err := c.ShouldBindJSON(&request)
 	if err != nil {
-		if errors.Is(err, apperr.ErrInvalidTimeRange) {
+		c.JSON(400, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	err = handler.reportService.ReportServer(c.Request.Context(), request)
+	if err != nil {
+		if errors.Is(err, apperr.ErrInvalidTimeRange) || errors.Is(err, apperr.ErrInvalidEmail) {
 			c.JSON(400, gin.H{
 				"message": err.Error(),
 			})
@@ -262,16 +272,5 @@ func (handler *ServerHandler) GetReportServers(c *gin.Context, params api.GetRep
 		})
 		return
 	}
-	result := make([]api.ReportServerItem, len(res))
-	for idx, item := range res {
-		result[idx] = api.ReportServerItem{
-			ServerId:    item.ServerID,
-			StartPingAt: item.StartPingAt,
-			LastPingAt:  item.LastPingAt,
-			UptimeRatio: item.UptimeRatio,
-		}
-	}
-	c.JSON(200, api.ReportServerResponse{
-		Result: result,
-	})
+	c.Status(202)
 }
