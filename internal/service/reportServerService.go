@@ -75,3 +75,15 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 	}
 	return s.publisher.Publish(ctx, "mail", mailReqByte)
 }
+
+func NewReportServerService(
+	a *es.Aggregator,
+	e export.ReportServerExporter,
+	p mq.Publisher,
+) *ReportServerService {
+	return &ReportServerService{
+		aggregator: a,
+		exporter:   e,
+		publisher:  p,
+	}
+}

@@ -8,7 +8,6 @@ import (
 	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
-	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	"github.com/LeHuuHai/server-management/internal/model"
 )
 
@@ -133,7 +132,6 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 func NewServerService(
 	r repo.ServerRepositoryInterface,
 	c cache.ServerMetadataCacheInterface,
-	a *es.Aggregator,
 ) *ServerService {
 	return &ServerService{
 		repo:       r,
