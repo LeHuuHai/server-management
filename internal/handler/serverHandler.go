@@ -132,8 +132,8 @@ func (handler *ServerHandler) ExportServers(c *gin.Context, params api.ExportSer
 	c.Header(
 		"Content-Disposition",
 		fmt.Sprintf(
-			`attachment; filename="%s"`,
-			handler.exporter.FileName(),
+			`attachment; filename="servers.%s"`,
+			handler.exporter.FileType(),
 		),
 	)
 

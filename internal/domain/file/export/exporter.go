@@ -9,6 +9,6 @@ import (
 
 type ServerExporter interface {
 	Export(ctx context.Context, writer io.Writer, data []model.Server) error
-	FileName() string
+	FileType() string
 	ContentType() string
 }

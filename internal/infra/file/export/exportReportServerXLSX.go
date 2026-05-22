@@ -11,8 +11,8 @@ import (
 
 type reportServerXLSXExport struct{}
 
-func (e *reportServerXLSXExport) FileName() string {
-	return "report.xlsx"
+func (e *reportServerXLSXExport) FileType() string {
+	return "xlsx"
 }
 
 func (e *reportServerXLSXExport) ContentType() string {

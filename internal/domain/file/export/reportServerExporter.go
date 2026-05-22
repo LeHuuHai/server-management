@@ -9,6 +9,6 @@ import (
 
 type ReportServerExporter interface {
 	Export(ctx context.Context, writer io.Writer, data []model.ServerUptimeAgg) error
-	FileName() string
+	FileType() string
 	ContentType() string
 }
