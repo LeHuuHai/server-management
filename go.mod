@@ -5,6 +5,7 @@ go 1.25.3
 require (
 	github.com/elastic/go-elasticsearch/v8 v8.19.6
 	github.com/gin-gonic/gin v1.12.0
+	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/redis/go-redis/v9 v9.19.0

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"net/mail"
 	"os"
 	"strconv"
 
@@ -19,6 +20,7 @@ type AppConfig struct {
 	Port      int
 	Host      string
 	CyclePing int
+	AdMail    string
 }
 
 type PostgresConfig struct {
@@ -72,11 +74,17 @@ func Load() (*MasterConfig, error) {
 		return nil, err
 	}
 
+	_, err = mail.ParseAddress(os.Getenv("APP_AD_MAIL"))
+	if err != nil {
+		return nil, err
+	}
+
 	return &MasterConfig{
 		App: AppConfig{
 			Port:      appPort,
 			Host:      os.Getenv("APP_HOST"),
 			CyclePing: appCyclePing,
+			AdMail:    os.Getenv("APP_A_MAIL"),
 		},
 		DB: PostgresConfig{
 			PgHost:     os.Getenv("DB_HOST"),

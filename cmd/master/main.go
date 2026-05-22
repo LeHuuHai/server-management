@@ -13,6 +13,7 @@ import (
 	"github.com/LeHuuHai/server-management/config"
 	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	"github.com/LeHuuHai/server-management/internal/handler"
+	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	xlsximport "github.com/LeHuuHai/server-management/internal/infra/file/deserialize"
 	xlsxexport "github.com/LeHuuHai/server-management/internal/infra/file/export"
 	"github.com/LeHuuHai/server-management/internal/infra/inmem"
@@ -29,12 +30,14 @@ func Serve(
 	wg *sync.WaitGroup,
 	rt *runtime.App,
 	serverService *service.ServerService,
+	reportServerService *service.ReportServerService,
 ) {
 	defer wg.Done()
 
 	//handler
 	serverHandler := handler.NewServerHandler(
 		serverService,
+		reportServerService,
 		xlsxexport.NewServerXLSXExporter(),
 		xlsximport.NewServerXLSXImporter(),
 	)
@@ -56,7 +59,7 @@ func CheckServer(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	rt *runtime.App,
-	publishPingService *service.PublishPingService,
+	publishPingService *service.PublishService,
 	serverMetadataCache cache.ServerMetadataCacheInterface,
 ) {
 	defer wg.Done()
@@ -77,14 +80,24 @@ func CheckServer(
 				reqBytes, err := json.Marshal(req)
 				if err != nil {
 					log.Println(err.Error())
+					continue
 				}
-				publishPingService.PublishRequestPing(ctx, reqBytes)
+				err = publishPingService.Publish(ctx, "ping", reqBytes)
+				if err != nil {
+					log.Println(err.Error())
+					continue
+				}
 			}
 		}
 	}
 }
 
-func Report(ctx context.Context, wg *sync.WaitGroup, app *runtime.App) {
+func Report(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	rt *runtime.App,
+	reportServerService *service.ReportServerService,
+) {
 	defer wg.Done()
 	for {
 		now := time.Now()
@@ -102,8 +115,16 @@ func Report(ctx context.Context, wg *sync.WaitGroup, app *runtime.App) {
 			timer.Stop()
 			return
 		case <-timer.C:
-			// agg
-			// send res
+			request := model.GenServerReportRequest{
+				From:      time.Now().Add(-24 * time.Hour),
+				To:        time.Now(),
+				Receivers: []string{rt.Config.App.AdMail},
+			}
+			err := reportServerService.ReportServer(ctx, request)
+			if err != nil {
+				log.Println(err.Error())
+				continue
+			}
 		}
 		timer.Stop()
 	}
@@ -122,19 +143,22 @@ func main() {
 		panic(err)
 	}
 
-	// domain
+	// domain, infra
 	serverRepo := pg.NewServerRepository(rt.DB)
 	serverInmemCache := inmem.NewServerInmemCache()
 	kfkPublisher := kfk.NewPublisher(rt.SyncWriter)
+	esAggregator := es.NewESAggregator(rt.ESClient)
+	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 
 	// service
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
-	publishPingService := service.NewPublishPingService(kfkPublisher)
+	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher)
+	publishService := service.NewPublishService(kfkPublisher)
 
 	var wg sync.WaitGroup
 	wg.Add(3)
-	go Serve(ctx, &wg, rt, serverService)
-	go CheckServer(ctx, &wg, rt, publishPingService, serverInmemCache)
-	go Report(ctx, &wg, rt)
+	go Serve(ctx, &wg, rt, serverService, reportServerService)
+	go CheckServer(ctx, &wg, rt, publishService, serverInmemCache)
+	go Report(ctx, &wg, rt, reportServerService)
 	wg.Wait()
 }
