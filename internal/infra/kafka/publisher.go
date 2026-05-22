@@ -10,10 +10,11 @@ type kafkaPublisher struct {
 	writer *kafka.Writer
 }
 
-func (p *kafkaPublisher) Publish(ctx context.Context, msg []byte) error {
+func (p *kafkaPublisher) Publish(ctx context.Context, topic string, msg []byte) error {
 	err := p.writer.WriteMessages(
 		ctx,
 		kafka.Message{
+			Topic: topic,
 			Value: msg,
 		},
 	)

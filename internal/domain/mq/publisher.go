@@ -3,5 +3,5 @@ package mq
 import "context"
 
 type Publisher interface {
-	Publish(ctx context.Context, msg []byte) error
+	Publish(ctx context.Context, topic string, msg []byte) error
 }

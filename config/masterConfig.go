@@ -38,7 +38,6 @@ type RedisConfig struct {
 type KafkaConfig struct {
 	KafkaBroker string
 	//KafkaConsumerGroupId string
-	KafkaTopic string
 }
 
 type ElasticsearchConfig struct {
@@ -93,7 +92,6 @@ func Load() (*MasterConfig, error) {
 		},
 		Kafka: KafkaConfig{
 			KafkaBroker: os.Getenv("KAFKA_BROKER"),
-			KafkaTopic:  os.Getenv("KAFKA_TOPIC"),
 		},
 		ES: ElasticsearchConfig{
 			EsURL:      os.Getenv("ES_URL"),

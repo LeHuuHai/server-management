@@ -12,24 +12,21 @@ import (
 func Connect(config *config.MasterConfig) (*kafka.Writer, *kafka.Writer, error) {
 	brokersString := config.Kafka.KafkaBroker
 	brokers := strings.Split(brokersString, ",")
-	topic := config.Kafka.KafkaTopic
-	syncWriter := newSyncWriter(brokers, topic)
-	asyncWriter := newAsyncWriter(brokers, topic)
+	syncWriter := newSyncWriter(brokers)
+	asyncWriter := newAsyncWriter(brokers)
 	return syncWriter, asyncWriter, nil
 }
 
-func newSyncWriter(brokers []string, topic string) *kafka.Writer {
+func newSyncWriter(brokers []string) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),
-		Topic:        topic,
 		RequiredAcks: kafka.RequireOne,
 	}
 }
 
-func newAsyncWriter(brokers []string, topic string) *kafka.Writer {
+func newAsyncWriter(brokers []string) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),
-		Topic:        topic,
 		RequiredAcks: kafka.RequireOne,
 		Async:        true,
 		Completion: func(messages []kafka.Message, err error) {
