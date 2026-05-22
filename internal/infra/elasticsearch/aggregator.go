@@ -38,6 +38,12 @@ type aggregationResponse struct {
 	} `json:"aggregations"`
 }
 
+func NewESAggregator(c *elasticsearch.Client) *Aggregator {
+	return &Aggregator{
+		client: c,
+	}
+}
+
 func (aggregator *Aggregator) Aggregation(ctx context.Context, from time.Time, to time.Time) ([]model.ServerUptimeAgg, error) {
 	query := map[string]any{
 		"size": 0,
