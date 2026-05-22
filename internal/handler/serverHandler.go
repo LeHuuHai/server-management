@@ -245,3 +245,33 @@ func (handler *ServerHandler) UpdateServer(c *gin.Context, serverId string) {
 		"Server": ServerModelToServerAPI(*s),
 	})
 }
+
+// Get report servers
+// (GET /servers/report)
+func (handler *ServerHandler) GetReportServers(c *gin.Context, params api.GetReportServersParams) {
+	res, err := handler.service.ReportServer(c.Request.Context(), params.From, params.To)
+	if err != nil {
+		if errors.Is(err, apperr.ErrInvalidTimeRange) {
+			c.JSON(400, gin.H{
+				"message": err.Error(),
+			})
+			return
+		}
+		c.JSON(500, gin.H{
+			"message": err.Error(),
+		})
+		return
+	}
+	result := make([]api.ReportServerItem, len(res))
+	for idx, item := range res {
+		result[idx] = api.ReportServerItem{
+			ServerId:    item.ServerID,
+			StartPingAt: item.StartPingAt,
+			LastPingAt:  item.LastPingAt,
+			UptimeRatio: item.UptimeRatio,
+		}
+	}
+	c.JSON(200, api.ReportServerResponse{
+		Result: result,
+	})
+}
