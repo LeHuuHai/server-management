@@ -300,38 +300,27 @@ paths:
           $ref: "#/components/responses/InternalError"
 
   /servers/report:
-    get:
+    post:
       tags:
         - Server
-      summary: Get report servers
-      operationId: GetReportServers
+      summary: Generate server report
+      operationId: GenerateServerReport
 
       security:
         - bearerAuth:
             - server:report
 
-      parameters:
-        - name: from
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date-time
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReportServerRequest"
 
-        - name: to
-          in: query
-          required: true
-          schema:
-            type: string
-            format: date-time
 
       responses:
-        "200":
-          description: Get report servers successfully
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ReportServerResponse"
+        "202":
+          description: Report generation queued successfully
 
         "400":
           $ref: "#/components/responses/BadRequest"
@@ -447,35 +436,27 @@ components:
           items:
             type: string
     
-    ReportServerResponse:
+    ReportServerRequest:
       type: object
       required:
-        - result
+        - from
+        - to
+        - receivers
+
       properties:
-        result:
+        from:
+          type: string
+          format: date-time
+
+        to:
+          type: string
+          format: date-time
+
+        receivers:
           type: array
           items:
-            $ref: "#/components/schemas/ReportServerItem"
-
-    ReportServerItem:
-      type: object
-      required: 
-        - server_id
-        - start_ping_at
-        - last_ping_at
-        - uptime_ratio
-      properties:
-        server_id:
-          type: string
-        start_ping_at:
-          type: string
-          format: date-time
-        last_ping_at:
-          type: string
-          format: date-time
-        uptime_ratio:
-          type: number
-          format: double
+            type: string
+            format: email
 
     ErrorResponse:
       type: object
