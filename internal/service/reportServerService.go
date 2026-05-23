@@ -73,7 +73,11 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 	if err != nil {
 		return err
 	}
-	return s.publisher.Publish(ctx, "mail", mailReqByte)
+	msg := mq.Message{
+		Topic: "mail",
+		Value: mailReqByte,
+	}
+	return s.publisher.Publish(ctx, msg)
 }
 
 func NewReportServerService(

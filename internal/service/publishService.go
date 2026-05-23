@@ -10,8 +10,12 @@ type PublishService struct {
 	publisher mq.Publisher
 }
 
-func (p *PublishService) Publish(ctx context.Context, topic string, msg []byte) error {
-	err := p.publisher.Publish(ctx, topic, msg)
+func (p *PublishService) Publish(ctx context.Context, topic string, value []byte) error {
+	msg := mq.Message{
+		Topic: topic,
+		Value: value,
+	}
+	err := p.publisher.Publish(ctx, msg)
 	if err != nil {
 		return err
 	}
