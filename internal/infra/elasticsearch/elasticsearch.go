@@ -3,15 +3,15 @@ package es
 import (
 	"strings"
 
-	"github.com/LeHuuHai/server-management/config"
+	commonconfig "github.com/LeHuuHai/server-management/config/common"
 	"github.com/elastic/go-elasticsearch/v8"
 )
 
-func Connect(config *config.MasterConfig) (*elasticsearch.Client, error) {
+func Connect(config *commonconfig.ElasticsearchConfig) (*elasticsearch.Client, error) {
 	cfg := elasticsearch.Config{
-		Addresses: strings.Split(config.ES.EsURL, ","),
-		Username:  config.ES.EsUsername,
-		Password:  config.ES.EsPassword,
+		Addresses: strings.Split(config.URL, ","),
+		Username:  config.Username,
+		Password:  config.Password,
 	}
 
 	esclient, err := elasticsearch.NewClient(cfg)

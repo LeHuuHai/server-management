@@ -1,7 +1,7 @@
-package runtime
+package masterruntime
 
 import (
-	"github.com/LeHuuHai/server-management/config"
+	masterconfig "github.com/LeHuuHai/server-management/config/master"
 	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
@@ -13,7 +13,7 @@ import (
 )
 
 type App struct {
-	Config      *config.MasterConfig
+	Config      *masterconfig.Config
 	DB          *gorm.DB
 	ESClient    *elasticsearch.Client
 	SyncWriter  *kafka.Writer
@@ -21,27 +21,27 @@ type App struct {
 	RdbClient   *redis.Client
 }
 
-func New(cfg *config.MasterConfig) (*App, error) {
+func NewApp(cfg *masterconfig.Config) (*App, error) {
 	// load config
-	cfg, err := config.Load()
+	cfg, err := masterconfig.Load()
 	if err != nil {
 		panic(err)
 	}
 
 	// infra
-	db, err := pg.Connect(cfg)
+	db, err := pg.Connect(cfg.DBConfig)
 	if err != nil {
 		return nil, err
 	}
-	esclient, err := es.Connect(cfg)
+	esclient, err := es.Connect(cfg.ESConfig)
 	if err != nil {
 		return nil, err
 	}
-	syncWriter, asyncWriter, err := kfk.Connect(cfg)
+	syncWriter, asyncWriter, err := kfk.ConnectWriter(cfg.KafkaWriterConfig)
 	if err != nil {
 		return nil, err
 	}
-	rdbClient, err := rdb.Connect(cfg)
+	rdbClient, err := rdb.Connect(cfg.RedisConfig)
 	if err != nil {
 		return nil, err
 	}

@@ -4,15 +4,15 @@ import (
 	"context"
 	"log"
 
-	"github.com/LeHuuHai/server-management/config"
+	commonconfig "github.com/LeHuuHai/server-management/config/common"
 	"github.com/redis/go-redis/v9"
 )
 
-func Connect(config *config.MasterConfig) (*redis.Client, error) {
+func Connect(config *commonconfig.RedisConfig) (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     config.Redis.RedisURL,
-		Password: config.Redis.RedisPassword,
-		DB:       config.Redis.RedisDB,
+		Addr:     config.URL,
+		Password: config.Password,
+		DB:       config.DB,
 	})
 
 	ctx := context.Background()

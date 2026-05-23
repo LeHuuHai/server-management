@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/LeHuuHai/server-management/api"
-	"github.com/LeHuuHai/server-management/config"
+	masterconfig "github.com/LeHuuHai/server-management/config/master"
 	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	"github.com/LeHuuHai/server-management/internal/handler"
 	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
@@ -19,7 +19,7 @@ import (
 	"github.com/LeHuuHai/server-management/internal/infra/inmem"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
-	"github.com/LeHuuHai/server-management/internal/infra/runtime"
+	masterruntime "github.com/LeHuuHai/server-management/internal/infra/runtime/master"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/LeHuuHai/server-management/internal/service"
 	"github.com/gin-gonic/gin"
@@ -28,7 +28,7 @@ import (
 func Serve(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	rt *runtime.App,
+	rt *masterruntime.App,
 	serverService *service.ServerService,
 	reportServerService *service.ReportServerService,
 ) {
@@ -46,8 +46,8 @@ func Serve(
 	r := gin.New()
 	api.RegisterHandlers(r, serverHandler)
 	addr := net.JoinHostPort(
-		rt.Config.App.Host,
-		strconv.Itoa(rt.Config.App.Port),
+		rt.Config.AppConfig.Host,
+		strconv.Itoa(rt.Config.AppConfig.Port),
 	)
 
 	if err := r.Run(addr); err != nil {
@@ -58,12 +58,12 @@ func Serve(
 func CheckServer(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	rt *runtime.App,
+	rt *masterruntime.App,
 	publishPingService *service.PublishService,
 	serverMetadataCache cache.ServerMetadataCacheInterface,
 ) {
 	defer wg.Done()
-	ticker := time.NewTicker(time.Duration(rt.Config.App.CyclePing) * time.Millisecond)
+	ticker := time.NewTicker(time.Duration(rt.Config.AppConfig.CyclePing) * time.Millisecond)
 	defer ticker.Stop()
 	for {
 		select {
@@ -95,7 +95,7 @@ func CheckServer(
 func Report(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	rt *runtime.App,
+	rt *masterruntime.App,
 	reportServerService *service.ReportServerService,
 ) {
 	defer wg.Done()
@@ -118,7 +118,7 @@ func Report(
 			request := model.GenServerReportRequest{
 				From:      time.Now().Add(-24 * time.Hour),
 				To:        time.Now(),
-				Receivers: []string{rt.Config.App.AdMail},
+				Receivers: []string{rt.Config.AppConfig.AdMail},
 			}
 			err := reportServerService.ReportServer(ctx, request)
 			if err != nil {
@@ -133,12 +133,12 @@ func Report(
 func main() {
 	ctx := context.Background()
 
-	cfg, err := config.Load()
+	cfg, err := masterconfig.Load()
 	if err != nil {
 		panic(err)
 	}
 
-	rt, err := runtime.New(cfg)
+	rt, err := masterruntime.NewApp(cfg)
 	if err != nil {
 		panic(err)
 	}

@@ -4,14 +4,13 @@ import (
 	"log"
 	"strings"
 
-	"github.com/LeHuuHai/server-management/config"
+	commonconfig "github.com/LeHuuHai/server-management/config/common"
 	"github.com/segmentio/kafka-go"
 )
 
 // return sync writer and async writer
-func Connect(config *config.MasterConfig) (*kafka.Writer, *kafka.Writer, error) {
-	brokersString := config.Kafka.KafkaBroker
-	brokers := strings.Split(brokersString, ",")
+func ConnectWriter(config *commonconfig.KafkaWriterConfig) (*kafka.Writer, *kafka.Writer, error) {
+	brokers := strings.Split(config.Broker, ",")
 	syncWriter := newSyncWriter(brokers)
 	asyncWriter := newAsyncWriter(brokers)
 	return syncWriter, asyncWriter, nil
@@ -35,4 +34,15 @@ func newAsyncWriter(brokers []string) *kafka.Writer {
 			}
 		},
 	}
+}
+
+func ConnectReader(config *commonconfig.KafkaReaderConfig) (*kafka.Reader, error) {
+	brokers := strings.Split(config.Broker, ",")
+	topic := config.Topic
+	consumerGroupID := config.ConsumerGroupId
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers: brokers,
+		Topic:   topic,
+		GroupID: consumerGroupID,
+	}), nil
 }
