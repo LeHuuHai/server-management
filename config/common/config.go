@@ -18,21 +18,8 @@ type KafkaWriterConfig struct {
 	Broker string
 }
 
-type KafkaReaderConfig struct {
-	Broker          string
-	Topic           string
-	ConsumerGroupId string
-}
-
 type ElasticsearchConfig struct {
 	URL      string
 	Username string
-	Password string
-}
-
-type GomailConfig struct {
-	Addr     string
-	Port     int
-	From     string
 	Password string
 }

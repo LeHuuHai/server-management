@@ -10,7 +10,8 @@ type App struct {
 	Config      *workerconfig.Config
 	SyncWriter  *kafka.Writer
 	AsyncWriter *kafka.Writer
-	Reader      *kafka.Reader
+	PingReader  *kafka.Reader
+	MailReader  *kafka.Reader
 }
 
 func NewApp(cfg *workerconfig.Config) (*App, error) {
@@ -25,7 +26,7 @@ func NewApp(cfg *workerconfig.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	reader, err := kfk.ConnectReader(cfg.KafkaReaderConfig)
+	pingReader, mailReader, err := kfk.ConnectWorkerReader(cfg.KafkaReaderConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -34,6 +35,7 @@ func NewApp(cfg *workerconfig.Config) (*App, error) {
 		Config:      cfg,
 		SyncWriter:  syncWriter,
 		AsyncWriter: asyncWriter,
-		Reader:      reader,
+		PingReader:  pingReader,
+		MailReader:  mailReader,
 	}, nil
 }

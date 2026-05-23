@@ -11,11 +11,25 @@ import (
 type Config struct {
 	AppConfig         *AppConfig
 	KafkaWriterConfig *commonconfig.KafkaWriterConfig
-	KafkaReaderConfig *commonconfig.KafkaReaderConfig
-	SenderConfig      *commonconfig.GomailConfig
+	KafkaReaderConfig *KafkaReaderConfig
+	SenderConfig      *GomailConfig
 }
 
 type AppConfig struct {
+}
+
+type KafkaReaderConfig struct {
+	Broker          string
+	PingTopic       string
+	MailTopic       string
+	ConsumerGroupId string
+}
+
+type GomailConfig struct {
+	Addr     string
+	Port     int
+	From     string
+	Password string
 }
 
 func Load() (*Config, error) {
@@ -34,12 +48,13 @@ func Load() (*Config, error) {
 		KafkaWriterConfig: &commonconfig.KafkaWriterConfig{
 			Broker: os.Getenv("KAFKA_BROKER"),
 		},
-		KafkaReaderConfig: &commonconfig.KafkaReaderConfig{
+		KafkaReaderConfig: &KafkaReaderConfig{
 			Broker:          os.Getenv("KAFKA_BROKER"),
 			ConsumerGroupId: os.Getenv("KAFKA_GROUP_ID"),
-			Topic:           os.Getenv("KAFKA_TOPIC"),
+			PingTopic:       os.Getenv("KAFKA_PING_TOPIC"),
+			MailTopic:       os.Getenv("KAFKA_MAIL_TOPIC"),
 		},
-		SenderConfig: &commonconfig.GomailConfig{
+		SenderConfig: &GomailConfig{
 			Addr:     os.Getenv("GOMAIL_ADDR"),
 			Port:     gomailPort,
 			From:     os.Getenv("GOMAIL_FROM"),

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
+	workerconfig "github.com/LeHuuHai/server-management/config/worker"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -36,13 +37,17 @@ func newAsyncWriter(brokers []string) *kafka.Writer {
 	}
 }
 
-func ConnectReader(config *commonconfig.KafkaReaderConfig) (*kafka.Reader, error) {
+func ConnectWorkerReader(config *workerconfig.KafkaReaderConfig) (*kafka.Reader, *kafka.Reader, error) {
 	brokers := strings.Split(config.Broker, ",")
-	topic := config.Topic
-	consumerGroupID := config.ConsumerGroupId
 	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers: brokers,
-		Topic:   topic,
-		GroupID: consumerGroupID,
-	}), nil
+			Brokers: brokers,
+			Topic:   config.PingTopic,
+			GroupID: config.ConsumerGroupId,
+		}),
+		kafka.NewReader(kafka.ReaderConfig{
+			Brokers: brokers,
+			Topic:   config.MailTopic,
+			GroupID: config.ConsumerGroupId,
+		}),
+		nil
 }
