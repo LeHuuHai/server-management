@@ -12,9 +12,10 @@ type gomailSender struct {
 	dialer *gomail.Dialer
 	conn   gomail.SendCloser
 	mu     sync.Mutex
+	From   string
 }
 
-func NewGomailSender(d *gomail.Dialer) (*gomailSender, error) {
+func NewGomailSender(d *gomail.Dialer, from string) (*gomailSender, error) {
 	conn, err := d.Dial()
 	if err != nil {
 		return nil, err
@@ -22,12 +23,13 @@ func NewGomailSender(d *gomail.Dialer) (*gomailSender, error) {
 	return &gomailSender{
 		dialer: d,
 		conn:   conn,
+		From:   from,
 	}, nil
 }
 
 func (s *gomailSender) Send(ctx context.Context, mail model.Mail) error {
 	msg := gomail.NewMessage()
-	msg.SetHeader("From", mail.From)
+	msg.SetHeader("From", s.From)
 	msg.SetHeader("To", mail.To...)
 	msg.SetHeader("Subject", mail.Subject)
 	msg.SetBody("text/plain", mail.Body)
@@ -58,12 +60,11 @@ func (s *gomailSender) sendWithRetry(m *gomail.Message) error {
 	return gomail.Send(s.conn, m)
 }
 
-func (s *gomailSender) Close() error {
+func (s *gomailSender) Close() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	if s.conn != nil {
-		return s.conn.Close()
+		s.conn.Close()
 	}
-	return nil
 }
