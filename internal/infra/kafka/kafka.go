@@ -5,13 +5,12 @@ import (
 	"strings"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
-	workerconfig "github.com/LeHuuHai/server-management/config/worker"
 	"github.com/segmentio/kafka-go"
 )
 
 // return sync writer and async writer
-func ConnectWriter(config *commonconfig.KafkaWriterConfig) (*kafka.Writer, *kafka.Writer, error) {
-	brokers := strings.Split(config.Broker, ",")
+func ConnectWriter(config *commonconfig.KafkaConfig) (*kafka.Writer, *kafka.Writer, error) {
+	brokers := strings.Split(config.Writer.Broker, ",")
 	syncWriter := newSyncWriter(brokers)
 	asyncWriter := newAsyncWriter(brokers)
 	return syncWriter, asyncWriter, nil
@@ -37,17 +36,17 @@ func newAsyncWriter(brokers []string) *kafka.Writer {
 	}
 }
 
-func ConnectWorkerReader(config *workerconfig.KafkaReaderConfig) (*kafka.Reader, *kafka.Reader, error) {
-	brokers := strings.Split(config.Broker, ",")
+func ConnectWorkerReader(config *commonconfig.KafkaConfig) (*kafka.Reader, *kafka.Reader, error) {
+	brokers := strings.Split(config.Reader.Broker, ",")
 	return kafka.NewReader(kafka.ReaderConfig{
 			Brokers: brokers,
-			Topic:   config.PingTopic,
-			GroupID: config.ConsumerGroupId,
+			Topic:   config.Topics["ping"],
+			GroupID: config.Reader.ConsumerGroupId,
 		}),
 		kafka.NewReader(kafka.ReaderConfig{
 			Brokers: brokers,
-			Topic:   config.MailTopic,
-			GroupID: config.ConsumerGroupId,
+			Topic:   config.Topics["mail"],
+			GroupID: config.Reader.ConsumerGroupId,
 		}),
 		nil
 }

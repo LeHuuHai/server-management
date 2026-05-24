@@ -10,11 +10,11 @@ import (
 )
 
 type Config struct {
-	AppConfig         *AppConfig
-	DBConfig          *commonconfig.PostgresConfig
-	RedisConfig       *commonconfig.RedisConfig
-	KafkaWriterConfig *commonconfig.KafkaWriterConfig
-	ESConfig          *commonconfig.ElasticsearchConfig
+	AppConfig   *AppConfig
+	DBConfig    *commonconfig.PostgresConfig
+	RedisConfig *commonconfig.RedisConfig
+	KafkaConfig *commonconfig.KafkaConfig
+	ESConfig    *commonconfig.ElasticsearchConfig
 }
 
 type AppConfig struct {
@@ -73,8 +73,13 @@ func Load() (*Config, error) {
 			Password: os.Getenv("REDIS_PASSWORD"),
 			DB:       redisdb,
 		},
-		KafkaWriterConfig: &commonconfig.KafkaWriterConfig{
-			Broker: os.Getenv("KAFKA_BROKER"),
+		KafkaConfig: &commonconfig.KafkaConfig{
+			Writer: &commonconfig.KafkaWriterConfig{
+				Broker: os.Getenv("KAFKA_BROKER"),
+			},
+			Topics: map[string]string{
+				"ping": os.Getenv("KAFKA_PING_TOPIC"),
+			},
 		},
 		ESConfig: &commonconfig.ElasticsearchConfig{
 			URL:      os.Getenv("ES_URL"),

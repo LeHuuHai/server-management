@@ -22,11 +22,11 @@ func NewApp(cfg *workerconfig.Config) (*App, error) {
 	}
 
 	// infra
-	syncWriter, asyncWriter, err := kfk.ConnectWriter(cfg.KafkaWriterConfig)
+	syncWriter, asyncWriter, err := kfk.ConnectWriter(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}
-	pingReader, mailReader, err := kfk.ConnectWorkerReader(cfg.KafkaReaderConfig)
+	pingReader, mailReader, err := kfk.ConnectWorkerReader(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}

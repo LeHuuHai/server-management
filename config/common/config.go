@@ -18,6 +18,17 @@ type KafkaWriterConfig struct {
 	Broker string
 }
 
+type KafkaReaderConfig struct {
+	Broker          string
+	ConsumerGroupId string
+}
+
+type KafkaConfig struct {
+	Writer *KafkaWriterConfig
+	Reader *KafkaReaderConfig
+	Topics map[string]string
+}
+
 type ElasticsearchConfig struct {
 	URL      string
 	Username string

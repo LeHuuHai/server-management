@@ -19,6 +19,7 @@ type ReportServerService struct {
 	aggregator *es.Aggregator
 	exporter   export.ReportServerExporter
 	publisher  mq.Publisher
+	mailTopic  string
 }
 
 func (s *ReportServerService) ReportServer(ctx context.Context, request model.GenServerReportRequest) error {
@@ -74,7 +75,7 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 		return err
 	}
 	msg := mq.Message{
-		Topic: "mail",
+		Topic: s.mailTopic,
 		Value: mailReqByte,
 	}
 	return s.publisher.Publish(ctx, msg)
@@ -84,10 +85,12 @@ func NewReportServerService(
 	a *es.Aggregator,
 	e export.ReportServerExporter,
 	p mq.Publisher,
+	mailTopic string,
 ) *ReportServerService {
 	return &ReportServerService{
 		aggregator: a,
 		exporter:   e,
 		publisher:  p,
+		mailTopic:  mailTopic,
 	}
 }

@@ -37,7 +37,7 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
-	syncWriter, asyncWriter, err := kfk.ConnectWriter(cfg.KafkaWriterConfig)
+	syncWriter, asyncWriter, err := kfk.ConnectWriter(cfg.KafkaConfig)
 	if err != nil {
 		return nil, err
 	}

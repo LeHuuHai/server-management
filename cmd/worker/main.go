@@ -39,8 +39,8 @@ func CheckServer(
 				log.Println(err.Error())
 				continue
 			}
-			if msg.Topic != rt.Config.KafkaReaderConfig.PingTopic {
-				log.Printf("Received message with topic %s, expected %s", msg.Topic, rt.Config.KafkaReaderConfig.PingTopic)
+			if msg.Topic != rt.Config.KafkaConfig.Topics["ping"] {
+				log.Printf("Received message with topic %s, expected %s", msg.Topic, rt.Config.KafkaConfig.Topics["ping"])
 				continue
 			}
 			var pingReq model.RequestPing
@@ -86,7 +86,7 @@ func CheckServer(
 						continue
 					}
 					msg := mq.Message{
-						Topic: "ping_res",
+						Topic: rt.Config.KafkaConfig.Topics["ping_res"],
 						Value: resBytes,
 					}
 					err = publisher.Publish(ctx, msg)
@@ -117,8 +117,8 @@ func SendMail(
 			log.Println(err.Error())
 			continue
 		}
-		if msg.Topic != rt.Config.KafkaReaderConfig.MailTopic {
-			log.Printf("Received message with topic %s, expected %s", msg.Topic, rt.Config.KafkaReaderConfig.MailTopic)
+		if msg.Topic != rt.Config.KafkaConfig.Topics["mail"] {
+			log.Printf("Received message with topic %s, expected %s", msg.Topic, rt.Config.KafkaConfig.Topics["mail"])
 			continue
 		}
 		var mailReq model.RequestMail

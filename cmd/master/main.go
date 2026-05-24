@@ -84,7 +84,7 @@ func CheckServer(
 					continue
 				}
 				msg := mq.Message{
-					Topic: "ping",
+					Topic: rt.Config.KafkaConfig.Topics["ping"],
 					Value: reqBytes,
 				}
 				err = publisher.Publish(ctx, msg)
@@ -157,7 +157,7 @@ func main() {
 
 	// service
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
-	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher)
+	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["ping"])
 
 	var wg sync.WaitGroup
 	wg.Add(3)
