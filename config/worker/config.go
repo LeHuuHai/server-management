@@ -16,6 +16,7 @@ type Config struct {
 }
 
 type AppConfig struct {
+	NumThread int
 }
 
 type KafkaReaderConfig struct {
@@ -38,13 +39,20 @@ func Load() (*Config, error) {
 		panic("Error loading .env file")
 	}
 
+	appNumThread, err := strconv.Atoi(os.Getenv("APP_NUM_THREAD"))
+	if err != nil {
+		return nil, err
+	}
+
 	gomailPort, err := strconv.Atoi(os.Getenv("GOMAIL_PORT"))
 	if err != nil {
 		return nil, err
 	}
 
 	return &Config{
-		AppConfig: &AppConfig{},
+		AppConfig: &AppConfig{
+			NumThread: appNumThread,
+		},
 		KafkaWriterConfig: &commonconfig.KafkaWriterConfig{
 			Broker: os.Getenv("KAFKA_BROKER"),
 		},
