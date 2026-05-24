@@ -25,7 +25,7 @@ type AppConfig struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load()
+	err := godotenv.Load(".env.master")
 	if err != nil {
 		panic("Error loading .env file")
 	}
@@ -60,6 +60,7 @@ func Load() (*Config, error) {
 			Port:      appPort,
 			Host:      os.Getenv("APP_HOST"),
 			CyclePing: appCyclePing,
+			AdMail:    os.Getenv("APP_ADMAIL"),
 		},
 		DBConfig: &commonconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),
@@ -84,7 +85,7 @@ func Load() (*Config, error) {
 		ESConfig: &commonconfig.ElasticsearchConfig{
 			URL:      os.Getenv("ES_URL"),
 			Username: os.Getenv("ES_USER"),
-			Password: os.Getenv("ES_PASS"),
+			Password: os.Getenv("ES_PASSWORD"),
 		},
 	}, nil
 }

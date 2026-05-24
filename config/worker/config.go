@@ -26,7 +26,7 @@ type GomailConfig struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load()
+	err := godotenv.Load(".env.worker")
 	if err != nil {
 		panic("Error loading .env file")
 	}
