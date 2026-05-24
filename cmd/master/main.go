@@ -12,6 +12,7 @@ import (
 	"github.com/LeHuuHai/server-management/api"
 	masterconfig "github.com/LeHuuHai/server-management/config/master"
 	"github.com/LeHuuHai/server-management/internal/domain/cache"
+	"github.com/LeHuuHai/server-management/internal/domain/mq"
 	"github.com/LeHuuHai/server-management/internal/handler"
 	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	xlsximport "github.com/LeHuuHai/server-management/internal/infra/file/deserialize"
@@ -59,7 +60,7 @@ func CheckServer(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	rt *masterruntime.App,
-	publishPingService *service.PublishService,
+	publisher mq.Publisher,
 	serverMetadataCache cache.ServerMetadataCacheInterface,
 ) {
 	defer wg.Done()
@@ -82,7 +83,11 @@ func CheckServer(
 					log.Println(err.Error())
 					continue
 				}
-				err = publishPingService.Publish(ctx, "ping", reqBytes)
+				msg := mq.Message{
+					Topic: "ping",
+					Value: reqBytes,
+				}
+				err = publisher.Publish(ctx, msg)
 				if err != nil {
 					log.Println(err.Error())
 					continue
@@ -153,12 +158,11 @@ func main() {
 	// service
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
 	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher)
-	publishService := service.NewPublishService(kfkPublisher)
 
 	var wg sync.WaitGroup
 	wg.Add(3)
 	go Serve(ctx, &wg, rt, serverService, reportServerService)
-	go CheckServer(ctx, &wg, rt, publishService, serverInmemCache)
+	go CheckServer(ctx, &wg, rt, kfkPublisher, serverInmemCache)
 	go Report(ctx, &wg, rt, reportServerService)
 	wg.Wait()
 }
