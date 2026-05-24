@@ -75,6 +75,8 @@ func Load() (*Config, error) {
 			DB:       redisdb,
 		},
 		KafkaConfig: &commonconfig.KafkaConfig{
+			Username: os.Getenv("KAFKA_USER"),
+			Password: os.Getenv("KAFKA_PASSWORD"),
 			Writer: &commonconfig.KafkaWriterConfig{
 				Broker: os.Getenv("KAFKA_BROKER"),
 			},
