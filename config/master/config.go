@@ -25,7 +25,7 @@ type AppConfig struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load(".env.master")
+	err := godotenv.Load("./config/master/.env.master")
 	if err != nil {
 		panic("Error loading .env file")
 	}
@@ -50,7 +50,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	_, err = mail.ParseAddress(os.Getenv("APP_AD_MAIL"))
+	_, err = mail.ParseAddress(os.Getenv("APP_ADMAIL"))
 	if err != nil {
 		return nil, err
 	}
