@@ -1,7 +1,10 @@
 package masterruntime
 
 import (
+	"fmt"
+
 	masterconfig "github.com/LeHuuHai/server-management/config/master"
+	apperr "github.com/LeHuuHai/server-management/internal/error"
 	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
@@ -25,25 +28,25 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 	// load config
 	cfg, err := masterconfig.Load()
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
 	// infra
 	db, err := pg.Connect(cfg.DBConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 	esclient, err := es.Connect(cfg.ESConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 	syncWriter, asyncWriter, err := kfk.ConnectWriter(cfg.KafkaConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 	rdbClient, err := rdb.Connect(cfg.RedisConfig)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
 	return &App{

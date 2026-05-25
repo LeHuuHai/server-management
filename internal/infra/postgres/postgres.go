@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
+	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -22,7 +23,7 @@ func Connect(config *commonconfig.PostgresConfig) (*gorm.DB, error) {
 	// Mở kết nối tới database
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrConnectPostgres, err)
 	}
 
 	return db, nil

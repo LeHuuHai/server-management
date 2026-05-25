@@ -2,9 +2,10 @@ package rdb
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
+	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/redis/go-redis/v9"
 )
 
@@ -18,8 +19,7 @@ func Connect(config *commonconfig.RedisConfig) (*redis.Client, error) {
 	ctx := context.Background()
 	_, err := rdb.Ping(ctx).Result()
 	if err != nil {
-		log.Printf("connect Redis error: %s", err.Error())
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrConnectRedis, err)
 	}
 	return rdb, nil
 }
