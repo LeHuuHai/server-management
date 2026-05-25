@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/LeHuuHai/server-management/api"
 
@@ -273,4 +275,27 @@ func (handler *ServerHandler) GenerateServerReport(c *gin.Context) {
 		return
 	}
 	c.Status(202)
+}
+
+// Download report file
+// (GET /report/{filename})
+func (handler *ServerHandler) GetReportFile(c *gin.Context, filename string) {
+	filename = filepath.Base(filename)
+	path := filepath.Join("tmp", filename)
+
+	if _, err := os.Stat(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			c.JSON(404, gin.H{
+				"error": "file not found",
+			})
+			return
+		}
+
+		c.JSON(500, gin.H{
+			"error": "internal error",
+		})
+		return
+	}
+
+	c.FileAttachment(path, filename)
 }
