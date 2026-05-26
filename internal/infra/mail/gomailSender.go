@@ -2,6 +2,7 @@ package smtp
 
 import (
 	"context"
+	"io"
 	"sync"
 
 	"github.com/LeHuuHai/server-management/internal/model"
@@ -34,7 +35,13 @@ func (s *gomailSender) Send(ctx context.Context, mail model.Mail) error {
 	msg.SetHeader("Subject", mail.Subject)
 	msg.SetBody("text/plain", mail.Body)
 	for _, item := range mail.Attachments {
-		msg.Attach(item.Path, gomail.Rename(item.Filename))
+		msg.Attach(
+			item.Filename,
+			gomail.SetCopyFunc(func(w io.Writer) error {
+				_, err := w.Write(item.Data)
+				return err
+			}),
+		)
 	}
 	return s.sendWithRetry(msg)
 }

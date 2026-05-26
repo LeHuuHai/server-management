@@ -59,7 +59,7 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 	attachment := make([]model.Attachment, 0)
 	attachment = append(attachment, model.Attachment{
 		Filename: fileName,
-		Path:     filePath,
+		Data:     []byte{},
 	})
 	mailReq := model.RequestMail{
 		Mail: model.Mail{

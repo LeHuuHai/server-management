@@ -2,7 +2,7 @@ package model
 
 type Attachment struct {
 	Filename string
-	Path     string
+	Data     []byte
 }
 
 type Mail struct {

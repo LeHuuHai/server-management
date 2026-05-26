@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	smtp "github.com/LeHuuHai/server-management/internal/infra/mail"
 	workerruntime "github.com/LeHuuHai/server-management/internal/infra/runtime/worker"
 	"github.com/LeHuuHai/server-management/internal/model"
+	"github.com/LeHuuHai/server-management/internal/service"
 	"gopkg.in/gomail.v2"
 )
 
@@ -109,6 +111,7 @@ func SendMail(
 	rt *workerruntime.App,
 	consumer mq.Consumer,
 	sender mail.Sender,
+	downloadService *service.DownloadService,
 ) {
 	defer wg.Done()
 	for {
@@ -125,6 +128,29 @@ func SendMail(
 		err = json.Unmarshal(msg.Value, &mailReq)
 		if err != nil {
 			log.Println(err.Error())
+			continue
+		}
+		// hydrate attachments
+		valid := true
+		for i, attachment := range mailReq.Mail.Attachments {
+			data, err := downloadService.Download(
+				ctx,
+				attachment.Filename,
+			)
+			if err != nil {
+				log.Printf(
+					"download attachment %s failed: %v",
+					attachment.Filename,
+					err,
+				)
+				valid = false
+				break
+			}
+
+			mailReq.Mail.Attachments[i].Data = data
+		}
+		if !valid {
+			log.Println("cannot send mail because of miss attachment")
 			continue
 		}
 		err = sender.Send(ctx, mailReq.Mail)
@@ -164,9 +190,12 @@ func main() {
 		panic(err)
 	}
 
+	// service
+	downloadService := service.NewDownLoadService(rt.Config.AppConfig.ReportURL, http.DefaultClient)
+
 	var wg sync.WaitGroup
 	wg.Add(2)
 	go CheckServer(ctx, &wg, rt, kfkPingConsumer, kfkPublisher)
-	go SendMail(ctx, &wg, rt, kfkMaillConsumer, gomailSender)
+	go SendMail(ctx, &wg, rt, kfkMaillConsumer, gomailSender, downloadService)
 	wg.Wait()
 }
