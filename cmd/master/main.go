@@ -187,7 +187,7 @@ func main() {
 
 	// service
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
-	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["ping"])
+	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["mail"])
 
 	var wg sync.WaitGroup
 	wg.Add(3)

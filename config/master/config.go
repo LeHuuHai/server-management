@@ -82,6 +82,7 @@ func Load() (*Config, error) {
 			},
 			Topics: map[string]string{
 				"ping": os.Getenv("KAFKA_PING_TOPIC"),
+				"mail": os.Getenv("KAFKA_MAIL_TOPIC"),
 			},
 		},
 		ESConfig: &commonconfig.ElasticsearchConfig{
