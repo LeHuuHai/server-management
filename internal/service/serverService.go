@@ -58,15 +58,15 @@ func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerF
 }
 
 func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
-	ip := net.ParseIP(server.IPv4)
-	if ip == nil || ip.To4() == nil {
-		return nil, apperr.ErrInvalidIP
-	}
 	fields := map[string]any{}
 	if server.ServerName != "" {
 		fields["server_name"] = server.ServerName
 	}
 	if server.IPv4 != "" {
+		ip := net.ParseIP(server.IPv4)
+		if ip == nil || ip.To4() == nil {
+			return nil, apperr.ErrInvalidIP
+		}
 		fields["ipv4"] = server.IPv4
 	}
 	fields["metadata_updated_at"] = time.Now()
