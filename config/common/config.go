@@ -35,4 +35,5 @@ type ElasticsearchConfig struct {
 	URL      string
 	Username string
 	Password string
+	Index    string
 }

@@ -14,6 +14,7 @@ import (
 
 type Aggregator struct {
 	client *elasticsearch.Client
+	index  string
 }
 
 type aggregationResponse struct {
@@ -38,9 +39,10 @@ type aggregationResponse struct {
 	} `json:"aggregations"`
 }
 
-func NewESAggregator(c *elasticsearch.Client) *Aggregator {
+func NewESAggregator(c *elasticsearch.Client, i string) *Aggregator {
 	return &Aggregator{
 		client: c,
+		index:  i,
 	}
 }
 
@@ -105,7 +107,7 @@ func (aggregator *Aggregator) Aggregation(ctx context.Context, from time.Time, t
 	}
 
 	res, err := aggregator.client.Search(
-		aggregator.client.Search.WithIndex("pings"),
+		aggregator.client.Search.WithIndex(aggregator.index),
 		aggregator.client.Search.WithBody(bytes.NewReader(body)),
 	)
 	if err != nil {

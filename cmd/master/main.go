@@ -23,6 +23,7 @@ import (
 	masterruntime "github.com/LeHuuHai/server-management/internal/infra/runtime/master"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/LeHuuHai/server-management/internal/service"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
@@ -45,6 +46,35 @@ func Serve(
 
 	// router
 	r := gin.New()
+
+	// cors
+	r.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:8081",
+		},
+
+		AllowMethods: []string{
+			"GET",
+			"POST",
+			"PUT",
+			"PATCH",
+			"DELETE",
+			"OPTIONS",
+		},
+
+		AllowHeaders: []string{
+			"Origin",
+			"Content-Type",
+			"Authorization",
+		},
+
+		ExposeHeaders: []string{
+			"Content-Length",
+		},
+
+		AllowCredentials: true,
+	}))
+
 	api.RegisterHandlers(r, serverHandler)
 	addr := net.JoinHostPort(
 		rt.Config.AppConfig.Host,
@@ -152,7 +182,7 @@ func main() {
 	serverRepo := pg.NewServerRepository(rt.DB)
 	serverInmemCache := inmem.NewServerInmemCache()
 	kfkPublisher := kfk.NewPublisher(rt.SyncWriter)
-	esAggregator := es.NewESAggregator(rt.ESClient)
+	esAggregator := es.NewESAggregator(rt.ESClient, rt.Config.ESConfig.Index)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 
 	// service

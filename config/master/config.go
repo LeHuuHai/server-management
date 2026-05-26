@@ -88,6 +88,7 @@ func Load() (*Config, error) {
 			URL:      os.Getenv("ES_URL"),
 			Username: os.Getenv("ES_USER"),
 			Password: os.Getenv("ES_PASSWORD"),
+			Index:    os.Getenv("ES_INDEX"),
 		},
 	}, nil
 }
