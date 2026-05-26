@@ -70,9 +70,9 @@ func CheckServer(
 						return
 					}
 					res := model.ResponsePing{
-						IP:     req.IP,
-						Status: "on",
-						PingAt: time.Now(),
+						ServerID: req.ServerID,
+						Status:   "on",
+						PingAt:   time.Now(),
 					}
 					conn, err := net.DialTimeout(
 						"tcp",
