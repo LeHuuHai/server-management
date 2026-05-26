@@ -56,8 +56,9 @@ func Load() (*Config, error) {
 				ConsumerGroupId: os.Getenv("KAFKA_GROUP_ID"),
 			},
 			Topics: map[string]string{
-				"ping": os.Getenv("KAFKA_PING_TOPIC"),
-				"mail": os.Getenv("KAFKA_MAIL_TOPIC"),
+				"ping":     os.Getenv("KAFKA_PING_TOPIC"),
+				"mail":     os.Getenv("KAFKA_MAIL_TOPIC"),
+				"ping_res": os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
 			},
 		},
 		SenderConfig: &GomailConfig{
