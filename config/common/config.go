@@ -24,11 +24,9 @@ type KafkaReaderConfig struct {
 }
 
 type KafkaConfig struct {
-	Username string
-	Password string
-	Writer   *KafkaWriterConfig
-	Reader   *KafkaReaderConfig
-	Topics   map[string]string
+	Writer *KafkaWriterConfig
+	Reader *KafkaReaderConfig
+	Topics map[string]string
 }
 
 type ElasticsearchConfig struct {
