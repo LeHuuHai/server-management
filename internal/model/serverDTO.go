@@ -3,9 +3,9 @@ package model
 import "time"
 
 type ServerRequestDTO struct {
-	ServerID   string
-	ServerName string
-	IPv4       string
+	ServerID   string `json:"server_id"`
+	ServerName string `json:"server_name"`
+	IPv4       string `json:"ipv4"`
 }
 
 type ServerResponseDTO struct {
