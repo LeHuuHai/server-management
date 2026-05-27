@@ -143,6 +143,7 @@ func (aggregator *Aggregator) Aggregation(ctx context.Context, from time.Time, t
 			UptimeRatio: b.UptimeRatio.Value,
 			StartPingAt: s,
 			LastPingAt:  l,
+			DocCount:    b.DocCount,
 		})
 	}
 
