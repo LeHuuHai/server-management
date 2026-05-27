@@ -157,7 +157,13 @@ func (r *serverRepo) BulkUpdateServers(ctx context.Context, items []model.Server
 			b.WriteString(",")
 		}
 
-		b.WriteString(fmt.Sprintf("($%d,$%d,$%d)", i*3+1, i*3+2, i*3+3))
+		// QUAN TRỌNG: Ép kiểu ở dòng đầu tiên để Postgres nhận diện đúng kiểu dữ liệu
+		if i == 0 {
+			// Ép kiểu id thành varchar/text (hoặc int/uuid tùy DB của bạn), status thành varchar, và last_ping_at thành timestamp
+			b.WriteString(fmt.Sprintf("($%d::varchar, $%d::varchar, $%d::timestamp)", i*3+1, i*3+2, i*3+3))
+		} else {
+			b.WriteString(fmt.Sprintf("($%d,$%d,$%d)", i*3+1, i*3+2, i*3+3))
+		}
 
 		args = append(args,
 			it.ServerID,
