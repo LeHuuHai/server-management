@@ -123,6 +123,22 @@ func (r *serverRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 	return res, nil
 }
 
+func (r *serverRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, error) {
+	var result []model.ServerMetadata
+
+	err := r.db.WithContext(ctx).
+		Model(&model.Server{}).
+		Select("server_id", "server_name", "ipv4").
+		Find(&result).
+		Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
 func NewServerRepository(db *gorm.DB) *serverRepo {
 	return &serverRepo{db: db}
 }

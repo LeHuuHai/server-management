@@ -16,4 +16,6 @@ type ServerMetadataCacheInterface interface {
 	BatchCreate(ctx context.Context, s []model.ServerMetadata)
 
 	List(ctx context.Context) []model.ServerMetadata
+
+	Sync(ctx context.Context) error
 }

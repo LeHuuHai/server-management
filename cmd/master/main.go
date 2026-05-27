@@ -180,12 +180,15 @@ func main() {
 
 	// domain, infra
 	serverRepo := pg.NewServerRepository(rt.DB)
-	serverInmemCache := inmem.NewServerInmemCache()
 	kfkPublisher := kfk.NewPublisher(rt.SyncWriter)
 	esAggregator := es.NewESAggregator(rt.ESClient, rt.Config.ESConfig.Index)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 
 	// service
+	serverInmemCache, err := inmem.NewServerInmemCache(ctx, serverRepo)
+	if err != nil {
+		panic(err)
+	}
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
 	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["mail"])
 

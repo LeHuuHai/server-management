@@ -4,19 +4,27 @@ import (
 	"context"
 	"sync"
 
+	"github.com/LeHuuHai/server-management/internal/domain/repo"
 	"github.com/LeHuuHai/server-management/internal/model"
 )
 
 type serverInmemCache struct {
 	servers map[string]*model.ServerMetadata
+	repo    repo.ServerRepositoryInterface
 	mu      sync.Mutex
 }
 
-func NewServerInmemCache() *serverInmemCache {
-	return &serverInmemCache{
+func NewServerInmemCache(ctx context.Context, r repo.ServerRepositoryInterface) (*serverInmemCache, error) {
+	cache := serverInmemCache{
 		servers: make(map[string]*model.ServerMetadata),
 		mu:      sync.Mutex{},
+		repo:    r,
 	}
+	err := cache.Sync(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &cache, nil
 }
 
 func (c *serverInmemCache) Create(ctx context.Context, s model.ServerMetadata) {
@@ -66,4 +74,20 @@ func (c *serverInmemCache) List(ctx context.Context) []model.ServerMetadata {
 		servers = append(servers, *v)
 	}
 	return servers
+}
+
+func (c *serverInmemCache) Sync(ctx context.Context) error {
+	servers, err := c.repo.AllMetadata(ctx)
+	if err != nil {
+		return err
+	}
+	newServers := make(map[string]*model.ServerMetadata)
+	for idx := range servers {
+		s := &servers[idx]
+		newServers[s.ServerID] = s
+	}
+	c.mu.Lock()
+	c.servers = newServers
+	c.mu.Unlock()
+	return nil
 }
