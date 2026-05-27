@@ -2,6 +2,7 @@ package kfk
 
 import (
 	"strings"
+	"time"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
 	"github.com/segmentio/kafka-go"
@@ -25,6 +26,9 @@ func newSyncWriter(brokers []string) *kafka.Writer {
 func newAsyncWriter(brokers []string) *kafka.Writer {
 	return &kafka.Writer{
 		Addr:         kafka.TCP(brokers...),
+		Async:        true,
+		BatchSize:    1000,
+		BatchTimeout: 10 * time.Millisecond,
 		RequiredAcks: kafka.RequireOne,
 	}
 }

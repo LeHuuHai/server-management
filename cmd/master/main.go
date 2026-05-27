@@ -180,7 +180,7 @@ func main() {
 
 	// domain, infra
 	serverRepo := pg.NewServerRepository(rt.DB)
-	kfkPublisher := kfk.NewPublisher(rt.SyncWriter)
+	kfkPublisher := kfk.NewPublisher(rt.AsyncWriter)
 	esAggregator := es.NewESAggregator(rt.ESClient, rt.Config.ESConfig.Index)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 

@@ -180,7 +180,7 @@ func main() {
 	)
 
 	// infra
-	kfkPublisher := kfk.NewPublisher(rt.SyncWriter)
+	kfkPublisher := kfk.NewPublisher(rt.AsyncWriter)
 	kfkPingConsumer := kfk.NewConsumer(rt.PingReader)
 	kfkMaillConsumer := kfk.NewConsumer(rt.MailReader)
 	gomailSender, err := smtp.NewGomailSender(dialer, rt.Config.SenderConfig.From)
