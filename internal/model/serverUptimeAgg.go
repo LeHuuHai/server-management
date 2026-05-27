@@ -7,4 +7,5 @@ type ServerUptimeAgg struct {
 	StartPingAt time.Time
 	LastPingAt  time.Time
 	UptimeRatio float64
+	DocCount    int64
 }

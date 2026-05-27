@@ -23,6 +23,8 @@ type aggregationResponse struct {
 			Buckets []struct {
 				Key string `json:"key"`
 
+				DocCount int64 `json:"doc_count"`
+
 				UptimeRatio struct {
 					Value float64 `json:"value"`
 				} `json:"uptime_ratio"`

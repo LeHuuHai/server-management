@@ -28,6 +28,7 @@ func (e *reportServerXLSXExport) Export(ctx context.Context, writer io.Writer, d
 	f.SetCellValue(sheet, "C1", "Uptime Ratio")
 	f.SetCellValue(sheet, "D1", "Start Ping At")
 	f.SetCellValue(sheet, "E1", "Last Ping At")
+	f.SetCellValue(sheet, "F1", "Total Checks")
 
 	for idx, item := range data {
 		row := strconv.Itoa(idx + 2)
@@ -36,6 +37,7 @@ func (e *reportServerXLSXExport) Export(ctx context.Context, writer io.Writer, d
 		f.SetCellValue(sheet, "C"+row, item.UptimeRatio)
 		f.SetCellValue(sheet, "D"+row, item.StartPingAt.Format("2006-01-02 15:04:05"))
 		f.SetCellValue(sheet, "E"+row, item.LastPingAt.Format("2006-01-02 15:04:05"))
+		f.SetCellValue(sheet, "F"+row, item.DocCount)
 	}
 
 	return f.Write(writer)
