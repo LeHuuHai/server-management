@@ -65,7 +65,7 @@ func main() {
 
 	// service
 	ch := make(chan model.ResponsePing, 10000)
-	batchService := service.NewBatchService(
+	batchService := service.NewBatchESService(
 		ch,
 		2000,
 		time.Second,

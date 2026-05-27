@@ -3,17 +3,19 @@ package service
 import (
 	"context"
 	"time"
+
+	"github.com/LeHuuHai/server-management/internal/model"
 )
 
-type BatchService[T any] struct {
-	Input     chan T
+type BatchESService struct {
+	Input     chan model.ResponsePing
 	MaxSize   int
 	Timeout   time.Duration
-	FlushFunc func([]T) error
+	FlushFunc func([]model.ResponsePing) error
 }
 
-func NewBatchService[T any](input chan T, size int, timeout time.Duration, flushFunc func([]T) error) *BatchService[T] {
-	return &BatchService[T]{
+func NewBatchESService(input chan model.ResponsePing, size int, timeout time.Duration, flushFunc func([]model.ResponsePing) error) *BatchESService {
+	return &BatchESService{
 		Input:     input,
 		MaxSize:   size,
 		Timeout:   timeout,
@@ -21,16 +23,16 @@ func NewBatchService[T any](input chan T, size int, timeout time.Duration, flush
 	}
 }
 
-func (s *BatchService[T]) Run(ctx context.Context) {
+func (s *BatchESService) Run(ctx context.Context) {
 	timer := time.NewTicker(s.Timeout)
 	defer timer.Stop()
-	buffer := make([]T, 0, s.MaxSize)
+	buffer := make([]model.ResponsePing, 0, s.MaxSize)
 
 	f := func() {
 		if len(buffer) == 0 {
 			return
 		}
-		tmp := make([]T, len(buffer))
+		tmp := make([]model.ResponsePing, len(buffer))
 		copy(tmp, buffer)
 		buffer = buffer[:0]
 		if err := s.FlushFunc(tmp); err != nil {
