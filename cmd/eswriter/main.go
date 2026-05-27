@@ -64,7 +64,7 @@ func main() {
 	writer := es.NewWriter[model.ResponsePing](rt.ESClient, rt.Config.ESConfig.Index)
 
 	// service
-	ch := make(chan model.ResponsePing, 10000)
+	ch := make(chan model.ResponsePing, 4000)
 	batchService := service.NewBatchESService(
 		ch,
 		2000,
