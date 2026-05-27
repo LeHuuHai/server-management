@@ -3,7 +3,7 @@ package model
 import "time"
 
 type ResponsePing struct {
-	ServerID string
-	Status   string
-	PingAt   time.Time
+	ServerID string    `json:"server_id"`
+	Status   string    `json:"status"`
+	PingAt   time.Time `json:"timestamp"`
 }
