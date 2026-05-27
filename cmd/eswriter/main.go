@@ -31,6 +31,7 @@ func ReadTopic(
 				continue
 			}
 		}
+		consumer.Commit(ctx, msg)
 		var res model.ResponsePing
 		err = json.Unmarshal(msg.Value, &res)
 		if err != nil {

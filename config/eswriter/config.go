@@ -27,7 +27,7 @@ func Load() (*Config, error) {
 		KafkaConfig: &commonconfig.KafkaConfig{
 			Reader: &commonconfig.KafkaReaderConfig{
 				Broker:          os.Getenv("KAFKA_BROKER"),
-				ConsumerGroupId: os.Getenv("KAFKA_CONSUMER_GROUP_ID"),
+				ConsumerGroupId: os.Getenv("KAFKA_GROUP_ID"),
 			},
 			Topics: map[string]string{
 				"ping_res": os.Getenv("KAFKA_HEARTBEAT_TOPIC"),

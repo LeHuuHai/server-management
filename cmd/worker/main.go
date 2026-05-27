@@ -41,10 +41,7 @@ func CheckServer(
 				log.Println(err.Error())
 				continue
 			}
-			if msg.Topic != rt.Config.KafkaConfig.Topics["ping"] {
-				log.Printf("Received message with topic %s, expected %s", msg.Topic, rt.Config.KafkaConfig.Topics["ping"])
-				continue
-			}
+			consumer.Commit(ctx, msg)
 			var pingReq model.RequestPing
 			err = json.Unmarshal(msg.Value, &pingReq)
 			if err != nil {
@@ -120,17 +117,13 @@ func SendMail(
 			log.Println(err.Error())
 			continue
 		}
-		if msg.Topic != rt.Config.KafkaConfig.Topics["mail"] {
-			log.Printf("Received message with topic %s, expected %s", msg.Topic, rt.Config.KafkaConfig.Topics["mail"])
-			continue
-		}
 		var mailReq model.RequestMail
 		err = json.Unmarshal(msg.Value, &mailReq)
 		if err != nil {
 			log.Println(err.Error())
 			continue
 		}
-		// hydrate attachments
+		// attachments
 		valid := true
 		for i, attachment := range mailReq.Mail.Attachments {
 			data, err := downloadService.Download(
@@ -158,6 +151,7 @@ func SendMail(
 			log.Println(err.Error())
 			continue
 		}
+		consumer.Commit(ctx, msg)
 	}
 }
 
