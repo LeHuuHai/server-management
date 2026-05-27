@@ -35,9 +35,9 @@ func (s *BatchESService) Run(ctx context.Context) {
 		tmp := make([]model.ResponsePing, len(buffer))
 		copy(tmp, buffer)
 		buffer = buffer[:0]
-		if err := s.FlushFunc(tmp); err != nil {
-			// log error
-		}
+		go func(data []model.ResponsePing) {
+			_ = s.FlushFunc(data)
+		}(tmp)
 	}
 
 	for {
