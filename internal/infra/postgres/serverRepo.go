@@ -3,6 +3,8 @@ package pg
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/model"
@@ -137,6 +139,40 @@ func (r *serverRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, e
 	}
 
 	return result, nil
+}
+
+func (r *serverRepo) BulkUpdateServers(ctx context.Context, items []model.Server) error {
+	var b strings.Builder
+	b.WriteString(`
+		UPDATE servers AS s
+		SET
+			status = v.status,
+			last_ping_at = v.last_ping_at
+		FROM (VALUES `)
+
+	args := make([]any, 0, len(items)*3)
+
+	for i, it := range items {
+		if i > 0 {
+			b.WriteString(",")
+		}
+
+		b.WriteString(fmt.Sprintf("($%d,$%d,$%d)", i*3+1, i*3+2, i*3+3))
+
+		args = append(args,
+			it.ServerID,
+			it.Status,
+			it.LastPingAt,
+		)
+	}
+
+	b.WriteString(`
+		) AS v(id, status, last_ping_at)
+		WHERE s.server_id = v.id
+		`)
+
+	res := r.db.WithContext(ctx).Exec(b.String(), args...)
+	return res.Error
 }
 
 func NewServerRepository(db *gorm.DB) *serverRepo {

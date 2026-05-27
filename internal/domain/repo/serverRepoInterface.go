@@ -18,4 +18,6 @@ type ServerRepositoryInterface interface {
 	CreateBatch(ctx context.Context, servers []model.Server) (*model.CreateBatchServerResult, error)
 
 	AllMetadata(ctx context.Context) ([]model.ServerMetadata, error)
+
+	BulkUpdateServers(ctx context.Context, items []model.Server) error
 }
