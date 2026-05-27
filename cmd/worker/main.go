@@ -4,8 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"net"
 	"net/http"
+	"os/exec"
+	"runtime"
 	"sync"
 	"time"
 
@@ -68,16 +69,22 @@ func CheckServer(
 					}
 					res := model.ResponsePing{
 						ServerID: req.ServerID,
-						Status:   "on",
+						Status:   "off",
 						PingAt:   time.Now(),
 					}
-					conn, err := net.DialTimeout(
-						"tcp",
-						net.JoinHostPort(req.IP, "22"),
-						1*time.Second,
-					)
-					if err != nil {
-						res.Status = "off"
+					var cmd *exec.Cmd
+					if runtime.GOOS == "windows" {
+						// Windows: -n 1 (gửi 1 gói tin), -w 1000 (thời gian chờ 1000ms)
+						cmd = exec.Command("ping", "-n", "1", "-w", "1000", req.IP)
+					} else {
+						// Linux/macOS: -c 1 (gửi 1 gói tin), -W 1 (thời gian chờ 1 giây)
+						cmd = exec.Command("ping", "-c", "1", "-W", "1", req.IP)
+					}
+					// Chạy lệnh và kiểm tra kết quả trả về
+					err := cmd.Run()
+					// Nếu lệnh ping chạy thành công (trả về exit code 0) tức là server có phản hồi -> ON
+					if err == nil {
+						res.Status = "on"
 					}
 					resBytes, err := json.Marshal(res)
 					if err != nil {
@@ -91,9 +98,6 @@ func CheckServer(
 					err = publisher.Publish(ctx, msg)
 					if err != nil {
 						log.Println(err.Error())
-					}
-					if conn != nil {
-						_ = conn.Close()
 					}
 				}
 			}
