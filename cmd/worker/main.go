@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -17,6 +16,7 @@ import (
 	workerruntime "github.com/LeHuuHai/server-management/internal/infra/runtime/worker"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/LeHuuHai/server-management/internal/service"
+	probing "github.com/prometheus-community/pro-bing"
 	"gopkg.in/gomail.v2"
 )
 
@@ -68,20 +68,29 @@ func CheckServer(
 					}
 					res := model.ResponsePing{
 						ServerID: req.ServerID,
-						Status:   "on",
+						Status:   "off",
 						PingAt:   time.Now(),
 					}
-					conn, err := net.DialTimeout(
-						"tcp",
-						net.JoinHostPort(req.IP, "22"),
-						1*time.Second,
-					)
-					if err != nil {
-						res.Status = "off"
+					pinger, err := probing.NewPinger(req.IP)
+					if err == nil {
+						pinger.Count = 1                 // Chỉ gửi đúng 1 gói ICMP duy nhất
+						pinger.Timeout = 1 * time.Second // Timeout đúng 1 giây theo thiết kế của bạn
+
+						// QUAN TRỌNG: Chế độ Privileged (Raw Socket) bắt buộc phải bật
+						// để Linux không bắt ép dùng cổng Unprivileged UDP lằng nhằng.
+						pinger.SetPrivileged(true)
+
+						err = pinger.Run()
+						if err == nil {
+							// Kiểm tra kết quả thống kê gói tin
+							stats := pinger.Statistics()
+							if stats.PacketsRecv > 0 {
+								res.Status = "on"
+							}
+						}
+
 					}
-					if conn != nil {
-						_ = conn.Close()
-					}
+
 					resBytes, err := json.Marshal(res)
 					if err != nil {
 						log.Println(err.Error())
