@@ -32,7 +32,7 @@ type LoginResult struct {
 func (s *AuthService) Login(userName string, password string) (*LoginResult, error) {
 	account, err := s.accountRepo.FindByUserName(userName)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %v", apperr.ErrRecordNotFound, err)
+		return nil, err
 	}
 
 	err = bcrypt.CompareHashAndPassword(
@@ -80,7 +80,7 @@ func (s *AuthService) RefreshAccessToken(refreshToken string) (string, error) {
 
 	account, err := s.accountRepo.FindByUserID(claims.UserID)
 	if err != nil {
-		return "", fmt.Errorf("%w: %v", apperr.ErrRecordNotFound, err)
+		return "", err
 	}
 
 	token, err := s.jwtProvider.GenerateAccessToken(*account)
