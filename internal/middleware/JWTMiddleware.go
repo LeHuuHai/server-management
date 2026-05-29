@@ -12,7 +12,7 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-func ValidTokenFactory(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
+func NewValidToken(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -35,34 +35,32 @@ func ValidTokenFactory(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
 	}
 }
 
-func ValidScope() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		requiredVal, exists := c.Get(BearerAuthScopes)
-		if !exists {
+func ValidScope(c *gin.Context) {
+	requiredVal, exists := c.Get(BearerAuthScopes)
+	if !exists {
+		c.Next()
+		return
+	}
+	required := requiredVal.(authdomain.Scope)
+
+	roleVal, ok := c.Get("role")
+	if !ok {
+		c.AbortWithStatusJSON(401, gin.H{"error": "missing role"})
+		return
+	}
+
+	role, ok := roleVal.(authdomain.Role)
+	if !ok {
+		c.AbortWithStatusJSON(500, gin.H{"error": "invalid role"})
+		return
+	}
+
+	for _, scope := range role.Scopes() {
+		if scope == required {
 			c.Next()
 			return
 		}
-		required := requiredVal.(authdomain.Scope)
-
-		roleVal, ok := c.Get("role")
-		if !ok {
-			c.AbortWithStatusJSON(401, gin.H{"error": "missing role"})
-			return
-		}
-
-		role, ok := roleVal.(authdomain.Role)
-		if !ok {
-			c.AbortWithStatusJSON(500, gin.H{"error": "invalid role"})
-			return
-		}
-
-		for _, scope := range role.Scopes() {
-			if scope == required {
-				c.Next()
-				return
-			}
-		}
-
-		c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
 	}
+
+	c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
 }
