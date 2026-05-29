@@ -398,11 +398,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
-          description: Invalid credentials
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
+
+        '500':
+          $ref: '#/components/responses/InternalError'
 
   /auth/refresh:
     post:
@@ -424,11 +423,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginResponse'
         '401':
-          description: Invalid or expired refresh token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
+          $ref: '#/components/responses/Unauthorized'
+
+        '500':
+          $ref: '#/components/responses/InternalError'
 
 components:
   schemas:
@@ -581,9 +579,6 @@ components:
           type: string
         refresh_token:
           type: string
-        expires_in:
-          type: integer
-          description: Access token expiry in seconds
 
     ErrorResponse:
       type: object
