@@ -19,7 +19,7 @@ func NewAccountRepository(db *gorm.DB) *AccountRepo {
 
 func (r *AccountRepo) FindByUserName(userName string) (*model.Account, error) {
 	var account model.Account
-	err := r.db.Where("user_name = ?", userName).First(&account).Error
+	err := r.db.Where("username = ?", userName).First(&account).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("%w", apperr.ErrRecordNotFound)
