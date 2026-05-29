@@ -15,13 +15,34 @@ func (r Role) String() string {
 func (r Role) Scopes() []Scope {
 	switch r {
 	case RoleAdmin:
-		return []Scope{}
+		return []Scope{
+			ScopeServerRead,
+			ScopeServerCreate,
+			ScopeServerUpdate,
+			ScopeServerDelete,
+			ScopeServerImport,
+			ScopeServerExport,
+			ScopeServerReport,
+			ScopreReportDownload,
+			ScopeUserRead,
+		}
 
 	case RoleUser:
-		return []Scope{}
+		return []Scope{
+			ScopeServerRead,
+			ScopeServerCreate,
+			ScopeServerUpdate,
+			ScopeServerDelete,
+			ScopeServerImport,
+			ScopeServerExport,
+			ScopeServerReport,
+			ScopreReportDownload,
+		}
 
 	case RoleGuest:
-		return []Scope{}
+		return []Scope{
+			ScopeServerRead,
+		}
 
 	default:
 		return []Scope{}
