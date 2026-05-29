@@ -11,7 +11,7 @@ var publicOps = map[string]bool{
 	"RefreshToken": true,
 }
 
-func AuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider) api.StrictMiddlewareFunc {
+func NewAuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider) api.StrictMiddlewareFunc {
 	validToken := NewValidToken(jwtProvider)
 
 	return func(f api.StrictHandlerFunc, operationID string) api.StrictHandlerFunc {
