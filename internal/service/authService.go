@@ -9,12 +9,12 @@ import (
 )
 
 type AuthService struct {
-	jwtProvider jwtprovider.JWTProvider
+	jwtProvider *jwtprovider.JWTProvider
 	accountRepo repo.AccountRepoInterface
 }
 
 func NewAuthService(
-	jwtProvider jwtprovider.JWTProvider,
+	jwtProvider *jwtprovider.JWTProvider,
 	accountRepo repo.AccountRepoInterface,
 ) *AuthService {
 	return &AuthService{

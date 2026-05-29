@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	masterconfig "github.com/LeHuuHai/server-management/config/master"
 	authdomain "github.com/LeHuuHai/server-management/internal/domain/auth"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/golang-jwt/jwt/v5"
@@ -12,16 +13,16 @@ import (
 type JWTProvider struct {
 	accessSecret  []byte
 	refreshSecret []byte
-	accesExpire   int64
+	accessExpire  int64
 	refreshExpire int64
 }
 
-func NewJWTProvider(accessToken string, refreshToken string, accessExpire int64, refreshExpire int64) *JWTProvider {
+func NewJWTProvider(cfg *masterconfig.JWTConfig) *JWTProvider {
 	return &JWTProvider{
-		accessSecret:  []byte(accessToken),
-		refreshSecret: []byte(refreshToken),
-		accesExpire:   accessExpire,
-		refreshExpire: refreshExpire,
+		accessSecret:  []byte(cfg.AccessSecret),
+		refreshSecret: []byte(cfg.RefreshSecret),
+		accessExpire:  int64(cfg.AccessExpired),
+		refreshExpire: int64(cfg.RefreshExpired),
 	}
 }
 
@@ -46,7 +47,7 @@ func (s *JWTProvider) GenerateAccessToken(
 
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(
-				time.Now().Add(time.Duration(s.accesExpire) * time.Second),
+				time.Now().Add(time.Duration(s.accessExpire) * time.Second),
 			),
 			IssuedAt: jwt.NewNumericDate(time.Now()),
 		},

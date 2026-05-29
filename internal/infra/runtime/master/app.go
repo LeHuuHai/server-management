@@ -6,6 +6,7 @@ import (
 	masterconfig "github.com/LeHuuHai/server-management/config/master"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
+	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
 	rdb "github.com/LeHuuHai/server-management/internal/infra/redis"
@@ -17,6 +18,7 @@ import (
 
 type App struct {
 	Config      *masterconfig.Config
+	JWTProvider *jwtprovider.JWTProvider
 	DB          *gorm.DB
 	ESClient    *elasticsearch.Client
 	SyncWriter  *kafka.Writer
@@ -32,6 +34,8 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 	}
 
 	// infra
+	jwtProvider := jwtprovider.NewJWTProvider(cfg.JWTConfig)
+
 	db, err := pg.Connect(cfg.DBConfig)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
@@ -51,6 +55,7 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 
 	return &App{
 		Config:      cfg,
+		JWTProvider: jwtProvider,
 		DB:          db,
 		ESClient:    esclient,
 		SyncWriter:  syncWriter,

@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	AppConfig   *AppConfig
+	JWTConfig   *JWTConfig
 	DBConfig    *commonconfig.PostgresConfig
 	RedisConfig *commonconfig.RedisConfig
 	KafkaConfig *commonconfig.KafkaConfig
@@ -24,10 +25,27 @@ type AppConfig struct {
 	AdMail    string
 }
 
+type JWTConfig struct {
+	AccessSecret   string
+	RefreshSecret  string
+	AccessExpired  int
+	RefreshExpired int
+}
+
 func Load() (*Config, error) {
 	err := godotenv.Load("./config/master/.env.master")
 	if err != nil {
 		panic("Error loading .env file")
+	}
+
+	accessExpired, err := strconv.Atoi(os.Getenv("JWT_ACCESS_EXPIRED"))
+	if err != nil {
+		return nil, err
+	}
+
+	refreshExpired, err := strconv.Atoi(os.Getenv("JWT_REFRESH_EXPIRED"))
+	if err != nil {
+		return nil, err
 	}
 
 	pgport, err := strconv.Atoi(os.Getenv("DB_PORT"))
@@ -61,6 +79,12 @@ func Load() (*Config, error) {
 			Host:      os.Getenv("APP_HOST"),
 			CyclePing: appCyclePing,
 			AdMail:    os.Getenv("APP_ADMAIL"),
+		},
+		JWTConfig: &JWTConfig{
+			AccessSecret:   os.Getenv("JWT_ACCESS_SECRET"),
+			RefreshSecret:  os.Getenv("JWT_REFRESH_SECRET"),
+			AccessExpired:  accessExpired,
+			RefreshExpired: refreshExpired,
 		},
 		DBConfig: &commonconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),
