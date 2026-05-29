@@ -18,9 +18,11 @@ import (
 	xlsximport "github.com/LeHuuHai/server-management/internal/infra/file/deserialize"
 	xlsxexport "github.com/LeHuuHai/server-management/internal/infra/file/export"
 	"github.com/LeHuuHai/server-management/internal/infra/inmem"
+	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
 	masterruntime "github.com/LeHuuHai/server-management/internal/infra/runtime/master"
+	"github.com/LeHuuHai/server-management/internal/middleware"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/LeHuuHai/server-management/internal/service"
 	"github.com/gin-contrib/cors"
@@ -31,18 +33,12 @@ func Serve(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	rt *masterruntime.App,
-	serverService *service.ServerService,
-	reportServerService *service.ReportServerService,
+	h *handler.Handler,
+	mw api.StrictMiddlewareFunc,
 ) {
 	defer wg.Done()
 
-	//handler
-	serverHandler := handler.NewServerHandler(
-		serverService,
-		reportServerService,
-		xlsxexport.NewServerXLSXExporter(),
-		xlsximport.NewServerXLSXImporter(),
-	)
+	strictHandler := api.NewStrictHandler(h, []api.StrictMiddlewareFunc{mw})
 
 	// router
 	r := gin.New()
@@ -75,7 +71,8 @@ func Serve(
 		AllowCredentials: true,
 	}))
 
-	api.RegisterHandlers(r, serverHandler)
+	api.RegisterHandlers(r, strictHandler)
+
 	addr := net.JoinHostPort(
 		rt.Config.AppConfig.Host,
 		strconv.Itoa(rt.Config.AppConfig.Port),
@@ -101,6 +98,7 @@ func CheckServer(
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
+			start := time.Now()
 			servers := serverMetadataCache.List(ctx)
 			for _, items := range servers {
 				req := model.RequestPing{
@@ -123,6 +121,8 @@ func CheckServer(
 					continue
 				}
 			}
+			elapse := time.Since(start)
+			log.Printf("publish %d servers in %v", len(servers), elapse)
 		}
 	}
 }
@@ -183,6 +183,8 @@ func main() {
 	kfkPublisher := kfk.NewPublisher(rt.AsyncWriter)
 	esAggregator := es.NewESAggregator(rt.ESClient, rt.Config.ESConfig.Index)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
+	jwtProvider := jwtprovider.NewJWTProvider(rt.Config.JWTConfig)
+	accountRepo := pg.NewAccountRepository(rt.DB)
 
 	// service
 	serverInmemCache, err := inmem.NewServerInmemCache(ctx, serverRepo)
@@ -191,10 +193,24 @@ func main() {
 	}
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
 	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["mail"])
+	authService := service.NewAuthService(jwtProvider, accountRepo)
+
+	// middleware
+	mw := middleware.NewAuthStrictMiddleware(jwtProvider)
+
+	// handler
+	serverHandler := handler.NewServerHandler(
+		serverService,
+		reportServerService,
+		xlsxexport.NewServerXLSXExporter(),
+		xlsximport.NewServerXLSXImporter(),
+	)
+	authHandler := handler.NewAuthHandler(authService)
+	h := handler.NewHandler(serverHandler, authHandler)
 
 	var wg sync.WaitGroup
 	wg.Add(3)
-	go Serve(ctx, &wg, rt, serverService, reportServerService)
+	go Serve(ctx, &wg, rt, h, mw)
 	go CheckServer(ctx, &wg, rt, kfkPublisher, serverInmemCache)
 	go Report(ctx, &wg, rt, reportServerService)
 	wg.Wait()
