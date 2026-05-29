@@ -12,7 +12,7 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-func ValidToken(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
+func ValidTokenFactory(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
