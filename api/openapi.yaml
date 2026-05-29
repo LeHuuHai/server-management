@@ -281,6 +281,11 @@ paths:
       responses:
         "200":
           description: Export servers successfully
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="servers.xlsx"
           content:
             application/octet-stream:
               schema:

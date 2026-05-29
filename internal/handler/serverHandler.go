@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -14,10 +15,9 @@ import (
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/LeHuuHai/server-management/internal/service"
-	"github.com/gin-gonic/gin"
 )
 
-// impl ServerInterface
+// impl StrictServerInterface
 type ServerHandler struct {
 	service       *service.ServerService
 	reportService *service.ReportServerService
@@ -36,266 +36,244 @@ func NewServerHandler(s *service.ServerService, r *service.ReportServerService, 
 
 // Get list servers
 // (GET /servers)
-func (handler *ServerHandler) GetListServers(c *gin.Context, params api.GetListServersParams) {
+func (handler *ServerHandler) GetListServers(ctx context.Context, request api.GetListServersRequestObject) (api.GetListServersResponseObject, error) {
+	params := request.Params
 	filter := model.ListServerFilter{
 		From:      params.From,
 		To:        params.To,
 		SortField: model.ServerSortField(params.SortField),
 		Desc:      params.Desc,
 	}
-	res, err := handler.service.ListServer(c.Request.Context(), filter)
+	res, err := handler.service.ListServer(ctx, filter)
 	if err != nil {
 		if errors.Is(err, apperr.ErrInvalidSort) || errors.Is(err, apperr.ErrInvalidPagination) {
-			c.JSON(400, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.GetListServers400JSONResponse{
+				BadRequestJSONResponse: BadRequest(err),
+			}, nil
 		}
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.GetListServers500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
 	items := make([]api.Server, len(res.Servers))
-	for idx, it := range res.Servers {
-		items[idx] = ServerModelToServerAPI(it)
+	for idx, s := range res.Servers {
+		items[idx] = api.Server{
+			ServerId:          s.ServerID,
+			ServerName:        s.ServerName,
+			Status:            api.ServerStatus(s.Status),
+			Ipv4:              s.IPv4,
+			CreatedAt:         &s.CreatedAt,
+			MetadataUpdatedAt: &s.MetadataUpdatedAt,
+			LastPingAt:        &s.LastPingAt,
+		}
 	}
-	c.JSON(
-		200,
-		api.GetListServersResponse{
-			Items: &items,
-			Total: &res.Total,
-		},
-	)
+	return api.GetListServers200JSONResponse{
+		Items: &items,
+		Total: &res.Total,
+	}, nil
 }
 
 // Create server
 // (POST /servers)
-func (handler *ServerHandler) CreateServer(c *gin.Context) {
-	var dto model.ServerRequestDTO
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(400, gin.H{
-			"message": err.Error(),
-		})
-		return
+func (handler *ServerHandler) CreateServer(ctx context.Context, request api.CreateServerRequestObject) (api.CreateServerResponseObject, error) {
+	server := model.Server{
+		ServerID:   request.Body.ServerId,
+		ServerName: request.Body.ServerName,
+		IPv4:       request.Body.Ipv4,
 	}
-	newServer := ServerDTOToServerModel(dto)
-	if err := handler.service.CreateServer(c.Request.Context(), &newServer); err != nil {
+	if err := handler.service.CreateServer(ctx, &server); err != nil {
 		if errors.Is(err, apperr.ErrDuplicateServer) {
-			c.JSON(409, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.CreateServer409JSONResponse{
+				ConflictJSONResponse: Conflict(err),
+			}, nil
 		}
 		if errors.Is(err, apperr.ErrInvalidIP) {
-			c.JSON(400, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.CreateServer400JSONResponse{
+				BadRequestJSONResponse: BadRequest(err),
+			}, nil
 		}
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.CreateServer500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
-	c.JSON(201, gin.H{
-		"message": "success",
-	})
+	return api.CreateServer201JSONResponse{}, nil
 }
 
 // Export servers
 // (GET /servers/export)
-func (handler *ServerHandler) ExportServers(c *gin.Context, params api.ExportServersParams) {
+func (handler *ServerHandler) ExportServers(ctx context.Context, request api.ExportServersRequestObject) (api.ExportServersResponseObject, error) {
+	params := request.Params
 	filter := model.ListServerFilter{
 		From:      params.From,
 		To:        params.To,
 		SortField: model.ServerSortField(params.SortField),
 		Desc:      params.Desc,
 	}
-	res, err := handler.service.ListServer(c.Request.Context(), filter)
+	res, err := handler.service.ListServer(ctx, filter)
 	if err != nil {
 		if errors.Is(err, apperr.ErrInvalidSort) || errors.Is(err, apperr.ErrInvalidPagination) {
-			c.JSON(400, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.ExportServers400JSONResponse{
+				BadRequestJSONResponse: BadRequest(err),
+			}, nil
 		}
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.ExportServers500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
 	buf := bytes.NewBuffer(nil)
-	err = handler.exporter.Export(c.Request.Context(), buf, res.Servers)
+	err = handler.exporter.Export(ctx, buf, res.Servers)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.ExportServers500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
-	c.Header(
-		"Content-Disposition",
-		fmt.Sprintf(
-			`attachment; filename="servers.%s"`,
-			handler.exporter.FileType(),
-		),
-	)
-
-	c.Data(
-		200,
-		handler.exporter.ContentType(),
-		buf.Bytes(),
-	)
+	return api.ExportServers200ApplicationoctetStreamResponse{
+		Body: buf,
+		Headers: api.ExportServers200ResponseHeaders{
+			ContentDisposition: fmt.Sprintf(`attachment; filename="servers.%s"`, handler.exporter.FileType()),
+		},
+	}, nil
 }
 
 // Import server
 // (POST /servers/import)
-func (handler *ServerHandler) ImportServer(c *gin.Context) {
-	fileHeader, err := c.FormFile("file")
+func (handler *ServerHandler) ImportServer(ctx context.Context, request api.ImportServerRequestObject) (api.ImportServerResponseObject, error) {
+	file, err := request.Body.NextPart()
 	if err != nil {
-		c.JSON(400, gin.H{
-			"message": "file is required",
-		})
-		return
-	}
-
-	file, err := fileHeader.Open()
-	if err != nil {
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.ImportServer400JSONResponse{
+			BadRequestJSONResponse: BadRequest(err),
+		}, nil
 	}
 	defer file.Close()
 
-	servers, err := handler.deserialize.Deserialize(c.Request.Context(), file)
+	servers, err := handler.deserialize.Deserialize(ctx, file)
 	if err != nil {
 		switch {
 		case errors.Is(err, apperr.ErrInvalidImportData):
-			c.JSON(400, gin.H{
-				"message": err.Error(),
-			})
-
+			return api.ImportServer400JSONResponse{
+				BadRequestJSONResponse: BadRequest(err),
+			}, nil
 		default:
-			c.JSON(500, gin.H{
-				"message": err.Error(),
-			})
+			return api.ImportServer500JSONResponse{
+				InternalErrorJSONResponse: InternalError(err),
+			}, nil
 		}
-		return
 	}
 
-	res, err := handler.service.ImportServer(c.Request.Context(), servers)
+	res, err := handler.service.ImportServer(ctx, servers)
 	if err != nil {
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.ImportServer500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
-
-	c.JSON(200,
-		api.ImportServerResponse{
-			IdFailed:     res.Failed,
-			IdSuccess:    res.Success,
-			TotalFailed:  res.FailedCnt,
-			TotalSuccess: res.SuccessCnt,
-		},
-	)
+	return api.ImportServer200JSONResponse{
+		IdFailed:     res.Failed,
+		IdSuccess:    res.Success,
+		TotalFailed:  res.FailedCnt,
+		TotalSuccess: res.SuccessCnt,
+	}, nil
 }
 
 // Delete server
 // (DELETE /servers/{server_id})
-func (handler *ServerHandler) DeleteServer(c *gin.Context, serverId string) {
-	if err := handler.service.DeleteServer(c.Request.Context(), serverId); err != nil {
+func (handler *ServerHandler) DeleteServer(ctx context.Context, request api.DeleteServerRequestObject) (api.DeleteServerResponseObject, error) {
+	if err := handler.service.DeleteServer(ctx, request.ServerId); err != nil {
 		if errors.Is(err, apperr.ErrRecordNotFound) {
-			c.JSON(404, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.DeleteServer404JSONResponse{
+				NotFoundJSONResponse: NotFound(err),
+			}, nil
 		}
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.DeleteServer500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
-	c.Status(204)
+	return api.DeleteServer204Response{}, nil
 }
 
 // Update server
 // (PATCH /servers/{server_id})
-func (handler *ServerHandler) UpdateServer(c *gin.Context, serverId string) {
-	var dto model.ServerRequestDTO
-	if err := c.ShouldBindJSON(&dto); err != nil {
-		c.JSON(400, gin.H{
-			"message": err.Error(),
-		})
-		return
+func (handler *ServerHandler) UpdateServer(ctx context.Context, request api.UpdateServerRequestObject) (api.UpdateServerResponseObject, error) {
+	server := model.Server{
+		ServerID:   request.ServerId,
+		ServerName: *request.Body.ServerName,
+		IPv4:       *request.Body.Ipv4,
 	}
-	server := ServerDTOToServerModel(dto)
-	server.ServerID = serverId
-	s, err := handler.service.UpdateServer(c.Request.Context(), &server)
+	s, err := handler.service.UpdateServer(ctx, &server)
 	if err != nil {
 		if errors.Is(err, apperr.ErrRecordNotFound) {
-			c.JSON(404, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.UpdateServer404JSONResponse{
+				NotFoundJSONResponse: NotFound(err),
+			}, nil
 		}
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.UpdateServer500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
-	c.JSON(200, gin.H{
-		"Server": ServerModelToServerAPI(*s),
-	})
+	return api.UpdateServer200JSONResponse{
+		ServerId:          s.ServerID,
+		ServerName:        s.ServerName,
+		Status:            api.ServerStatus(s.Status),
+		Ipv4:              s.IPv4,
+		CreatedAt:         &s.CreatedAt,
+		MetadataUpdatedAt: &s.MetadataUpdatedAt,
+		LastPingAt:        &s.LastPingAt,
+	}, nil
 }
 
 // Generate server report
 // (POST /servers/report)
-func (handler *ServerHandler) GenerateServerReport(c *gin.Context) {
-	var request model.GenServerReportRequest
-	err := c.ShouldBindJSON(&request)
-	if err != nil {
-		c.JSON(400, gin.H{
-			"message": err.Error(),
-		})
-		return
+func (handler *ServerHandler) GenerateServerReport(ctx context.Context, request api.GenerateServerReportRequestObject) (api.GenerateServerReportResponseObject, error) {
+	receivers := make([]string, len(request.Body.Receivers))
+	for i, r := range request.Body.Receivers {
+		receivers[i] = string(r)
 	}
-	err = handler.reportService.ReportServer(c.Request.Context(), request)
+	req := model.GenServerReportRequest{
+		From:      request.Body.From,
+		To:        request.Body.To,
+		Receivers: receivers,
+	}
+	err := handler.reportService.ReportServer(ctx, req)
 	if err != nil {
 		if errors.Is(err, apperr.ErrInvalidTimeRange) || errors.Is(err, apperr.ErrInvalidEmail) {
-			c.JSON(400, gin.H{
-				"message": err.Error(),
-			})
-			return
+			return api.GenerateServerReport400JSONResponse{
+				BadRequestJSONResponse: BadRequest(err),
+			}, nil
 		}
-		c.JSON(500, gin.H{
-			"message": err.Error(),
-		})
-		return
+		return api.GenerateServerReport500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
-	c.Status(202)
+	return api.GenerateServerReport202Response{}, nil
 }
 
 // Download report file
 // (GET /report/{filename})
-func (handler *ServerHandler) GetReportFile(c *gin.Context, filename string) {
-	filename = filepath.Base(filename)
+func (handler *ServerHandler) GetReportFile(ctx context.Context, request api.GetReportFileRequestObject) (api.GetReportFileResponseObject, error) {
+	filename := filepath.Base(request.Filename)
 	path := filepath.Join("tmp", filename)
 
-	if _, err := os.Stat(path); err != nil {
+	info, err := os.Stat(path)
+	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			c.JSON(404, gin.H{
-				"error": "file not found",
-			})
-			return
+			return api.GetReportFile404JSONResponse{
+				NotFoundJSONResponse: NotFound(err),
+			}, nil
 		}
 
-		c.JSON(500, gin.H{
-			"error": "internal error",
-		})
-		return
+		return api.GetReportFile500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
 	}
 
-	c.FileAttachment(path, filename)
+	file, err := os.Open(path)
+	if err != nil {
+		return api.GetReportFile500JSONResponse{
+			InternalErrorJSONResponse: InternalError(err),
+		}, nil
+	}
+
+	return api.GetReportFile200ApplicationoctetStreamResponse{
+		Body:          file,
+		ContentLength: info.Size(),
+	}, nil
 }
