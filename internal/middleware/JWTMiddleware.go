@@ -41,7 +41,7 @@ func ValidScope(c *gin.Context) {
 		c.Next()
 		return
 	}
-	required := requiredVal.(authdomain.Scope)
+	requiredScopes := requiredVal.([]string)
 
 	roleVal, ok := c.Get("role")
 	if !ok {
@@ -55,10 +55,12 @@ func ValidScope(c *gin.Context) {
 		return
 	}
 
-	for _, scope := range role.Scopes() {
-		if scope == required {
-			c.Next()
-			return
+	for _, required := range requiredScopes {
+		for _, scope := range role.Scopes() {
+			if string(scope) == required {
+				c.Next()
+				return
+			}
 		}
 	}
 
