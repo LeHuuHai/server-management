@@ -1,9 +1,10 @@
 package service
 
 import (
-	"errors"
+	"fmt"
 
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
+	apperr "github.com/LeHuuHai/server-management/internal/error"
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -28,14 +29,10 @@ type LoginResult struct {
 	RefreshToken string `json:"refresh_token"`
 }
 
-func (s *AuthService) Login(
-	userName string,
-	password string,
-) (*LoginResult, error) {
-
+func (s *AuthService) Login(userName string, password string) (*LoginResult, error) {
 	account, err := s.accountRepo.FindByUserName(userName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrRecordNotFound, err)
 	}
 
 	err = bcrypt.CompareHashAndPassword(
@@ -44,17 +41,17 @@ func (s *AuthService) Login(
 	)
 
 	if err != nil {
-		return nil, errors.New("invalid credentials")
+		return nil, fmt.Errorf("%w: %v", apperr.ErrInvalidCredentials, err)
 	}
 
 	accessToken, err := s.jwtProvider.GenerateAccessToken(*account)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrSignToken, err)
 	}
 
 	refreshToken, err := s.jwtProvider.GenerateRefreshToken(*account)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("%w: %v", apperr.ErrSignToken, err)
 	}
 
 	return &LoginResult{
@@ -63,15 +60,11 @@ func (s *AuthService) Login(
 	}, nil
 }
 
-func (s *AuthService) HashPassword(
-	password string,
-) (string, error) {
-
+func (s *AuthService) HashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword(
 		[]byte(password),
 		bcrypt.DefaultCost,
 	)
-
 	if err != nil {
 		return "", err
 	}
@@ -79,27 +72,20 @@ func (s *AuthService) HashPassword(
 	return string(hash), nil
 }
 
-func (s *AuthService) RefreshAccessToken(
-	refreshToken string,
-) (string, error) {
-
-	claims, err := s.jwtProvider.ParseRefreshToken(
-		refreshToken,
-	)
-
+func (s *AuthService) RefreshAccessToken(refreshToken string) (string, error) {
+	claims, err := s.jwtProvider.ParseRefreshToken(refreshToken)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w: %v", apperr.ErrInvalidToken, err)
 	}
 
-	account, err := s.accountRepo.FindByUserID(
-		claims.UserID,
-	)
-
+	account, err := s.accountRepo.FindByUserID(claims.UserID)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("%w: %v", apperr.ErrRecordNotFound, err)
 	}
 
-	return s.jwtProvider.GenerateAccessToken(
-		*account,
-	)
+	token, err := s.jwtProvider.GenerateAccessToken(*account)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", apperr.ErrSignToken, err)
+	}
+	return token, nil
 }

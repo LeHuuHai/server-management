@@ -16,4 +16,10 @@ var (
 	ErrConnectKafka         = errors.New("connect kafka failed")
 	ErrConnectRedis         = errors.New("connect redis failed")
 	ErrAppBuild             = errors.New("build app failed")
+
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrDeniedAccess       = errors.New("access denied")
+	ErrSignToken          = errors.New("sign token failed")
+	ErrExpiredToken       = errors.New("token expired")
+	ErrInvalidToken       = errors.New("invalid token")
 )
