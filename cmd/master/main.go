@@ -21,6 +21,7 @@ import (
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/internal/infra/postgres"
+	rdb "github.com/LeHuuHai/server-management/internal/infra/redis"
 	masterruntime "github.com/LeHuuHai/server-management/internal/infra/runtime/master"
 	"github.com/LeHuuHai/server-management/internal/middleware"
 	"github.com/LeHuuHai/server-management/internal/model"
@@ -181,7 +182,9 @@ func main() {
 	// domain, infra
 	serverRepo := pg.NewServerRepository(rt.DB)
 	kfkPublisher := kfk.NewPublisher(rt.AsyncWriter)
+	dailyReportRedisCache := rdb.NewDailyReportRedisCache(rt.RdbClient)
 	esAggregator := es.NewESAggregator(rt.ESClient, rt.Config.ESConfig.Index)
+	esCachedAggregator := es.NewCachedAggregator(esAggregator, dailyReportRedisCache)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 	jwtProvider := jwtprovider.NewJWTProvider(rt.Config.JWTConfig)
 	accountRepo := pg.NewAccountRepository(rt.DB)
@@ -192,7 +195,7 @@ func main() {
 		panic(err)
 	}
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
-	reportServerService := service.NewReportServerService(esAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["mail"])
+	reportServerService := service.NewReportServerService(esCachedAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["mail"])
 	authService := service.NewAuthService(jwtProvider, accountRepo)
 
 	// middleware

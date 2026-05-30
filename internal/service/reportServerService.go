@@ -16,7 +16,7 @@ import (
 )
 
 type ReportServerService struct {
-	aggregator *es.Aggregator
+	aggregator *es.CachedAggregator
 	exporter   export.ReportServerExporter
 	publisher  mq.Publisher
 	mailTopic  string
@@ -82,7 +82,7 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 }
 
 func NewReportServerService(
-	a *es.Aggregator,
+	a *es.CachedAggregator,
 	e export.ReportServerExporter,
 	p mq.Publisher,
 	mailTopic string,
