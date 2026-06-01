@@ -55,14 +55,17 @@ func ValidScope(c *gin.Context) {
 		return
 	}
 
-	for _, required := range requiredScopes {
-		for _, scope := range role.Scopes() {
-			if string(scope) == required {
-				c.Next()
-				return
-			}
-		}
-	}
+	roleScopes := make(map[string]bool)
+    for _, scope := range role.Scopes() {
+        roleScopes[string(scope)] = true
+    }
 
-	c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
+    for _, required := range requiredScopes {
+        if !roleScopes[required] {
+            c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
+            return
+        }
+    }
+
+    c.Next()
 }
