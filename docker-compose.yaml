@@ -66,6 +66,16 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
 
+  swagger-ui:
+    image: swaggerapi/swagger-ui
+    container_name: sm_swagger
+    ports:
+      - "8081:8080"
+    environment:
+      SWAGGER_JSON: /api/openapi.yaml
+    volumes:
+      - ./api/openapi.yaml:/api/openapi.yaml
+
 volumes:
   postgres_data:
   redis_data:
