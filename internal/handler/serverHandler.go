@@ -81,7 +81,8 @@ func (handler *ServerHandler) CreateServer(ctx context.Context, request api.Crea
 		ServerName: request.Body.ServerName,
 		IPv4:       request.Body.Ipv4,
 	}
-	if err := handler.service.CreateServer(ctx, &server); err != nil {
+	newServer, err := handler.service.CreateServer(ctx, &server)
+	if err != nil {
 		if errors.Is(err, apperr.ErrDuplicateServer) {
 			return api.CreateServer409JSONResponse{
 				ConflictJSONResponse: Conflict(err),
@@ -96,7 +97,15 @@ func (handler *ServerHandler) CreateServer(ctx context.Context, request api.Crea
 			InternalErrorJSONResponse: InternalError(err),
 		}, nil
 	}
-	return api.CreateServer201JSONResponse{}, nil
+	return api.CreateServer201JSONResponse{
+		ServerId:          newServer.ServerID,
+		ServerName:        newServer.ServerName,
+		Ipv4:              newServer.IPv4,
+		Status:            api.ServerStatus(newServer.Status),
+		CreatedAt:         &newServer.CreatedAt,
+		LastPingAt:        &newServer.LastPingAt,
+		MetadataUpdatedAt: &newServer.MetadataUpdatedAt,
+	}, nil
 }
 
 // Export servers

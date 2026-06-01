@@ -16,14 +16,14 @@ type ServerService struct {
 	inmemCache cache.ServerMetadataCacheInterface
 }
 
-func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) error {
+func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
 	ip := net.ParseIP(server.IPv4)
 	if ip == nil || ip.To4() == nil {
-		return apperr.ErrInvalidIP
+		return nil, apperr.ErrInvalidIP
 	}
 	err := s.repo.Create(ctx, server)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	// cache
 	s.inmemCache.Create(ctx, model.ServerMetadata{
@@ -31,7 +31,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) 
 		ServerName: server.ServerName,
 		IPv4:       server.IPv4,
 	})
-	return nil
+	return server, nil
 }
 
 func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
