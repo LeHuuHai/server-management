@@ -136,10 +136,11 @@ func (handler *ServerHandler) ExportServers(ctx context.Context, request api.Exp
 			InternalErrorJSONResponse: InternalError(err),
 		}, nil
 	}
+	contentDisposition := fmt.Sprintf(`attachment; filename="servers.%s"`, handler.exporter.FileType())
 	return api.ExportServers200ApplicationoctetStreamResponse{
 		Body: buf,
 		Headers: api.ExportServers200ResponseHeaders{
-			ContentDisposition: fmt.Sprintf(`attachment; filename="servers.%s"`, handler.exporter.FileType()),
+			ContentDisposition: &contentDisposition,
 		},
 	}, nil
 }

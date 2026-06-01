@@ -42,7 +42,7 @@ func Serve(
 	strictHandler := api.NewStrictHandler(h, []api.StrictMiddlewareFunc{mw})
 
 	// router
-	r := gin.New()
+	r := gin.Default()
 
 	// cors
 	r.Use(cors.New(cors.Config{
@@ -63,6 +63,7 @@ func Serve(
 			"Origin",
 			"Content-Type",
 			"Authorization",
+			"X-API-Key",
 		},
 
 		ExposeHeaders: []string{
@@ -199,7 +200,7 @@ func main() {
 	authService := service.NewAuthService(jwtProvider, accountRepo)
 
 	// middleware
-	mw := middleware.NewAuthStrictMiddleware(jwtProvider)
+	mw := middleware.NewAuthStrictMiddleware(jwtProvider, rt.Config.AppConfig.ReportKey)
 
 	// handler
 	serverHandler := handler.NewServerHandler(

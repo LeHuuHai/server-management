@@ -23,6 +23,7 @@ type AppConfig struct {
 	Host      string
 	CyclePing int
 	AdMail    string
+	ReportKey string
 }
 
 type JWTConfig struct {
@@ -79,6 +80,7 @@ func Load() (*Config, error) {
 			Host:      os.Getenv("APP_HOST"),
 			CyclePing: appCyclePing,
 			AdMail:    os.Getenv("APP_ADMAIL"),
+			ReportKey: os.Getenv("APP_REPORT_KEY"),
 		},
 		JWTConfig: &JWTConfig{
 			AccessSecret:   os.Getenv("JWT_ACCESS_SECRET"),

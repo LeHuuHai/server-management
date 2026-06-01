@@ -194,7 +194,7 @@ func main() {
 	}
 
 	// service
-	downloadService := service.NewDownLoadService(rt.Config.AppConfig.ReportURL, http.DefaultClient)
+	downloadService := service.NewDownLoadService(rt.Config.AppConfig.ReportURL, rt.Config.AppConfig.ReportKey, http.DefaultClient)
 
 	var wg sync.WaitGroup
 	wg.Add(2)

@@ -87,6 +87,7 @@ func NewReportServerService(
 	p mq.Publisher,
 	mailTopic string,
 ) *ReportServerService {
+	os.MkdirAll("./tmp", 0755)
 	return &ReportServerService{
 		aggregator: a,
 		exporter:   e,

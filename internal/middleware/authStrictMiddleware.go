@@ -11,12 +11,25 @@ var publicOps = map[string]bool{
 	"RefreshToken": true,
 }
 
-func NewAuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider) api.StrictMiddlewareFunc {
+var getReportOps = map[string]bool{
+	"GetReportFile": true,
+}
+
+func NewAuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider, reportKey string) api.StrictMiddlewareFunc {
 	validToken := NewValidToken(jwtProvider)
+	validGetReportKey := MewAPIKeyMiddleware(reportKey)
 
 	return func(f api.StrictHandlerFunc, operationID string) api.StrictHandlerFunc {
 		return func(ctx *gin.Context, request interface{}) (interface{}, error) {
 			if publicOps[operationID] {
+				return f(ctx, request)
+			}
+
+			if getReportOps[operationID] {
+				validGetReportKey(ctx)
+				if ctx.IsAborted() {
+					return nil, nil
+				}
 				return f(ctx, request)
 			}
 

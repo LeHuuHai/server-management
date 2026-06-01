@@ -17,6 +17,7 @@ type Config struct {
 type AppConfig struct {
 	NumThread int
 	ReportURL string
+	ReportKey string
 }
 
 type GomailConfig struct {
@@ -46,6 +47,7 @@ func Load() (*Config, error) {
 		AppConfig: &AppConfig{
 			NumThread: appNumThread,
 			ReportURL: os.Getenv("APP_REPORT_URL"),
+			ReportKey: os.Getenv("APP_REPORT_KEY"),
 		},
 		KafkaConfig: &commonconfig.KafkaConfig{
 			Writer: &commonconfig.KafkaWriterConfig{

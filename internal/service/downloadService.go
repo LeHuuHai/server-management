@@ -9,6 +9,7 @@ import (
 
 type DownloadService struct {
 	BaseURL string
+	Key     string
 	Client  *http.Client
 }
 
@@ -30,6 +31,7 @@ func (s *DownloadService) Download(
 	if err != nil {
 		return nil, err
 	}
+	req.Header.Set("X-API-Key", s.Key)
 	resp, err := s.Client.Do(req)
 	if err != nil {
 		return nil, err
@@ -51,9 +53,10 @@ func (s *DownloadService) Download(
 	return data, nil
 }
 
-func NewDownLoadService(base string, client *http.Client) *DownloadService {
+func NewDownLoadService(base string, key string, client *http.Client) *DownloadService {
 	return &DownloadService{
 		BaseURL: base,
+		Key:     key,
 		Client:  client,
 	}
 }
