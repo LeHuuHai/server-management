@@ -65,7 +65,7 @@ func main() {
 	}
 
 	// domain, infra
-	consumer := kfk.NewConsumer(rt.HeartBeatReader)
+	consumer := kfk.NewConsumer(rt.PingResReader)
 	serverRepo := pg.NewServerRepository(rt.DB)
 
 	// service

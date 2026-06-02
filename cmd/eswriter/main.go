@@ -60,7 +60,7 @@ func main() {
 	}
 
 	// domain, infra
-	consumer := kfk.NewConsumer(rt.HeartBeatReader)
+	consumer := kfk.NewConsumer(rt.PingResReader)
 	writer := es.NewWriter[model.ResponsePing](rt.ESClient, rt.Config.ESConfig.Index)
 
 	// service

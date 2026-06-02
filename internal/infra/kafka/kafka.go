@@ -50,7 +50,7 @@ func ConnectWorkerReader(config *commonconfig.KafkaConfig) (*kafka.Reader, *kafk
 		nil
 }
 
-func ConnectHeartbeatReader(config *commonconfig.KafkaConfig) (*kafka.Reader, error) {
+func ConnectPingResReader(config *commonconfig.KafkaConfig) (*kafka.Reader, error) {
 	brokers := strings.Split(config.Reader.Broker, ",")
 	return kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     brokers,

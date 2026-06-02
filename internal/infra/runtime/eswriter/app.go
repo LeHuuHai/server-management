@@ -12,9 +12,9 @@ import (
 )
 
 type App struct {
-	Config          *eswriterconfig.Config
-	ESClient        *elasticsearch.Client
-	HeartBeatReader *kafka.Reader
+	Config        *eswriterconfig.Config
+	ESClient      *elasticsearch.Client
+	PingResReader *kafka.Reader
 }
 
 func NewApp(cfg *eswriterconfig.Config) (*App, error) {
@@ -29,14 +29,14 @@ func NewApp(cfg *eswriterconfig.Config) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
-	heartbeatReader, err := kfk.ConnectHeartbeatReader(cfg.KafkaConfig)
+	pingResReader, err := kfk.ConnectPingResReader(cfg.KafkaConfig)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
 	return &App{
-		Config:          cfg,
-		ESClient:        esclient,
-		HeartBeatReader: heartbeatReader,
+		Config:        cfg,
+		ESClient:      esclient,
+		PingResReader: pingResReader,
 	}, nil
 }

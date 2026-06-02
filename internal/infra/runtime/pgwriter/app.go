@@ -12,9 +12,9 @@ import (
 )
 
 type App struct {
-	Config          *pgwriterconfig.Config
-	DB              *gorm.DB
-	HeartBeatReader *kafka.Reader
+	Config        *pgwriterconfig.Config
+	DB            *gorm.DB
+	PingResReader *kafka.Reader
 }
 
 func NewApp(cfg *pgwriterconfig.Config) (*App, error) {
@@ -25,7 +25,7 @@ func NewApp(cfg *pgwriterconfig.Config) (*App, error) {
 	}
 
 	// infra
-	heartbeatReader, err := kfk.ConnectHeartbeatReader(cfg.KafkaConfig)
+	pingResReader, err := kfk.ConnectPingResReader(cfg.KafkaConfig)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
@@ -35,8 +35,8 @@ func NewApp(cfg *pgwriterconfig.Config) (*App, error) {
 	}
 
 	return &App{
-		Config:          cfg,
-		DB:              db,
-		HeartBeatReader: heartbeatReader,
+		Config:        cfg,
+		DB:            db,
+		PingResReader: pingResReader,
 	}, nil
 }
