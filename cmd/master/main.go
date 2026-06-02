@@ -188,6 +188,7 @@ func main() {
 	esCachedAggregator := es.NewCachedAggregator(esAggregator, dailyReportRedisCache)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 	jwtProvider := jwtprovider.NewJWTProvider(rt.Config.JWTConfig)
+	tokenBlocklistRedis := jwtprovider.NewTokenBlocklistRedis(rt.RdbClient)
 	accountRepo := pg.NewAccountRepository(rt.DB)
 
 	// service
@@ -197,10 +198,10 @@ func main() {
 	}
 	serverService := service.NewServerService(serverRepo, serverInmemCache)
 	reportServerService := service.NewReportServerService(esCachedAggregator, reportServerXLSXExporter, kfkPublisher, rt.Config.KafkaConfig.Topics["mail"])
-	authService := service.NewAuthService(jwtProvider, accountRepo)
+	authService := service.NewAuthService(jwtProvider, tokenBlocklistRedis, accountRepo)
 
 	// middleware
-	mw := middleware.NewAuthStrictMiddleware(jwtProvider, rt.Config.AppConfig.ReportKey)
+	mw := middleware.NewAuthStrictMiddleware(jwtProvider, tokenBlocklistRedis, rt.Config.AppConfig.ReportKey)
 
 	// handler
 	serverHandler := handler.NewServerHandler(

@@ -22,4 +22,5 @@ var (
 	ErrSignToken          = errors.New("sign token failed")
 	ErrExpiredToken       = errors.New("token expired")
 	ErrInvalidToken       = errors.New("invalid token")
+	ErrRevokedToken       = errors.New("revoked token")
 )

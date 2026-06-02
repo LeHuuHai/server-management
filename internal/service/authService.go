@@ -1,6 +1,7 @@
 package service
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
@@ -11,15 +12,18 @@ import (
 
 type AuthService struct {
 	jwtProvider *jwtprovider.JWTProvider
+	blocklist   *jwtprovider.TokenBlocklistRedis
 	accountRepo repo.AccountRepoInterface
 }
 
 func NewAuthService(
 	jwtProvider *jwtprovider.JWTProvider,
+	blocklist *jwtprovider.TokenBlocklistRedis,
 	accountRepo repo.AccountRepoInterface,
 ) *AuthService {
 	return &AuthService{
 		jwtProvider: jwtProvider,
+		blocklist:   blocklist,
 		accountRepo: accountRepo,
 	}
 }
@@ -72,7 +76,14 @@ func (s *AuthService) HashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
-func (s *AuthService) RefreshAccessToken(refreshToken string) (string, error) {
+func (s *AuthService) RefreshAccessToken(ctx context.Context, refreshToken string) (string, error) {
+	revoked, err := s.blocklist.IsRevoked(ctx, refreshToken)
+	if err != nil {
+		return "", fmt.Errorf("refresh: %w", err)
+	}
+	if revoked {
+		return "", fmt.Errorf("%w: token has been revoked", apperr.ErrRevokedToken)
+	}
 	claims, err := s.jwtProvider.ParseRefreshToken(refreshToken)
 	if err != nil {
 		return "", fmt.Errorf("%w: %v", apperr.ErrInvalidToken, err)
@@ -88,4 +99,15 @@ func (s *AuthService) RefreshAccessToken(refreshToken string) (string, error) {
 		return "", fmt.Errorf("%w: %v", apperr.ErrSignToken, err)
 	}
 	return token, nil
+}
+
+func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
+	claims, err := s.jwtProvider.ParseRefreshToken(refreshToken)
+	if err != nil {
+		return fmt.Errorf("%w: %v", apperr.ErrInvalidToken, err)
+	}
+	if err := s.blocklist.Revoke(ctx, refreshToken, claims.ExpiresAt.Time); err != nil {
+		return fmt.Errorf("logout: %w", err)
+	}
+	return nil
 }

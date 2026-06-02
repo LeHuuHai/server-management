@@ -12,7 +12,7 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-func NewValidToken(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
+func NewValidToken(jwtProvider *jwtprovider.JWTProvider, blocklist *jwtprovider.TokenBlocklistRedis) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
@@ -21,6 +21,18 @@ func NewValidToken(jwtProvider *jwtprovider.JWTProvider) gin.HandlerFunc {
 		}
 
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		revoked, err := blocklist.IsRevoked(c.Request.Context(), tokenString)
+		if err != nil {
+			// Redis lỗi: fail-open (cho qua) hoặc fail-closed tuỳ yêu cầu bảo mật
+			// Hiện tại chọn fail-closed để an toàn hơn
+			c.AbortWithStatusJSON(500, gin.H{"error": "internal error"})
+			return
+		}
+		if revoked {
+			c.AbortWithStatusJSON(401, gin.H{"error": "token has been revoked"})
+			return
+		}
 
 		claims, err := jwtProvider.ParseAccessToken(tokenString)
 		if err != nil {
@@ -56,16 +68,16 @@ func ValidScope(c *gin.Context) {
 	}
 
 	roleScopes := make(map[string]bool)
-    for _, scope := range role.Scopes() {
-        roleScopes[string(scope)] = true
-    }
+	for _, scope := range role.Scopes() {
+		roleScopes[string(scope)] = true
+	}
 
-    for _, required := range requiredScopes {
-        if !roleScopes[required] {
-            c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
-            return
-        }
-    }
+	for _, required := range requiredScopes {
+		if !roleScopes[required] {
+			c.AbortWithStatusJSON(403, gin.H{"error": "forbidden"})
+			return
+		}
+	}
 
-    c.Next()
+	c.Next()
 }

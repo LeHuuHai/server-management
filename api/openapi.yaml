@@ -426,6 +426,28 @@ paths:
 
         '500':
           $ref: '#/components/responses/InternalError'
+  
+  /auth/logout:
+    post:
+      summary: Logout
+      operationId: Logout
+      tags:
+        - auth
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LogoutRequest'
+      responses:
+        '200':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
 
 components:
   schemas:
@@ -576,6 +598,14 @@ components:
       properties:
         access_token:
           type: string
+        refresh_token:
+          type: string
+
+    LogoutRequest:
+      type: object
+      required:
+        - refresh_token
+      properties:
         refresh_token:
           type: string
 

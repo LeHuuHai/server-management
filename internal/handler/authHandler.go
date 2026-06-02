@@ -50,11 +50,12 @@ func (handler *AuthHandler) Login(ctx context.Context, request api.LoginRequestO
 // Refresh token
 // (POST /auth/refresh)
 func (handler *AuthHandler) RefreshToken(ctx context.Context, request api.RefreshTokenRequestObject) (api.RefreshTokenResponseObject, error) {
-	res, err := handler.authService.RefreshAccessToken(request.Body.RefreshToken)
+	res, err := handler.authService.RefreshAccessToken(ctx, request.Body.RefreshToken)
 	if err != nil {
 		switch {
 		case errors.Is(err, apperr.ErrInvalidToken),
-			errors.Is(err, apperr.ErrRecordNotFound):
+			errors.Is(err, apperr.ErrRecordNotFound),
+			errors.Is(err, apperr.ErrRevokedToken):
 			return api.RefreshToken401JSONResponse{
 				UnauthorizedJSONResponse: Unauthorized(err),
 			}, nil
@@ -73,4 +74,23 @@ func (handler *AuthHandler) RefreshToken(ctx context.Context, request api.Refres
 		AccessToken:  &res,
 		RefreshToken: &request.Body.RefreshToken,
 	}, nil
+}
+
+// Logout
+// (POST /auth/logout)
+func (handler *AuthHandler) Logout(ctx context.Context, request api.LogoutRequestObject) (api.LogoutResponseObject, error) {
+	if err := handler.authService.Logout(ctx, request.Body.RefreshToken); err != nil {
+		switch {
+		case errors.Is(err, apperr.ErrInvalidToken):
+			return api.Logout401JSONResponse{
+				UnauthorizedJSONResponse: Unauthorized(err),
+			}, nil
+		default:
+			return api.Logout500JSONResponse{
+				InternalErrorJSONResponse: InternalError(err),
+			}, nil
+		}
+	}
+
+	return api.Logout200Response{}, nil
 }
