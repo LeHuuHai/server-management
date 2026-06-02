@@ -12,7 +12,7 @@ create table servers (
 create table users (
     id serial primary key,
     full_name varchar(255) not null,
-    email varchar(255) not null unique,
+    email varchar(255) not null unique
 );
 
 create table accounts (

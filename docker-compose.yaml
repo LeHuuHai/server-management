@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16
@@ -13,6 +11,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "admin", "-d", "server_management"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
 
   redis:
     image: redis:7
@@ -39,9 +42,10 @@ services:
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@sm_kafka:9093
       # Listeners
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093,INTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,INTERNAL://sm_kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       # Single node
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
@@ -53,6 +57,11 @@ services:
       KAFKA_LOG_RETENTION_BYTES: -1          # Không giới hạn theo dung lượng (-1 = tắt)
       KAFKA_LOG_SEGMENT_BYTES: 104857600     # Segment 100MB (nhỏ hơn → xóa nhanh hơn)
       KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 60000  # Kiểm tra mỗi 1 phút
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:29092", "--list"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
@@ -71,6 +80,12 @@ services:
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
 
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:9200/_cluster/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+
   swagger-ui:
     image: swaggerapi/swagger-ui
     container_name: sm_swagger
@@ -84,36 +99,40 @@ services:
   migrate:
     image: migrate/migrate:v4.17.0
     depends_on:
-      - postgres
+      postgres:
+        condition: service_healthy
     volumes:
-      - ./db/migrations:/migrations
+      - ./migrations:/migrations
     entrypoint: >
-      sh -c "
-      sleep 5 &&
       migrate -path=/migrations
       -database postgres://admin:123456@postgres:5432/server_management?sslmode=disable
       up
-      "
 
   kafka-init:
     image: apache/kafka:3.7.1
     container_name: kafka_init
     depends_on:
-      - kafka
+      kafka:
+        condition: service_healthy
     volumes:
-      - ./kafka.sh:/kafka.sh
+      - ./scripts/kafka.sh:/kafka.sh
     entrypoint: ["bash", "/kafka.sh"]
 
   es-init:
     image: curlimages/curl:8.5.0
     container_name: es_init
     depends_on:
-      - elasticsearch
+      elasticsearch:
+        condition: service_healthy
     volumes:
-      - ./es.sh:/es.sh
+      - ./scripts/es.sh:/es.sh
     entrypoint: ["sh", "/es.sh"]
   
 volumes:
   postgres_data:
   redis_data:
   elasticsearch_data:
+
+networks:
+  default:
+    name: server-management_default

@@ -2,7 +2,7 @@
 
 set -e
 
-BOOTSTRAP=kafka:9092
+BOOTSTRAP=sm_kafka:29092
 
 echo "Waiting for Kafka..."
 
