@@ -8,13 +8,13 @@ import (
 )
 
 type BatchESService struct {
-	Input     chan model.ResponsePing
+	Input     chan model.ServerEvent
 	MaxSize   int
 	Timeout   time.Duration
-	FlushFunc func([]model.ResponsePing) error
+	FlushFunc func([]model.ServerEvent) error
 }
 
-func NewBatchESService(input chan model.ResponsePing, size int, timeout time.Duration, flushFunc func([]model.ResponsePing) error) *BatchESService {
+func NewBatchESService(input chan model.ServerEvent, size int, timeout time.Duration, flushFunc func([]model.ServerEvent) error) *BatchESService {
 	return &BatchESService{
 		Input:     input,
 		MaxSize:   size,
@@ -26,16 +26,16 @@ func NewBatchESService(input chan model.ResponsePing, size int, timeout time.Dur
 func (s *BatchESService) Run(ctx context.Context) {
 	timer := time.NewTicker(s.Timeout)
 	defer timer.Stop()
-	buffer := make([]model.ResponsePing, 0, s.MaxSize)
+	buffer := make([]model.ServerEvent, 0, s.MaxSize)
 
 	f := func() {
 		if len(buffer) == 0 {
 			return
 		}
-		tmp := make([]model.ResponsePing, len(buffer))
+		tmp := make([]model.ServerEvent, len(buffer))
 		copy(tmp, buffer)
 		buffer = buffer[:0]
-		go func(data []model.ResponsePing) {
+		go func(data []model.ServerEvent) {
 			_ = s.FlushFunc(data)
 		}(tmp)
 	}
