@@ -2,7 +2,7 @@ package middleware
 
 import "github.com/gin-gonic/gin"
 
-func MewAPIKeyMiddleware(validKey string) gin.HandlerFunc {
+func NewAPIKeyMiddleware(validKey string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		key := c.GetHeader("X-API-Key")
 		if key != validKey {

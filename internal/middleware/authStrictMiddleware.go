@@ -17,7 +17,7 @@ var getReportOps = map[string]bool{
 
 func NewAuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider, blocklist *jwtprovider.TokenBlocklistRedis, reportKey string) api.StrictMiddlewareFunc {
 	validToken := NewValidToken(jwtProvider, blocklist)
-	validGetReportKey := MewAPIKeyMiddleware(reportKey)
+	validGetReportKey := NewAPIKeyMiddleware(reportKey)
 
 	return func(f api.StrictHandlerFunc, operationID string) api.StrictHandlerFunc {
 		return func(ctx *gin.Context, request interface{}) (interface{}, error) {
