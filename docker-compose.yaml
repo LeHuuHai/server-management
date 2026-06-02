@@ -49,6 +49,11 @@ services:
       # KRaft cluster id
       KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
+      KAFKA_LOG_RETENTION_MS: 3600000        # Giữ message 1 giờ
+      KAFKA_LOG_RETENTION_BYTES: -1          # Không giới hạn theo dung lượng (-1 = tắt)
+      KAFKA_LOG_SEGMENT_BYTES: 104857600     # Segment 100MB (nhỏ hơn → xóa nhanh hơn)
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 60000  # Kiểm tra mỗi 1 phút
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
     container_name: sm_elasticsearch
