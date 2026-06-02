@@ -102,10 +102,12 @@ func CheckServer(
 		case <-ticker.C:
 			start := time.Now()
 			servers := serverMetadataCache.List(ctx)
+			cnt := 0
 			for _, item := range servers {
-				if time.Since(*item.LastHeartbeatAt) < time.Duration(rt.Config.AppConfig.HeartbeatTimeout) {
+				if item.LastHeartbeatAt != nil && time.Since(*item.LastHeartbeatAt) < time.Duration(rt.Config.AppConfig.HeartbeatTimeout)*time.Millisecond {
 					continue
 				}
+				cnt++
 				req := model.RequestPing{
 					ServerID:   item.ServerID,
 					ServerName: item.ServerName,
@@ -127,7 +129,7 @@ func CheckServer(
 				}
 			}
 			elapse := time.Since(start)
-			log.Printf("publish %d servers in %v", len(servers), elapse)
+			log.Printf("publish %d servers in %v", cnt, elapse)
 		}
 	}
 }
