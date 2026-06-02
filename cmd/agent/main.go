@@ -55,7 +55,8 @@ func sendHeartbeat(
 	apiKey string,
 ) error {
 	body, err := json.Marshal(model.Heartbeat{
-		ServerID: serverID,
+		ServerID:  serverID,
+		Timestamp: time.Now().UTC(),
 	})
 	if err != nil {
 		return err
