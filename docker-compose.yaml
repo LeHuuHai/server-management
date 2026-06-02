@@ -81,6 +81,38 @@ services:
     volumes:
       - ./api/openapi.yaml:/api/openapi.yaml
 
+  migrate:
+    image: migrate/migrate:v4.17.0
+    depends_on:
+      - postgres
+    volumes:
+      - ./db/migrations:/migrations
+    entrypoint: >
+      sh -c "
+      sleep 5 &&
+      migrate -path=/migrations
+      -database postgres://admin:123456@postgres:5432/server_management?sslmode=disable
+      up
+      "
+
+  kafka-init:
+    image: apache/kafka:3.7.1
+    container_name: kafka_init
+    depends_on:
+      - kafka
+    volumes:
+      - ./kafka.sh:/kafka.sh
+    entrypoint: ["bash", "/kafka.sh"]
+
+  es-init:
+    image: curlimages/curl:8.5.0
+    container_name: es_init
+    depends_on:
+      - elasticsearch
+    volumes:
+      - ./es.sh:/es.sh
+    entrypoint: ["sh", "/es.sh"]
+  
 volumes:
   postgres_data:
   redis_data:
