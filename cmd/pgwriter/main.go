@@ -14,7 +14,7 @@ import (
 	"github.com/LeHuuHai/server-management/internal/service"
 )
 
-func ReadTopic(
+func ReadPingResTopic(
 	ctx context.Context,
 	wg *sync.WaitGroup,
 	consumer *kfk.KfkConsumer,
@@ -51,6 +51,43 @@ func ReadTopic(
 	}
 }
 
+func ReadHeartbeatTopic(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	consumer *kfk.KfkConsumer,
+	ch chan<- model.Server,
+) {
+	defer wg.Done()
+	for {
+		msg, err := consumer.Read(ctx)
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				continue
+			}
+		}
+		var res model.Heartbeat
+		err = json.Unmarshal(msg.Value, &res)
+		if err != nil {
+			continue
+		}
+		s := model.Server{
+			ServerID:   res.ServerID,
+			Status:     model.StatusOnline,
+			LastPingAt: res.Timestamp,
+		}
+		select {
+		case <-ctx.Done():
+			return
+
+		case ch <- s:
+			consumer.Commit(ctx, msg)
+		}
+	}
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -65,7 +102,8 @@ func main() {
 	}
 
 	// domain, infra
-	consumer := kfk.NewConsumer(rt.PingResReader)
+	pingResConsumer := kfk.NewConsumer(rt.PingResReader)
+	heartbeatConsumer := kfk.NewConsumer(rt.HeartbeatReader)
 	serverRepo := pg.NewServerRepository(rt.DB)
 
 	// service
@@ -87,8 +125,9 @@ func main() {
 	)
 
 	var wg sync.WaitGroup
-	wg.Add(2)
-	go ReadTopic(ctx, &wg, consumer, ch)
+	wg.Add(3)
+	go ReadPingResTopic(ctx, &wg, pingResConsumer, ch)
+	go ReadHeartbeatTopic(ctx, &wg, heartbeatConsumer, ch)
 	go func() {
 		defer wg.Done()
 		batchService.Run(ctx)

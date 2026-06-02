@@ -36,7 +36,8 @@ func Load() (*Config, error) {
 				ConsumerGroupId: os.Getenv("KAFKA_GROUP_ID"),
 			},
 			Topics: map[string]string{
-				"ping_res": os.Getenv("KAFKA_PING_RES_TOPIC"),
+				"ping_res":  os.Getenv("KAFKA_PING_RES_TOPIC"),
+				"heartbeat": os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
 			},
 		},
 		DBConfig: &commonconfig.PostgresConfig{
