@@ -19,11 +19,12 @@ type Config struct {
 }
 
 type AppConfig struct {
-	Port      int
-	Host      string
-	CyclePing int
-	AdMail    string
-	ReportKey string
+	Port             int
+	Host             string
+	CyclePing        int
+	HeartbeatTimeout int
+	AdMail           string
+	ReportKey        string
 }
 
 type JWTConfig struct {
@@ -69,6 +70,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	heartbeatTimeout, err := strconv.Atoi(os.Getenv("APP_HEARTBEAT_TIMEOUT"))
+	if err != nil {
+		return nil, err
+	}
+
 	_, err = mail.ParseAddress(os.Getenv("APP_ADMAIL"))
 	if err != nil {
 		return nil, err
@@ -76,11 +82,12 @@ func Load() (*Config, error) {
 
 	return &Config{
 		AppConfig: &AppConfig{
-			Port:      appPort,
-			Host:      os.Getenv("APP_HOST"),
-			CyclePing: appCyclePing,
-			AdMail:    os.Getenv("APP_ADMAIL"),
-			ReportKey: os.Getenv("APP_REPORT_KEY"),
+			Port:             appPort,
+			Host:             os.Getenv("APP_HOST"),
+			CyclePing:        appCyclePing,
+			HeartbeatTimeout: heartbeatTimeout,
+			AdMail:           os.Getenv("APP_ADMAIL"),
+			ReportKey:        os.Getenv("APP_REPORT_KEY"),
 		},
 		JWTConfig: &JWTConfig{
 			AccessSecret:   os.Getenv("JWT_ACCESS_SECRET"),
@@ -105,8 +112,9 @@ func Load() (*Config, error) {
 				Broker: os.Getenv("KAFKA_BROKER"),
 			},
 			Topics: map[string]string{
-				"ping": os.Getenv("KAFKA_PING_TOPIC"),
-				"mail": os.Getenv("KAFKA_MAIL_TOPIC"),
+				"ping":      os.Getenv("KAFKA_PING_TOPIC"),
+				"mail":      os.Getenv("KAFKA_MAIL_TOPIC"),
+				"heartbeat": os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
 			},
 		},
 		ESConfig: &commonconfig.ElasticsearchConfig{

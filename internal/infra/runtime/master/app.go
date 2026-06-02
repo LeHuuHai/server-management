@@ -17,13 +17,14 @@ import (
 )
 
 type App struct {
-	Config      *masterconfig.Config
-	JWTProvider *jwtprovider.JWTProvider
-	DB          *gorm.DB
-	ESClient    *elasticsearch.Client
-	SyncWriter  *kafka.Writer
-	AsyncWriter *kafka.Writer
-	RdbClient   *redis.Client
+	Config          *masterconfig.Config
+	JWTProvider     *jwtprovider.JWTProvider
+	DB              *gorm.DB
+	ESClient        *elasticsearch.Client
+	SyncWriter      *kafka.Writer
+	AsyncWriter     *kafka.Writer
+	HeartbeatReader *kafka.Reader
+	RdbClient       *redis.Client
 }
 
 func NewApp(cfg *masterconfig.Config) (*App, error) {
@@ -48,18 +49,23 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
+	heartbeatReader, err := kfk.ConnectHeartbeatReader(cfg.KafkaConfig)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
+	}
 	rdbClient, err := rdb.Connect(cfg.RedisConfig)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
 	return &App{
-		Config:      cfg,
-		JWTProvider: jwtProvider,
-		DB:          db,
-		ESClient:    esclient,
-		SyncWriter:  syncWriter,
-		AsyncWriter: asyncWriter,
-		RdbClient:   rdbClient,
+		Config:          cfg,
+		JWTProvider:     jwtProvider,
+		DB:              db,
+		ESClient:        esclient,
+		SyncWriter:      syncWriter,
+		AsyncWriter:     asyncWriter,
+		HeartbeatReader: heartbeatReader,
+		RdbClient:       rdbClient,
 	}, nil
 }

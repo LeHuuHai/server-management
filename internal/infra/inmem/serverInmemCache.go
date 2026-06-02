@@ -41,9 +41,18 @@ func (c *serverInmemCache) Update(ctx context.Context, s model.ServerMetadata) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.servers[s.ServerID] = &model.ServerMetadata{
-		ServerID:   s.ServerID,
-		ServerName: s.ServerName,
-		IPv4:       s.IPv4,
+		ServerID:        s.ServerID,
+		ServerName:      s.ServerName,
+		IPv4:            s.IPv4,
+		LastHeartbeatAt: c.servers[s.ServerID].LastHeartbeatAt,
+	}
+}
+
+func (c *serverInmemCache) BatchUpdateHeartbeat(ctx context.Context, s []model.ServerMetadata) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	for _, item := range s {
+		c.servers[item.ServerID].LastHeartbeatAt = item.LastHeartbeatAt
 	}
 }
 

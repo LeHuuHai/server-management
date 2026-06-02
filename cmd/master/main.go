@@ -102,11 +102,14 @@ func CheckServer(
 		case <-ticker.C:
 			start := time.Now()
 			servers := serverMetadataCache.List(ctx)
-			for _, items := range servers {
+			for _, item := range servers {
+				if time.Since(*item.LastHeartbeatAt) < time.Duration(rt.Config.AppConfig.HeartbeatTimeout) {
+					continue
+				}
 				req := model.RequestPing{
-					ServerID:   items.ServerID,
-					ServerName: items.ServerName,
-					IP:         items.IPv4,
+					ServerID:   item.ServerID,
+					ServerName: item.ServerName,
+					IP:         item.IPv4,
 				}
 				reqBytes, err := json.Marshal(req)
 				if err != nil {
@@ -167,6 +170,70 @@ func Report(
 	}
 }
 
+func ReadTopic(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	consumer *kfk.KfkConsumer,
+	ch chan<- model.ServerMetadata,
+) {
+	defer wg.Done()
+	for {
+		msg, err := consumer.Read(ctx)
+		if err != nil {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				continue
+			}
+		}
+		consumer.Commit(ctx, msg)
+		var res model.Heartbeat
+		err = json.Unmarshal(msg.Value, &res)
+		if err != nil {
+			continue
+		}
+		s := model.ServerMetadata{
+			ServerID:        res.ServerID,
+			LastHeartbeatAt: &res.Timestamp,
+		}
+		select {
+		case <-ctx.Done():
+			return
+
+		case ch <- s:
+		}
+	}
+}
+
+func ListenHeartbeat(
+	ctx context.Context,
+	wg *sync.WaitGroup,
+	rt *masterruntime.App,
+	serverMetadataCache cache.ServerMetadataCacheInterface,
+) {
+	defer wg.Done()
+	var heartbeatWg sync.WaitGroup
+	consumer := kfk.NewConsumer(rt.HeartbeatReader)
+	ch := make(chan model.ServerMetadata, 4000)
+	batchService := service.NewBatchServerMetadataService(
+		ch,
+		2000,
+		time.Second,
+		func(items []model.ServerMetadata) error {
+			serverMetadataCache.BatchUpdateHeartbeat(ctx, items)
+			return nil
+		},
+	)
+	heartbeatWg.Add(2)
+	go ReadTopic(ctx, &heartbeatWg, consumer, ch)
+	go func() {
+		defer heartbeatWg.Done()
+		batchService.Run(ctx)
+	}()
+	heartbeatWg.Wait()
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -214,9 +281,10 @@ func main() {
 	h := handler.NewHandler(serverHandler, authHandler)
 
 	var wg sync.WaitGroup
-	wg.Add(3)
+	wg.Add(4)
 	go Serve(ctx, &wg, rt, h, mw)
 	go CheckServer(ctx, &wg, rt, kfkPublisher, serverInmemCache)
 	go Report(ctx, &wg, rt, reportServerService)
+	go ListenHeartbeat(ctx, &wg, rt, serverInmemCache)
 	wg.Wait()
 }

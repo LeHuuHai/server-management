@@ -11,6 +11,8 @@ type ServerMetadataCacheInterface interface {
 
 	Update(ctx context.Context, s model.ServerMetadata)
 
+	BatchUpdateHeartbeat(ctx context.Context, s []model.ServerMetadata)
+
 	Delete(ctx context.Context, s string)
 
 	BatchCreate(ctx context.Context, s []model.ServerMetadata)

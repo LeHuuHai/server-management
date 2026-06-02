@@ -59,3 +59,13 @@ func ConnectPingResReader(config *commonconfig.KafkaConfig) (*kafka.Reader, erro
 		StartOffset: kafka.LastOffset,
 	}), nil
 }
+
+func ConnectHeartbeatReader(config *commonconfig.KafkaConfig) (*kafka.Reader, error) {
+	brokers := strings.Split(config.Reader.Broker, ",")
+	return kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     brokers,
+		Topic:       config.Topics["heartbeat"],
+		GroupID:     config.Reader.ConsumerGroupId,
+		StartOffset: kafka.LastOffset,
+	}), nil
+}
