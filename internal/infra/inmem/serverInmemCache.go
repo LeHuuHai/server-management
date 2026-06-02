@@ -52,7 +52,9 @@ func (c *serverInmemCache) BatchUpdateHeartbeat(ctx context.Context, s []model.S
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	for _, item := range s {
-		c.servers[item.ServerID].LastHeartbeatAt = item.LastHeartbeatAt
+		if server, ok := c.servers[item.ServerID]; ok {
+			server.LastHeartbeatAt = item.LastHeartbeatAt
+		}
 	}
 }
 
