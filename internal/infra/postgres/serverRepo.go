@@ -131,6 +131,7 @@ func (r *serverRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, e
 	err := r.db.WithContext(ctx).
 		Model(&model.Server{}).
 		Select("server_id", "server_name", "ipv4").
+		Where("is_deleted = false").
 		Find(&result).
 		Error
 
