@@ -62,20 +62,20 @@ func (aggregator *Aggregator) Aggregation(ctx context.Context, from time.Time, t
 		"aggs": map[string]any{
 			"by_server": map[string]any{
 				"terms": map[string]any{
-					"field": "server_id.keyword",
+					"field": "server_id",
 					"size":  10000,
 				},
 				"aggs": map[string]any{
 					"by_status_on": map[string]any{
 						"filter": map[string]any{
 							"term": map[string]any{
-								"status.keyword": "on",
+								"status": "on",
 							},
 						},
 					},
 					"status_count": map[string]any{
 						"value_count": map[string]any{
-							"field": "status.keyword",
+							"field": "status",
 						},
 					},
 					"uptime_ratio": map[string]any{
