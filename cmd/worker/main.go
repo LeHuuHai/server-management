@@ -68,7 +68,7 @@ func CheckServer(
 					}
 					res := model.ResponsePing{
 						ServerID: req.ServerID,
-						Status:   "off",
+						Status:   string(model.StatusOffline),
 						PingAt:   time.Now(),
 					}
 					pinger, err := probing.NewPinger(req.IP)
@@ -85,7 +85,7 @@ func CheckServer(
 							// Kiểm tra kết quả thống kê gói tin
 							stats := pinger.Statistics()
 							if stats.PacketsRecv > 0 {
-								res.Status = "on"
+								res.Status = string(model.StatusOnline)
 							}
 						}
 

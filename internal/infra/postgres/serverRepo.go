@@ -18,6 +18,7 @@ type serverRepo struct {
 }
 
 func (r *serverRepo) Create(ctx context.Context, s *model.Server) error {
+	s.Status = model.StatusUnknown
 	err := r.db.WithContext(ctx).
 		Create(s).
 		Error
@@ -108,6 +109,7 @@ func (r *serverRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 	}
 
 	for _, s := range servers {
+		s.Status = model.StatusUnknown
 		err := r.db.WithContext(ctx).
 			Create(&s).Error
 
