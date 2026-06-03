@@ -16,6 +16,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      default:
+        ipv4_address: 10.10.10.10
 
   redis:
     image: redis:7
@@ -28,6 +31,9 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
+    networks:
+      default:
+        ipv4_address: 10.10.10.11
 
   kafka:
     image: apache/kafka:3.7.1
@@ -52,7 +58,6 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       # KRaft cluster id
       KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
-
       KAFKA_LOG_RETENTION_MS: 3600000        # Giữ message 1 giờ
       KAFKA_LOG_RETENTION_BYTES: -1          # Không giới hạn theo dung lượng (-1 = tắt)
       KAFKA_LOG_SEGMENT_BYTES: 104857600     # Segment 100MB (nhỏ hơn → xóa nhanh hơn)
@@ -62,6 +67,9 @@ services:
       interval: 10s
       timeout: 10s
       retries: 10
+    networks:
+      default:
+        ipv4_address: 10.10.10.12
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
@@ -70,16 +78,15 @@ services:
     environment:
       discovery.type: single-node
       xpack.security.enabled: "false"
-
       # JVM
       ES_JAVA_OPTS: -Xms512m -Xmx512m
-
     ports:
       - "9200:9200"
-
+    networks:
+      default:
+        ipv4_address: 10.10.10.13
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-
     healthcheck:
       test: ["CMD", "curl", "-sf", "http://localhost:9200/_cluster/health"]
       interval: 10s
@@ -136,3 +143,7 @@ volumes:
 networks:
   default:
     name: server-management_default
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24
+          gateway: 10.10.10.1

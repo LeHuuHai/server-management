@@ -1,0 +1,75 @@
+services:
+  master:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        CMD_PATH: master
+    container_name: sm_master
+    restart: unless-stopped
+    ports:
+      - "8080:8080"  
+    volumes:
+      - ./config/master/.env.master:/app/config/master/.env.master
+    networks:
+      default:
+        ipv4_address: 10.10.10.20
+  
+  worker:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        CMD_PATH: worker
+    restart: unless-stopped
+    deploy:
+      replicas: 3
+    volumes:
+      - ./config/worker/.env.worker:/app/config/worker/.env.worker
+    networks:
+      - default
+
+  es-writer:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        CMD_PATH: eswriter
+    restart: unless-stopped
+    volumes:
+      - ./config/eswriter/.env.eswriter:/app/config/eswriter/.env.eswriter
+    networks:
+      - default
+
+  pg-writer:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        CMD_PATH: pgwriter
+    restart: unless-stopped
+    volumes:
+      - ./config/pgwriter/.env.pgwriter:/app/config/pgwriter/.env.pgwriter
+    networks:
+      - default
+
+  gw:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        CMD_PATH: gw
+    container_name: sm_gw
+    restart: unless-stopped
+    ports:
+      - "8082:8080"  
+    volumes:
+      - ./config/gw/.env.gw:/app/config/gw/.env.gw
+    networks:
+      default:
+        ipv4_address: 10.10.10.21
+
+networks:
+  sm_network:
+    external: true
+    name: server-management_default

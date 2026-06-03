@@ -1,0 +1,159 @@
+services:
+  agent-base:
+    build:
+      context: .
+      dockerfile: dockerfile
+      args:
+        CMD_PATH: agent
+    image: sm_agent
+    container_name: sm_agent_base
+    command: ["echo", "agent image ready"]
+    networks:
+      - default
+
+  
+
+  agent-001:
+    image: sm_agent
+    container_name: sm_agent_001
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00001
+    networks:
+      default:
+        ipv4_address: 10.10.10.101
+ 
+  agent-002:
+    image: sm_agent
+    container_name: sm_agent_002
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00002
+    networks:
+      default:
+        ipv4_address: 10.10.10.102
+ 
+  agent-003:
+    image: sm_agent
+    container_name: sm_agent_003
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00003
+    networks:
+      default:
+        ipv4_address: 10.10.10.103
+ 
+  agent-004:
+    image: sm_agent
+    container_name: sm_agent_004
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00004
+    networks:
+      default:
+        ipv4_address: 10.10.10.104
+ 
+  agent-005:
+    image: sm_agent
+    container_name: sm_agent_005
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00005
+    networks:
+      default:
+        ipv4_address: 10.10.10.105
+ 
+  agent-006:
+    image: sm_agent
+    container_name: sm_agent_006
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00006
+    networks:
+      default:
+        ipv4_address: 10.10.10.106
+ 
+  agent-007:
+    image: sm_agent
+    container_name: sm_agent_007
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00007
+    networks:
+      default:
+        ipv4_address: 10.10.10.107
+ 
+  agent-008:
+    image: sm_agent
+    container_name: sm_agent_008
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00008
+    networks:
+      default:
+        ipv4_address: 10.10.10.108
+ 
+  agent-009:
+    image: sm_agent
+    container_name: sm_agent_009
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00009
+    networks:
+      default:
+        ipv4_address: 10.10.10.109
+ 
+  agent-010:
+    image: sm_agent
+    container_name: sm_agent_010
+    restart: unless-stopped
+    depends_on:
+      - agent-base
+    volumes:
+      - ./config/agent/.env.agent:/app/config/agent/.env.agent
+    environment:
+      - APP_SERVER_ID=server_00010
+    networks:
+      default:
+        ipv4_address: 10.10.10.110
+        
+networks:
+  sm_network:
+    external: true
+    name: server-management_default
