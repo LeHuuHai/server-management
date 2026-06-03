@@ -24,7 +24,7 @@ func Load() (*Config, error) {
 		panic("Error loading .env file")
 	}
 
-	cycleHeartbeat, err := strconv.Atoi(os.Getenv("APP_CYCLE_HEARBEAT"))
+	cycleHeartbeat, err := strconv.Atoi(os.Getenv("APP_CYCLE_HEARTBEAT"))
 	if err != nil {
 		return nil, err
 	}
