@@ -111,6 +111,10 @@ func Load() (*Config, error) {
 			Writer: &commonconfig.KafkaWriterConfig{
 				Broker: os.Getenv("KAFKA_BROKER"),
 			},
+			Reader: &commonconfig.KafkaReaderConfig{
+				Broker:          os.Getenv("KAFKA_BROKER"),
+				ConsumerGroupId: os.Getenv("KAFKA_GROUP_ID"),
+			},
 			Topics: map[string]string{
 				"ping":      os.Getenv("KAFKA_PING_TOPIC"),
 				"mail":      os.Getenv("KAFKA_MAIL_TOPIC"),
