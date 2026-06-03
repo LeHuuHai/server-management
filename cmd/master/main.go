@@ -46,9 +46,7 @@ func Serve(
 
 	// cors
 	r.Use(cors.New(cors.Config{
-		AllowOrigins: []string{
-			"http://localhost:8081",
-		},
+		AllowOrigins: rt.Config.AppConfig.CORSOrigins,
 
 		AllowMethods: []string{
 			"GET",

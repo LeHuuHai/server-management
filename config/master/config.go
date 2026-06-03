@@ -4,6 +4,7 @@ import (
 	"net/mail"
 	"os"
 	"strconv"
+	"strings"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
 	"github.com/joho/godotenv"
@@ -25,6 +26,7 @@ type AppConfig struct {
 	HeartbeatTimeout int
 	AdMail           string
 	ReportKey        string
+	CORSOrigins      []string
 }
 
 type JWTConfig struct {
@@ -88,6 +90,7 @@ func Load() (*Config, error) {
 			HeartbeatTimeout: heartbeatTimeout,
 			AdMail:           os.Getenv("APP_ADMAIL"),
 			ReportKey:        os.Getenv("APP_REPORT_KEY"),
+			CORSOrigins:      strings.Split(os.Getenv("APP_CORS_ORIGIN"), ","),
 		},
 		JWTConfig: &JWTConfig{
 			AccessSecret:   os.Getenv("JWT_ACCESS_SECRET"),
