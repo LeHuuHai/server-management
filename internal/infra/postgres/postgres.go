@@ -2,6 +2,7 @@ package pg
 
 import (
 	"fmt"
+	"log/slog"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
@@ -26,5 +27,6 @@ func Connect(config *commonconfig.PostgresConfig) (*gorm.DB, error) {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrConnectPostgres, err)
 	}
 
+	slog.Info("Connected to Postgres successfully", "host", host, "port", port, "database", dbname, "user", user, "password", password)
 	return db, nil
 }

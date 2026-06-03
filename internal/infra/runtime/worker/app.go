@@ -1,6 +1,8 @@
 package workerruntime
 
 import (
+	"log/slog"
+
 	workerconfig "github.com/LeHuuHai/server-management/config/worker"
 	kfk "github.com/LeHuuHai/server-management/internal/infra/kafka"
 	"github.com/segmentio/kafka-go"
@@ -31,11 +33,13 @@ func NewApp(cfg *workerconfig.Config) (*App, error) {
 		return nil, err
 	}
 
-	return &App{
+	app := App{
 		Config:      cfg,
 		SyncWriter:  syncWriter,
 		AsyncWriter: asyncWriter,
 		PingReader:  pingReader,
 		MailReader:  mailReader,
-	}, nil
+	}
+	slog.Info("App initialized successfully", "app", app)
+	return &app, nil
 }

@@ -2,6 +2,7 @@ package masterruntime
 
 import (
 	"fmt"
+	"log/slog"
 
 	masterconfig "github.com/LeHuuHai/server-management/config/master"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
@@ -58,7 +59,7 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
-	return &App{
+	app := App{
 		Config:          cfg,
 		JWTProvider:     jwtProvider,
 		DB:              db,
@@ -67,5 +68,7 @@ func NewApp(cfg *masterconfig.Config) (*App, error) {
 		AsyncWriter:     asyncWriter,
 		HeartbeatReader: heartbeatReader,
 		RdbClient:       rdbClient,
-	}, nil
+	}
+	slog.Info("App initialized successfully", "app", app)
+	return &app, nil
 }

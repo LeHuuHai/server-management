@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net"
 	"strconv"
 	"sync"
@@ -41,11 +42,8 @@ func Serve(
 
 	strictHandler := api.NewStrictHandler(h, []api.StrictMiddlewareFunc{mw})
 
-	// router
-	r := gin.Default()
-
 	// cors
-	r.Use(cors.New(cors.Config{
+	corsConfig := cors.Config{
 		AllowOrigins: rt.Config.AppConfig.CORSOrigins,
 
 		AllowMethods: []string{
@@ -69,7 +67,13 @@ func Serve(
 		},
 
 		AllowCredentials: true,
-	}))
+	}
+
+	// router
+	r := gin.Default()
+
+	r.Use(cors.New(corsConfig))
+	slog.Info("CORS config applied", "config", corsConfig)
 
 	api.RegisterHandlers(r, strictHandler)
 
@@ -77,6 +81,7 @@ func Serve(
 		rt.Config.AppConfig.Host,
 		strconv.Itoa(rt.Config.AppConfig.Port),
 	)
+	slog.Info("Starting server", "addr", addr)
 
 	if err := r.Run(addr); err != nil {
 		log.Fatal(err)
@@ -127,7 +132,7 @@ func CheckServer(
 				}
 			}
 			elapse := time.Since(start)
-			log.Printf("publish %d servers in %v", cnt, elapse)
+			slog.Info("CheckServer tick", "published_servers", cnt, "elapse", elapse)
 		}
 	}
 }
@@ -193,6 +198,7 @@ func ReadTopic(
 		if err != nil {
 			continue
 		}
+		slog.Info("Received heartbeat", "server_id", res.ServerID, "timestamp", res.Timestamp)
 		s := model.ServerMetadata{
 			ServerID:        res.ServerID,
 			LastHeartbeatAt: &res.Timestamp,

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/LeHuuHai/server-management/internal/model"
@@ -38,6 +39,7 @@ func (s *BatchESService) Run(ctx context.Context) {
 		go func(data []model.ServerEvent) {
 			_ = s.FlushFunc(data)
 		}(tmp)
+		slog.Info("Flushing batch to ES", "batch_size", len(tmp))
 	}
 
 	for {

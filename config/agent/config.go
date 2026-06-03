@@ -29,12 +29,13 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	cfg := Config{
 		AppConfig: &AppConfig{
 			ServerID:        os.Getenv("APP_SERVER_ID"),
 			HeartbeatURL:    os.Getenv("APP_HEARTBEAT_URL"),
 			HeartbeatAPIKey: os.Getenv("APP_HEARTBEAT_KEY"),
 			CycleHeartbeat:  cycleHeartbeat,
 		},
-	}, nil
+	}
+	return &cfg, nil
 }

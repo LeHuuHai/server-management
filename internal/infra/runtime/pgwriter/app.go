@@ -2,6 +2,7 @@ package pgwriterruntime
 
 import (
 	"fmt"
+	"log/slog"
 
 	pgwriterconfig "github.com/LeHuuHai/server-management/config/pgwriter"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
@@ -39,10 +40,12 @@ func NewApp(cfg *pgwriterconfig.Config) (*App, error) {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
-	return &App{
+	app := App{
 		Config:          cfg,
 		DB:              db,
 		PingResReader:   pingResReader,
 		HeartbeatReader: heartbeatReader,
-	}, nil
+	}
+	slog.Info("App initialized successfully", "app", app)
+	return &app, nil
 }

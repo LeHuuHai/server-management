@@ -1,6 +1,7 @@
 package masterconfig
 
 import (
+	"log/slog"
 	"net/mail"
 	"os"
 	"strconv"
@@ -82,7 +83,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	cfg := Config{
 		AppConfig: &AppConfig{
 			Port:             appPort,
 			Host:             os.Getenv("APP_HOST"),
@@ -130,5 +131,7 @@ func Load() (*Config, error) {
 			Password: os.Getenv("ES_PASSWORD"),
 			Index:    os.Getenv("ES_INDEX"),
 		},
-	}, nil
+	}
+	slog.Info("Config loaded", "config", cfg)
+	return &cfg, nil
 }

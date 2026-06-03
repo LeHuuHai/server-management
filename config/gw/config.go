@@ -1,6 +1,7 @@
 package gwconfig
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -30,7 +31,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	cfg := Config{
 		AppConfig: &AppConfig{
 			Port:         appPort,
 			Host:         os.Getenv("APP_HOST"),
@@ -44,5 +45,7 @@ func Load() (*Config, error) {
 				"heartbeat": os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
 			},
 		},
-	}, nil
+	}
+	slog.Info("Config loaded", "config", cfg)
+	return &cfg, nil
 }

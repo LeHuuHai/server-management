@@ -1,6 +1,7 @@
 package kfk
 
 import (
+	"log/slog"
 	"strings"
 	"time"
 
@@ -13,6 +14,7 @@ func ConnectWriter(config *commonconfig.KafkaConfig) (*kafka.Writer, *kafka.Writ
 	brokers := strings.Split(config.Writer.Broker, ",")
 	syncWriter := newSyncWriter(brokers)
 	asyncWriter := newAsyncWriter(brokers)
+	slog.Info("Kafka writers connected", "brokers", brokers)
 	return syncWriter, asyncWriter, nil
 }
 
@@ -35,37 +37,43 @@ func newAsyncWriter(brokers []string) *kafka.Writer {
 
 func ConnectWorkerReader(config *commonconfig.KafkaConfig) (*kafka.Reader, *kafka.Reader, error) {
 	brokers := strings.Split(config.Reader.Broker, ",")
-	return kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     brokers,
-			Topic:       config.Topics["ping"],
-			GroupID:     config.Reader.ConsumerGroupId,
-			StartOffset: kafka.LastOffset,
-		}),
-		kafka.NewReader(kafka.ReaderConfig{
-			Brokers:     brokers,
-			Topic:       config.Topics["mail"],
-			GroupID:     config.Reader.ConsumerGroupId,
-			StartOffset: kafka.LastOffset,
-		}),
-		nil
+	pingReader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     brokers,
+		Topic:       config.Topics["ping"],
+		GroupID:     config.Reader.ConsumerGroupId,
+		StartOffset: kafka.LastOffset,
+	})
+	slog.Info("Kafka ping readers connected", "brokers", brokers, "topics", config.Topics["ping"], "groupId", config.Reader.ConsumerGroupId)
+	mailReader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers:     brokers,
+		Topic:       config.Topics["mail"],
+		GroupID:     config.Reader.ConsumerGroupId,
+		StartOffset: kafka.LastOffset,
+	})
+	slog.Info("Kafka mail readers connected", "brokers", brokers, "topics", config.Topics["mail"], "groupId", config.Reader.ConsumerGroupId)
+	return pingReader, mailReader, nil
 }
 
 func ConnectPingResReader(config *commonconfig.KafkaConfig) (*kafka.Reader, error) {
 	brokers := strings.Split(config.Reader.Broker, ",")
-	return kafka.NewReader(kafka.ReaderConfig{
+	pingResReader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     brokers,
 		Topic:       config.Topics["ping_res"],
 		GroupID:     config.Reader.ConsumerGroupId,
 		StartOffset: kafka.LastOffset,
-	}), nil
+	})
+	slog.Info("Kafka ping res readers connected", "brokers", brokers, "topics", config.Topics["ping_res"], "groupId", config.Reader.ConsumerGroupId)
+	return pingResReader, nil
 }
 
 func ConnectHeartbeatReader(config *commonconfig.KafkaConfig) (*kafka.Reader, error) {
 	brokers := strings.Split(config.Reader.Broker, ",")
-	return kafka.NewReader(kafka.ReaderConfig{
+	heartbeatReader := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     brokers,
 		Topic:       config.Topics["heartbeat"],
 		GroupID:     config.Reader.ConsumerGroupId,
 		StartOffset: kafka.LastOffset,
-	}), nil
+	})
+	slog.Info("Kafka heartbeat readers connected", "brokers", brokers, "topics", config.Topics["heartbeat"], "groupId", config.Reader.ConsumerGroupId)
+	return heartbeatReader, nil
 }

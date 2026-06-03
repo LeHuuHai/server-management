@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -40,6 +41,7 @@ func main() {
 			); err != nil {
 				log.Printf("heartbeat failed: %v", err)
 			}
+			slog.Info("Sent heartbeat")
 
 		case <-ctx.Done():
 			return

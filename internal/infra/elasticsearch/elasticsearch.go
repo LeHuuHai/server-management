@@ -2,6 +2,7 @@ package es
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
@@ -26,6 +27,6 @@ func Connect(config *commonconfig.ElasticsearchConfig) (*elasticsearch.Client, e
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrConnectElasticsearch, err)
 	}
-
+	slog.Info("Elasticsearch client connected", "urls", cfg.Addresses)
 	return esclient, nil
 }

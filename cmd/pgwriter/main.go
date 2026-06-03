@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -36,6 +37,7 @@ func ReadPingResTopic(
 		if err != nil {
 			continue
 		}
+		slog.Info("Received ping response", "server_id", res.ServerID, "status", res.Status)
 		s := model.Server{
 			ServerID:   res.ServerID,
 			Status:     model.ServerStatus(res.Status),
@@ -73,6 +75,7 @@ func ReadHeartbeatTopic(
 		if err != nil {
 			continue
 		}
+		slog.Info("Received heartbeat", "server_id", res.ServerID)
 		s := model.Server{
 			ServerID:   res.ServerID,
 			Status:     model.StatusOnline,

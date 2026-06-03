@@ -2,6 +2,7 @@ package gwruntime
 
 import (
 	"fmt"
+	"log/slog"
 
 	gwconfig "github.com/LeHuuHai/server-management/config/gw"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
@@ -28,9 +29,11 @@ func NewApp(cfg *gwconfig.Config) (*App, error) {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
-	return &App{
+	app := App{
 		Config:      cfg,
 		SyncWriter:  syncWriter,
 		AsyncWriter: asyncWriter,
-	}, nil
+	}
+	slog.Info("App initialized successfully", "app", app)
+	return &app, nil
 }

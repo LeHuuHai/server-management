@@ -2,6 +2,7 @@ package eswriterruntime
 
 import (
 	"fmt"
+	"log/slog"
 
 	eswriterconfig "github.com/LeHuuHai/server-management/config/eswriter"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
@@ -39,10 +40,12 @@ func NewApp(cfg *eswriterconfig.Config) (*App, error) {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
-	return &App{
+	app := App{
 		Config:          cfg,
 		ESClient:        esclient,
 		PingResReader:   pingResReader,
 		HeartbeatReader: heartbeatReader,
-	}, nil
+	}
+	slog.Info("App initialized successfully", "app", app)
+	return &app, nil
 }

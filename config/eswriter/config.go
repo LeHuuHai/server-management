@@ -1,6 +1,7 @@
 package eswriterconfig
 
 import (
+	"log/slog"
 	"os"
 
 	commonconfig "github.com/LeHuuHai/server-management/config/common"
@@ -22,7 +23,7 @@ func Load() (*Config, error) {
 		panic("Error loading .env file")
 	}
 
-	return &Config{
+	cfg := Config{
 		AppConfig: &AppConfig{},
 		KafkaConfig: &commonconfig.KafkaConfig{
 			Reader: &commonconfig.KafkaReaderConfig{
@@ -38,5 +39,7 @@ func Load() (*Config, error) {
 			URL:   os.Getenv("ES_URL"),
 			Index: os.Getenv("ES_INDEX"),
 		},
-	}, nil
+	}
+	slog.Info("Config loaded", "config", cfg)
+	return &cfg, nil
 }

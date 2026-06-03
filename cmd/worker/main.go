@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -48,6 +49,7 @@ func CheckServer(
 				log.Println(err.Error())
 				continue
 			}
+			slog.Info("Received ping request", "server_id", pingReq.ServerID, "ip", pingReq.IP)
 			select {
 			case jobs <- pingReq:
 			case <-ctx.Done():
@@ -104,6 +106,7 @@ func CheckServer(
 					if err != nil {
 						log.Println(err.Error())
 					}
+					slog.Info("Processed ping request", "server_id", req.ServerID, "status", res.Status)
 				}
 			}
 		}()
@@ -132,6 +135,7 @@ func SendMail(
 			log.Println(err.Error())
 			continue
 		}
+		slog.Info("Received mail request", "to", mailReq.Mail.To, "filename", mailReq.Mail.Attachments[0].Filename)
 		// attachments
 		valid := true
 		for i, attachment := range mailReq.Mail.Attachments {
@@ -161,6 +165,7 @@ func SendMail(
 			continue
 		}
 		consumer.Commit(ctx, msg)
+		slog.Info("Processed mail request", "to", mailReq.Mail.To, "filename", mailReq.Mail.Attachments[0].Filename)
 	}
 }
 

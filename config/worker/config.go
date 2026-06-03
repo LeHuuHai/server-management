@@ -1,6 +1,7 @@
 package workerconfig
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -43,7 +44,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	cfg := Config{
 		AppConfig: &AppConfig{
 			NumThread: appNumThread,
 			ReportURL: os.Getenv("APP_REPORT_URL"),
@@ -69,6 +70,8 @@ func Load() (*Config, error) {
 			From:     os.Getenv("GOMAIL_FROM"),
 			Password: os.Getenv("GOMAIL_PASSWORD"),
 		},
-	}, nil
+	}
+	slog.Info("Config loaded", "config", cfg)
+	return &cfg, nil
 
 }

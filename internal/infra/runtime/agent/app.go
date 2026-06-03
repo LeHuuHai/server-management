@@ -2,6 +2,7 @@ package agentruntime
 
 import (
 	"fmt"
+	"log/slog"
 
 	agentconfig "github.com/LeHuuHai/server-management/config/agent"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
@@ -17,7 +18,9 @@ func NewApp(cfg *agentconfig.Config) (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
-	return &App{
+	app := App{
 		Config: cfg,
-	}, nil
+	}
+	slog.Info("App initialized successfully", "app", app)
+	return &app, nil
 }

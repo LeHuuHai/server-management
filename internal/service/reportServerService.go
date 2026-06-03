@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/mail"
 	"os"
 
@@ -78,7 +79,12 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 		Topic: s.mailTopic,
 		Value: mailReqByte,
 	}
-	return s.publisher.Publish(ctx, msg)
+	err = s.publisher.Publish(ctx, msg)
+	if err != nil {
+		return err
+	}
+	slog.Info("Report generated and mail request published", "file_path", filePath, "receivers", request.Receivers)
+	return nil
 }
 
 func NewReportServerService(

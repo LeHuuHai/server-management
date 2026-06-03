@@ -1,6 +1,7 @@
 package pgwriterconfig
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -28,7 +29,7 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
-	return &Config{
+	cfg := Config{
 		AppConfig: &AppConfig{},
 		KafkaConfig: &commonconfig.KafkaConfig{
 			Reader: &commonconfig.KafkaReaderConfig{
@@ -47,5 +48,7 @@ func Load() (*Config, error) {
 			Port:     pgport,
 			Database: os.Getenv("DB_DBNAME"),
 		},
-	}, nil
+	}
+	slog.Info("Config loaded", "config", cfg)
+	return &cfg, nil
 }

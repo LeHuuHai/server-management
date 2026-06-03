@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log/slog"
 	"time"
 
 	"github.com/LeHuuHai/server-management/internal/model"
@@ -37,6 +38,7 @@ func (s *BatchPGService) Run(ctx context.Context) {
 		go func(data map[string]model.Server) {
 			_ = s.FlushFunc(data)
 		}(tmp)
+		slog.Info("Flushing batch to PG", "batch_size", len(tmp))
 	}
 
 	for {
