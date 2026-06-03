@@ -20,7 +20,7 @@ type AppConfig struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load("./config/master/.env.master")
+	err := godotenv.Load("./config/gw/.env.gw")
 	if err != nil {
 		panic("Error loading .env file")
 	}
