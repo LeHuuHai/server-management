@@ -17,6 +17,11 @@ type JWTProvider struct {
 	refreshExpire int64
 }
 
+const (
+	TokenTypeAccess  = "access"
+	TokenTypeRefresh = "refresh"
+)
+
 func NewJWTProvider(cfg *masterconfig.JWTConfig) *JWTProvider {
 	return &JWTProvider{
 		accessSecret:  []byte(cfg.AccessSecret),
@@ -27,14 +32,23 @@ func NewJWTProvider(cfg *masterconfig.JWTConfig) *JWTProvider {
 }
 
 type AccessClaims struct {
-	UserID uint            `json:"user_id"`
-	Role   authdomain.Role `json:"role"`
+	UserID    uint            `json:"user_id"`
+	Role      authdomain.Role `json:"role"`
+	TokenType string          `json:"token_type"`
 	jwt.RegisteredClaims
 }
 
 type RefreshClaims struct {
-	UserID uint `json:"user_id"`
+	UserID    uint   `json:"user_id"`
+	TokenType string `json:"token_type"`
 	jwt.RegisteredClaims
+}
+
+func validateSigningMethod(token *jwt.Token) error {
+	if token.Method != jwt.SigningMethodHS256 {
+		return errors.New("unexpected signing method")
+	}
+	return nil
 }
 
 func (s *JWTProvider) GenerateAccessToken(
@@ -42,8 +56,9 @@ func (s *JWTProvider) GenerateAccessToken(
 ) (string, error) {
 
 	claims := AccessClaims{
-		UserID: account.UserID,
-		Role:   account.Role,
+		UserID:    account.UserID,
+		Role:      account.Role,
+		TokenType: TokenTypeAccess,
 
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(
@@ -66,7 +81,8 @@ func (s *JWTProvider) GenerateRefreshToken(
 ) (string, error) {
 
 	claims := RefreshClaims{
-		UserID: account.UserID,
+		UserID:    account.UserID,
+		TokenType: TokenTypeRefresh,
 
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(
@@ -87,11 +103,13 @@ func (s *JWTProvider) GenerateRefreshToken(
 func (s *JWTProvider) ParseAccessToken(
 	tokenString string,
 ) (*AccessClaims, error) {
-
 	token, err := jwt.ParseWithClaims(
 		tokenString,
 		&AccessClaims{},
 		func(token *jwt.Token) (interface{}, error) {
+			if err := validateSigningMethod(token); err != nil {
+				return nil, err
+			}
 			return s.accessSecret, nil
 		},
 	)
@@ -103,6 +121,9 @@ func (s *JWTProvider) ParseAccessToken(
 	claims, ok := token.Claims.(*AccessClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid access token")
+	}
+	if claims.TokenType != TokenTypeAccess {
+		return nil, errors.New("invalid access token type")
 	}
 
 	return claims, nil
@@ -116,6 +137,9 @@ func (s *JWTProvider) ParseRefreshToken(
 		tokenString,
 		&RefreshClaims{},
 		func(token *jwt.Token) (interface{}, error) {
+			if err := validateSigningMethod(token); err != nil {
+				return nil, err
+			}
 			return s.refreshSecret, nil
 		},
 	)
@@ -127,6 +151,9 @@ func (s *JWTProvider) ParseRefreshToken(
 	claims, ok := token.Claims.(*RefreshClaims)
 	if !ok || !token.Valid {
 		return nil, errors.New("invalid refresh token")
+	}
+	if claims.TokenType != TokenTypeRefresh {
+		return nil, errors.New("invalid refresh token type")
 	}
 
 	return claims, nil
