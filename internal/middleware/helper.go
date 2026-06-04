@@ -6,7 +6,7 @@ import (
 )
 
 func LoggerFromContext(ctx context.Context) *slog.Logger {
-	if logger, ok := ctx.Value("logger").(*slog.Logger); ok {
+	if logger, ok := ctx.Value(loggerKey).(*slog.Logger); ok {
 		return logger
 	}
 	return slog.Default()
