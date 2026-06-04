@@ -36,11 +36,12 @@ func Serve(
 	wg *sync.WaitGroup,
 	rt *masterruntime.App,
 	h *handler.Handler,
-	mw api.StrictMiddlewareFunc,
+	authmw api.StrictMiddlewareFunc,
+	logmw api.StrictMiddlewareFunc,
 ) {
 	defer wg.Done()
 
-	strictHandler := api.NewStrictHandler(h, []api.StrictMiddlewareFunc{mw})
+	strictHandler := api.NewStrictHandler(h, []api.StrictMiddlewareFunc{logmw, authmw})
 
 	// cors
 	corsConfig := cors.Config{
@@ -118,7 +119,7 @@ func CheckServer(
 				}
 				reqBytes, err := json.Marshal(req)
 				if err != nil {
-					log.Println(err.Error())
+					slog.Warn("Marshal request ping failed", slog.Any("request ping", req), slog.Any("err", err))
 					continue
 				}
 				msg := mq.Message{
@@ -127,7 +128,7 @@ func CheckServer(
 				}
 				err = publisher.Publish(ctx, msg)
 				if err != nil {
-					log.Println(err.Error())
+					slog.Warn("Publish request ping failed", slog.Any("request ping", req), slog.Any("err", err))
 					continue
 				}
 			}
@@ -167,7 +168,7 @@ func Report(
 			}
 			err := reportServerService.ReportServer(ctx, request)
 			if err != nil {
-				log.Println(err.Error())
+				slog.Warn("Report service failed", slog.Any("request", request), slog.Any("err", err))
 				continue
 			}
 		}
@@ -263,6 +264,7 @@ func main() {
 	jwtProvider := jwtprovider.NewJWTProvider(rt.Config.JWTConfig)
 	tokenBlocklistRedis := jwtprovider.NewTokenBlocklistRedis(rt.RdbClient)
 	accountRepo := pg.NewAccountRepository(rt.DB)
+	logger := slog.Default()
 
 	// service
 	serverInmemCache, err := inmem.NewServerInmemCache(ctx, serverRepo)
@@ -274,7 +276,8 @@ func main() {
 	authService := service.NewAuthService(jwtProvider, tokenBlocklistRedis, accountRepo)
 
 	// middleware
-	mw := middleware.NewAuthStrictMiddleware(jwtProvider, tokenBlocklistRedis, rt.Config.AppConfig.ReportKey)
+	authmw := middleware.NewAuthStrictMiddleware(jwtProvider, tokenBlocklistRedis, rt.Config.AppConfig.ReportKey)
+	logmw := middleware.NewLogStrictMiddleware(logger)
 
 	// handler
 	serverHandler := handler.NewServerHandler(
@@ -288,7 +291,7 @@ func main() {
 
 	var wg sync.WaitGroup
 	wg.Add(4)
-	go Serve(ctx, &wg, rt, h, mw)
+	go Serve(ctx, &wg, rt, h, authmw, logmw)
 	go CheckServer(ctx, &wg, rt, kfkPublisher, serverInmemCache)
 	go Report(ctx, &wg, rt, reportServerService)
 	go ListenHeartbeat(ctx, &wg, rt, serverInmemCache)

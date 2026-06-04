@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"log"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -39,14 +38,14 @@ func CheckServer(
 			// read req
 			msg, err := consumer.Read(ctx)
 			if err != nil {
-				log.Println(err.Error())
+				slog.Warn("Read topic ping failed", slog.Any("err", err))
 				continue
 			}
 			consumer.Commit(ctx, msg)
 			var pingReq model.RequestPing
 			err = json.Unmarshal(msg.Value, &pingReq)
 			if err != nil {
-				log.Println(err.Error())
+				slog.Warn("Marshal request ping failed", slog.Any("bytes", msg.Value), slog.Any("err", err))
 				continue
 			}
 			slog.Info("Received ping request", "server_id", pingReq.ServerID, "ip", pingReq.IP)
@@ -95,7 +94,7 @@ func CheckServer(
 
 					resBytes, err := json.Marshal(res)
 					if err != nil {
-						log.Println(err.Error())
+						slog.Warn("Marshal response ping failed", slog.Any("response ping", res), slog.Any("err", err))
 						continue
 					}
 					msg := mq.Message{
@@ -104,7 +103,7 @@ func CheckServer(
 					}
 					err = publisher.Publish(ctx, msg)
 					if err != nil {
-						log.Println(err.Error())
+						slog.Warn("Publish response ping failed", slog.Any("response ping", res), slog.Any("err", err))
 					}
 					slog.Info("Processed ping request", "server_id", req.ServerID, "status", res.Status)
 				}
@@ -126,13 +125,13 @@ func SendMail(
 	for {
 		msg, err := consumer.Read(ctx)
 		if err != nil {
-			log.Println(err.Error())
+			slog.Warn("Read topic mail failed", slog.Any("err", err))
 			continue
 		}
 		var mailReq model.RequestMail
 		err = json.Unmarshal(msg.Value, &mailReq)
 		if err != nil {
-			log.Println(err.Error())
+			slog.Warn("Marshal request mail failed", slog.Any("request mail", mailReq), slog.Any("err", err))
 			continue
 		}
 		slog.Info("Received mail request", "to", mailReq.Mail.To, "filename", mailReq.Mail.Attachments[0].Filename)
@@ -144,11 +143,7 @@ func SendMail(
 				attachment.Filename,
 			)
 			if err != nil {
-				log.Printf(
-					"download attachment %s failed: %v",
-					attachment.Filename,
-					err,
-				)
+				slog.Warn("Download report file failed", slog.Any("file name", attachment.Filename), slog.Any("err", err))
 				valid = false
 				break
 			}
@@ -156,12 +151,12 @@ func SendMail(
 			mailReq.Mail.Attachments[i].Data = data
 		}
 		if !valid {
-			log.Println("cannot send mail because of miss attachment")
+			slog.Warn("Cannot send mail because of miss attachment", slog.Any("file name", mailReq.Mail.Attachments))
 			continue
 		}
 		err = sender.Send(ctx, mailReq.Mail)
 		if err != nil {
-			log.Println(err.Error())
+			slog.Warn("Send mail failed", slog.Any("to", mailReq.Mail.To), slog.Any("filename", mailReq.Mail.Attachments[0].Filename), slog.Any("err", err))
 			continue
 		}
 		consumer.Commit(ctx, msg)

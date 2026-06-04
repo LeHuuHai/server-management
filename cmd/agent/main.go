@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"time"
@@ -39,7 +38,7 @@ func main() {
 				cfg.AppConfig.ServerID,
 				cfg.AppConfig.HeartbeatAPIKey,
 			); err != nil {
-				log.Printf("heartbeat failed: %v", err)
+				slog.Warn("Send heartbeat failed", slog.Any("err", err))
 			}
 			slog.Info("Sent heartbeat")
 
