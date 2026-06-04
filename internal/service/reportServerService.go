@@ -8,16 +8,16 @@ import (
 	"net/mail"
 	"os"
 
+	"github.com/LeHuuHai/server-management/internal/domain/aggregator"
 	"github.com/LeHuuHai/server-management/internal/domain/file/export"
 	"github.com/LeHuuHai/server-management/internal/domain/mq"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
-	es "github.com/LeHuuHai/server-management/internal/infra/elasticsearch"
 	"github.com/LeHuuHai/server-management/internal/model"
 	"github.com/google/uuid"
 )
 
 type ReportServerService struct {
-	aggregator *es.CachedAggregator
+	aggregator aggregator.ReportAggregator
 	exporter   export.ReportServerExporter
 	publisher  mq.Publisher
 	mailTopic  string
@@ -88,7 +88,7 @@ func (s *ReportServerService) ReportServer(ctx context.Context, request model.Ge
 }
 
 func NewReportServerService(
-	a *es.CachedAggregator,
+	a aggregator.ReportAggregator,
 	e export.ReportServerExporter,
 	p mq.Publisher,
 	mailTopic string,
