@@ -30,6 +30,11 @@ func NewServerInmemCache(ctx context.Context, r repo.ServerRepositoryInterface) 
 func (c *serverInmemCache) Create(ctx context.Context, s model.ServerMetadata) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	if _, ok := c.servers[s.ServerID]; ok {
+		return
+	}
+
 	c.servers[s.ServerID] = &model.ServerMetadata{
 		ServerID:   s.ServerID,
 		ServerName: s.ServerName,
@@ -40,11 +45,17 @@ func (c *serverInmemCache) Create(ctx context.Context, s model.ServerMetadata) {
 func (c *serverInmemCache) Update(ctx context.Context, s model.ServerMetadata) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
+
+	existing, ok := c.servers[s.ServerID]
+	if !ok {
+		return
+	}
+
 	c.servers[s.ServerID] = &model.ServerMetadata{
 		ServerID:        s.ServerID,
 		ServerName:      s.ServerName,
 		IPv4:            s.IPv4,
-		LastHeartbeatAt: c.servers[s.ServerID].LastHeartbeatAt,
+		LastHeartbeatAt: existing.LastHeartbeatAt,
 	}
 }
 
@@ -69,6 +80,11 @@ func (c *serverInmemCache) BatchCreate(ctx context.Context, s []model.ServerMeta
 	defer c.mu.Unlock()
 	for i := range s {
 		item := s[i]
+
+		if _, ok := c.servers[item.ServerID]; ok {
+			continue
+		}
+
 		c.servers[item.ServerID] = &model.ServerMetadata{
 			ServerID:   item.ServerID,
 			ServerName: item.ServerName,
