@@ -4,6 +4,7 @@ import (
 	"log/slog"
 
 	"github.com/LeHuuHai/server-management/api"
+	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	"github.com/gin-gonic/gin"
 )
@@ -17,7 +18,7 @@ var getReportOps = map[string]bool{
 	"GetReportFile": true,
 }
 
-func NewAuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider, blocklist *jwtprovider.TokenBlocklistRedis, reportKey string) api.StrictMiddlewareFunc {
+func NewAuthStrictMiddleware(jwtProvider *jwtprovider.JWTProvider, blocklist cache.TokenBlocklist, reportKey string) api.StrictMiddlewareFunc {
 	validToken := NewValidToken(jwtProvider, blocklist)
 	validGetReportKey := NewAPIKeyMiddleware(reportKey)
 

@@ -1,4 +1,4 @@
-package jwtprovider
+package rdb
 
 import (
 	"context"

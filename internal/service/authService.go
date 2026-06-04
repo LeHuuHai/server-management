@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
@@ -12,13 +13,13 @@ import (
 
 type AuthService struct {
 	jwtProvider *jwtprovider.JWTProvider
-	blocklist   *jwtprovider.TokenBlocklistRedis
+	blocklist   cache.TokenBlocklist
 	accountRepo repo.AccountRepoInterface
 }
 
 func NewAuthService(
 	jwtProvider *jwtprovider.JWTProvider,
-	blocklist *jwtprovider.TokenBlocklistRedis,
+	blocklist cache.TokenBlocklist,
 	accountRepo repo.AccountRepoInterface,
 ) *AuthService {
 	return &AuthService{

@@ -262,7 +262,7 @@ func main() {
 	esCachedAggregator := es.NewCachedAggregator(esAggregator, dailyReportRedisCache)
 	reportServerXLSXExporter := xlsxexport.NewReportServerXLSXExporter()
 	jwtProvider := jwtprovider.NewJWTProvider(rt.Config.JWTConfig)
-	tokenBlocklistRedis := jwtprovider.NewTokenBlocklistRedis(rt.RdbClient)
+	tokenBlocklistRedis := rdb.NewTokenBlocklistRedis(rt.RdbClient)
 	accountRepo := pg.NewAccountRepository(rt.DB)
 	logger := slog.Default()
 

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	authdomain "github.com/LeHuuHai/server-management/internal/domain/auth"
+	"github.com/LeHuuHai/server-management/internal/domain/cache"
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +14,7 @@ const (
 	BearerAuthScopes = "bearerAuth.Scopes"
 )
 
-func NewValidToken(jwtProvider *jwtprovider.JWTProvider, blocklist *jwtprovider.TokenBlocklistRedis) gin.HandlerFunc {
+func NewValidToken(jwtProvider *jwtprovider.JWTProvider, blocklist cache.TokenBlocklist) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
