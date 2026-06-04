@@ -22,6 +22,6 @@ func Connect(config *commonconfig.RedisConfig) (*redis.Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrConnectRedis, err)
 	}
-	slog.Info("Connected to Redis successfully", "url", config.URL, "db", config.DB, "password", config.Password)
+	slog.Info("Redis connected", "url", config.URL, "db", config.DB, "password", config.Password)
 	return rdb, nil
 }

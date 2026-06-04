@@ -27,6 +27,6 @@ func Connect(config *commonconfig.ElasticsearchConfig) (*elasticsearch.Client, e
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrConnectElasticsearch, err)
 	}
-	slog.Info("Elasticsearch client connected", "urls", cfg.Addresses)
+	slog.Info("Elasticsearch connected", "urls", cfg.Addresses)
 	return esclient, nil
 }

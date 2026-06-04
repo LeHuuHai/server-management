@@ -37,6 +37,38 @@ type JWTConfig struct {
 	RefreshExpired int
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("port", c.Port),
+		slog.String("host", c.Host),
+		slog.Int("cycle_ping", c.CyclePing),
+		slog.Int("heartbeat_timeout", c.HeartbeatTimeout),
+		slog.String("ad_mail", c.AdMail),
+		slog.String("report_key", c.ReportKey),
+		slog.Any("cors_origins", c.CORSOrigins),
+	)
+}
+
+func (c *JWTConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("access_secret", c.AccessSecret),
+		slog.String("refresh_secret", c.RefreshSecret),
+		slog.Int("access_expired", c.AccessExpired),
+		slog.Int("refresh_expired", c.RefreshExpired),
+	)
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app", c.AppConfig),
+		slog.Any("jwt", c.JWTConfig),
+		slog.Any("db", c.DBConfig),
+		slog.Any("redis", c.RedisConfig),
+		slog.Any("kafka", c.KafkaConfig),
+		slog.Any("es", c.ESConfig),
+	)
+}
+
 func Load() (*Config, error) {
 	err := godotenv.Load("./config/master/.env.master")
 	if err != nil {
@@ -132,6 +164,6 @@ func Load() (*Config, error) {
 			Index:    os.Getenv("ES_INDEX"),
 		},
 	}
-	slog.Info("Config loaded", "config", cfg)
+	slog.Info("Config loaded", "config", &cfg)
 	return &cfg, nil
 }

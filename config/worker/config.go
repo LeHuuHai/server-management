@@ -28,6 +28,31 @@ type GomailConfig struct {
 	Password string
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("num_thread", c.NumThread),
+		slog.String("report_url", c.ReportURL),
+		slog.String("report_key", c.ReportKey),
+	)
+}
+
+func (c *GomailConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("addr", c.Addr),
+		slog.Int("port", c.Port),
+		slog.String("from", c.From),
+		slog.String("password", c.Password),
+	)
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app", c.AppConfig),
+		slog.Any("kafka", c.KafkaConfig),
+		slog.Any("sender", c.SenderConfig),
+	)
+}
+
 func Load() (*Config, error) {
 	err := godotenv.Load("./config/worker/.env.worker")
 	if err != nil {
@@ -71,7 +96,7 @@ func Load() (*Config, error) {
 			Password: os.Getenv("GOMAIL_PASSWORD"),
 		},
 	}
-	slog.Info("Config loaded", "config", cfg)
+	slog.Info("Config loaded", "config", &cfg)
 	return &cfg, nil
 
 }

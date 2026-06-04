@@ -18,6 +18,18 @@ type Config struct {
 type AppConfig struct {
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue()
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app", c.AppConfig),
+		slog.Any("kafka", c.KafkaConfig),
+		slog.Any("db", c.DBConfig),
+	)
+}
+
 func Load() (*Config, error) {
 	err := godotenv.Load("./config/pgwriter/.env.pgwriter")
 	if err != nil {
@@ -49,6 +61,6 @@ func Load() (*Config, error) {
 			Database: os.Getenv("DB_DBNAME"),
 		},
 	}
-	slog.Info("Config loaded", "config", cfg)
+	slog.Info("Config loaded", "config", &cfg)
 	return &cfg, nil
 }

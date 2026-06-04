@@ -20,6 +20,21 @@ type AppConfig struct {
 	HeartbeatKey string
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Int("port", c.Port),
+		slog.String("host", c.Host),
+		slog.String("heartbeat_key", c.HeartbeatKey),
+	)
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app", c.AppConfig),
+		slog.Any("kafka", c.KafkaConfig),
+	)
+}
+
 func Load() (*Config, error) {
 	err := godotenv.Load("./config/gw/.env.gw")
 	if err != nil {
@@ -46,6 +61,6 @@ func Load() (*Config, error) {
 			},
 		},
 	}
-	slog.Info("Config loaded", "config", cfg)
+	slog.Info("Config loaded", "config", &cfg)
 	return &cfg, nil
 }

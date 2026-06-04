@@ -73,7 +73,7 @@ func Serve(
 	r := gin.Default()
 
 	r.Use(cors.New(corsConfig))
-	slog.Info("CORS config applied", "config", corsConfig)
+	slog.Info("CORS config applied", "allow origins", corsConfig.AllowOrigins, "allow methods", corsConfig.AllowMethods, "allow headers", corsConfig.AllowHeaders)
 
 	api.RegisterHandlers(r, strictHandler)
 

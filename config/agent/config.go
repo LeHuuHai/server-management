@@ -1,6 +1,7 @@
 package agentconfig
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -16,6 +17,21 @@ type AppConfig struct {
 	HeartbeatURL    string
 	HeartbeatAPIKey string
 	CycleHeartbeat  int
+}
+
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("server_id", c.ServerID),
+		slog.Any("heartbeat_url", c.HeartbeatURL),
+		slog.Any("heartbeat_api_key", c.HeartbeatAPIKey),
+		slog.Any("cycle_heartbeat", c.CycleHeartbeat),
+	)
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app", c.AppConfig),
+	)
 }
 
 func Load() (*Config, error) {
@@ -37,5 +53,6 @@ func Load() (*Config, error) {
 			CycleHeartbeat:  cycleHeartbeat,
 		},
 	}
+	slog.Info("Config loaded", "config", &cfg)
 	return &cfg, nil
 }
