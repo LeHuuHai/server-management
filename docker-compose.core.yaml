@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "7"
+
 services:
   master:
     build:
@@ -14,6 +20,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.20
+    logging: *default-logging
   
   worker:
     build:
@@ -28,6 +35,7 @@ services:
       - ./config/worker/.env.worker:/app/config/worker/.env.worker
     networks:
       - sm_network
+    logging: *default-logging
 
   eswriter:
     build:
@@ -40,6 +48,7 @@ services:
       - ./config/eswriter/.env.eswriter:/app/config/eswriter/.env.eswriter
     networks:
       - sm_network
+    logging: *default-logging
 
   pgwriter:
     build:
@@ -52,6 +61,7 @@ services:
       - ./config/pgwriter/.env.pgwriter:/app/config/pgwriter/.env.pgwriter
     networks:
       - sm_network
+    logging: *default-logging
 
   gw:
     build:
@@ -68,6 +78,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.21
+    logging: *default-logging
 
 networks:
   sm_network:

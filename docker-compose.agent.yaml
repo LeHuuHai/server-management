@@ -1,3 +1,9 @@
+x-logging: &default-logging
+  driver: "json-file"
+  options:
+    max-size: "10m"
+    max-file: "7"
+
 services:
   agent-base:
     build:
@@ -10,6 +16,7 @@ services:
     command: ["echo", "agent image ready"]
     networks:
       - sm_network
+    logging: *default-logging
 
   agent-001:
     image: sm_agent
@@ -24,6 +31,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.101
+    logging: *default-logging
  
   agent-002:
     image: sm_agent
@@ -38,7 +46,8 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.102
- 
+    logging: *default-logging
+
   agent-003:
     image: sm_agent
     container_name: sm_agent_003
@@ -52,6 +61,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.103
+    logging: *default-logging
  
   agent-004:
     image: sm_agent
@@ -66,7 +76,8 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.104
- 
+    logging: *default-logging
+
   agent-005:
     image: sm_agent
     container_name: sm_agent_005
@@ -80,6 +91,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.105
+    logging: *default-logging
  
   agent-006:
     image: sm_agent
@@ -94,7 +106,8 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.106
- 
+    logging: *default-logging
+
   agent-007:
     image: sm_agent
     container_name: sm_agent_007
@@ -108,7 +121,8 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.107
- 
+    logging: *default-logging
+
   agent-008:
     image: sm_agent
     container_name: sm_agent_008
@@ -122,6 +136,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.108
+    logging: *default-logging
  
   agent-009:
     image: sm_agent
@@ -136,6 +151,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.109
+    logging: *default-logging
  
   agent-010:
     image: sm_agent
@@ -150,6 +166,7 @@ services:
     networks:
       sm_network:
         ipv4_address: 10.10.10.110
+    logging: *default-logging
         
 networks:
   sm_network:
