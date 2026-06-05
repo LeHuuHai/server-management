@@ -39,7 +39,7 @@ func (s *BatchServerMetadataService) Run(ctx context.Context) {
 		go func(data []model.ServerMetadata) {
 			_ = s.FlushFunc(data)
 		}(tmp)
-		slog.Info("Flushing batch to PG", "batch_size", len(tmp))
+		slog.Info("Flushing batch to immem", "batch_size", len(tmp))
 	}
 
 	for {
