@@ -219,6 +219,10 @@ paths:
                 file:
                   type: string
                   format: binary
+            
+            encoding:
+              file:
+                contentType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
 
       responses:
         "200":
@@ -287,7 +291,7 @@ paths:
                 type: string
               description: attachment; filename="servers.xlsx"
           content:
-            application/octet-stream:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
               schema:
                 type: string
                 format: binary

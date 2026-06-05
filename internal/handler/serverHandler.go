@@ -179,10 +179,10 @@ func (handler *ServerHandler) ExportServers(ctx context.Context, request api.Exp
 	logger.Info("handler: export servers success", slog.Int("size", buf.Len()))
 
 	contentDisposition := fmt.Sprintf(`attachment; filename="servers.%s"`, handler.exporter.FileType())
-	return api.ExportServers200ApplicationoctetStreamResponse{
+	return api.ExportServers200ApplicationvndOpenxmlformatsOfficedocumentSpreadsheetmlSheetResponse{
 		Body: buf,
 		Headers: api.ExportServers200ResponseHeaders{
-			ContentDisposition: &contentDisposition,
+			ContentDisposition: contentDisposition,
 		},
 	}, nil
 }
