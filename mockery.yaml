@@ -1,0 +1,59 @@
+# .mockery.yaml — đặt ở root project (cùng cấp go.mod)
+# Chạy: mockery
+# Yêu cầu: go install github.com/vektra/mockery/v2@latest
+
+with-expecter: true       # sinh EXPECT() API type-safe
+dir: "mocks"              # toàn bộ mock output vào thư mục mocks/
+outpkg: "mocks"           # package name trong file sinh ra
+mockname: "Mock{{.InterfaceName}}"
+filename: "mock_{{.InterfaceName}}.go"
+log-level: info
+
+packages:
+  # --- Repository ---
+  github.com/LeHuuHai/server-management/internal/domain/repo:
+    interfaces:
+      ServerRepositoryInterface:
+      AccountRepoInterface:
+
+  # --- Cache ---
+  github.com/LeHuuHai/server-management/internal/domain/cache:
+    interfaces:
+      ServerMetadataCacheInterface:
+      TokenBlocklist:
+
+  # --- Message Queue ---
+  github.com/LeHuuHai/server-management/internal/domain/mq:
+    interfaces:
+      Publisher:
+      Consumer:
+
+  # --- File: Export & Deserialize ---
+  github.com/LeHuuHai/server-management/internal/domain/file/export:
+    interfaces:
+      ServerExporter:
+      ReportServerExporter:
+
+  github.com/LeHuuHai/server-management/internal/domain/file/deserialize:
+    interfaces:
+      ServerDeserializer:
+
+  # --- Aggregator ---
+  github.com/LeHuuHai/server-management/internal/domain/aggregator:
+    interfaces:
+      ReportAggregator:
+
+  # --- Mail ---
+  github.com/LeHuuHai/server-management/internal/domain/mail:
+    interfaces:
+      Sender:
+
+  # --- Service ---
+  github.com/LeHuuHai/server-management/internal/domain/service:
+    interfaces:
+      AuthServiceInterface:
+      ServerServiceInterface:
+      ReportServiceInterface:
+      GwServiceInterface:
+      DownloadServiceInterface:
+      BatchServiceInterface:
