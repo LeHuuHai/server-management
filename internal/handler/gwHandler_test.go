@@ -19,9 +19,9 @@ import (
 
 func TestGwHandler_SendHeartbeat_Success(t *testing.T) {
 	mockGW := mocks.NewMockGWServiceInterface(t)
-	mockGW.EXPECT().PublishHeartbeat(mock.Anything, model.Heartbeat{
-		ServerID: "srv-01",
-	})
+	mockGW.EXPECT().PublishHeartbeat(mock.Anything, mock.MatchedBy(func(hb model.Heartbeat) bool {
+		return hb.ServerID == "srv-01"
+	})).Return(nil) // k so sanh time stamp
 
 	handler := handler.NewGwHandler(mockGW)
 	resp, err := handler.SendHeartbeat(context.Background(), gwapi.SendHeartbeatRequestObject{
