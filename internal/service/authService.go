@@ -8,6 +8,7 @@ import (
 	"github.com/LeHuuHai/server-management/internal/domain/repo"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
+	"github.com/LeHuuHai/server-management/internal/model"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,12 +30,7 @@ func NewAuthService(
 	}
 }
 
-type LoginResult struct {
-	AccessToken  string `json:"access_token"`
-	RefreshToken string `json:"refresh_token"`
-}
-
-func (s *AuthService) Login(userName string, password string) (*LoginResult, error) {
+func (s *AuthService) Login(userName string, password string) (*model.LoginResult, error) {
 	account, err := s.accountRepo.FindByUserName(userName)
 	if err != nil {
 		return nil, err
@@ -59,7 +55,7 @@ func (s *AuthService) Login(userName string, password string) (*LoginResult, err
 		return nil, fmt.Errorf("%w: %v", apperr.ErrSignToken, err)
 	}
 
-	return &LoginResult{
+	return &model.LoginResult{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
 	}, nil

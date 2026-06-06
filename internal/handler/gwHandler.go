@@ -6,17 +6,17 @@ import (
 	"time"
 
 	gwapi "github.com/LeHuuHai/server-management/api/gw"
+	serviceinterface "github.com/LeHuuHai/server-management/internal/domain/service"
 	"github.com/LeHuuHai/server-management/internal/middleware"
 	"github.com/LeHuuHai/server-management/internal/model"
-	"github.com/LeHuuHai/server-management/internal/service"
 )
 
 // impl StrictServerInterface
 type GwHandler struct {
-	GwService *service.GwService
+	GwService serviceinterface.GWServiceInterface
 }
 
-func NewGwHandler(gwService *service.GwService) *GwHandler {
+func NewGwHandler(gwService serviceinterface.GWServiceInterface) *GwHandler {
 	return &GwHandler{
 		GwService: gwService,
 	}

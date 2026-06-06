@@ -6,16 +6,16 @@ import (
 	"log/slog"
 
 	"github.com/LeHuuHai/server-management/api"
+	serviceinterface "github.com/LeHuuHai/server-management/internal/domain/service"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/middleware"
-	"github.com/LeHuuHai/server-management/internal/service"
 )
 
 type AuthHandler struct {
-	authService *service.AuthService
+	authService serviceinterface.AuthServiceInterface
 }
 
-func NewAuthHandler(authService *service.AuthService) *AuthHandler {
+func NewAuthHandler(authService serviceinterface.AuthServiceInterface) *AuthHandler {
 	return &AuthHandler{
 		authService: authService,
 	}

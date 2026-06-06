@@ -13,21 +13,26 @@ import (
 
 	"github.com/LeHuuHai/server-management/internal/domain/file/deserialize"
 	"github.com/LeHuuHai/server-management/internal/domain/file/export"
+	serviceinterface "github.com/LeHuuHai/server-management/internal/domain/service"
 	apperr "github.com/LeHuuHai/server-management/internal/error"
 	"github.com/LeHuuHai/server-management/internal/middleware"
 	"github.com/LeHuuHai/server-management/internal/model"
-	"github.com/LeHuuHai/server-management/internal/service"
 )
 
 // impl StrictServerInterface
 type ServerHandler struct {
-	service       *service.ServerService
-	reportService *service.ReportServerService
+	service       serviceinterface.ServerServiceInterface
+	reportService serviceinterface.ReportServiceInterface
 	exporter      export.ServerExporter
 	deserialize   deserialize.ServerDeserializer
 }
 
-func NewServerHandler(s *service.ServerService, r *service.ReportServerService, e export.ServerExporter, d deserialize.ServerDeserializer) *ServerHandler {
+func NewServerHandler(
+	s serviceinterface.ServerServiceInterface,
+	r serviceinterface.ReportServiceInterface,
+	e export.ServerExporter,
+	d deserialize.ServerDeserializer,
+) *ServerHandler {
 	return &ServerHandler{
 		service:       s,
 		reportService: r,
