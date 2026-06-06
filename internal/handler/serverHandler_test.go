@@ -393,6 +393,7 @@ func TestServerHandler_ExportServers_ExportError_Returns500(t *testing.T) {
 		Servers: []model.Server{{ServerID: "s1"}},
 		Total:   1,
 	}, nil)
+	mockExp.EXPECT().FileType().Return("xlsx")
 	mockExp.EXPECT().Export(mock.Anything, mock.Anything, mock.Anything).Return(errors.New("write error"))
 
 	handler := handler.NewServerHandler(mockSvc, nil, mockExp, nil)
