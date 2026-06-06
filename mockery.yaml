@@ -54,6 +54,6 @@ packages:
       AuthServiceInterface:
       ServerServiceInterface:
       ReportServiceInterface:
-      GwServiceInterface:
+      GWServiceInterface:
       DownloadServiceInterface:
       BatchServiceInterface:
