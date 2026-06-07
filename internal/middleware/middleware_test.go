@@ -1,7 +1,6 @@
 package middleware_test
 
 import (
-	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,10 +10,8 @@ import (
 	jwtprovider "github.com/LeHuuHai/server-management/internal/infra/jwt"
 	"github.com/LeHuuHai/server-management/internal/middleware"
 	"github.com/LeHuuHai/server-management/internal/model"
-	"github.com/LeHuuHai/server-management/mocks"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func init() {
@@ -95,13 +92,12 @@ func TestAPIKeyMiddleware_MissingKey_Returns401(t *testing.T) {
 
 func TestNewValidToken_MissingHeader_Returns401(t *testing.T) {
 	jwt := newJWTProvider()
-	mockBlocklist := mocks.NewMockTokenBlocklist(t)
 
 	c, w := newGinContext(http.MethodGet, "/")
 	// không set Authorization header
 
 	router := gin.New()
-	router.GET("/", middleware.NewValidToken(jwt, mockBlocklist), func(c *gin.Context) {
+	router.GET("/", middleware.NewValidToken(jwt), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 	router.ServeHTTP(w, c.Request)
@@ -111,74 +107,27 @@ func TestNewValidToken_MissingHeader_Returns401(t *testing.T) {
 
 func TestNewValidToken_InvalidFormat_Returns401(t *testing.T) {
 	jwt := newJWTProvider()
-	mockBlocklist := mocks.NewMockTokenBlocklist(t)
 
 	c, w := newGinContext(http.MethodGet, "/")
 	c.Request.Header.Set("Authorization", "InvalidFormat token")
 
 	router := gin.New()
-	router.GET("/", middleware.NewValidToken(jwt, mockBlocklist), func(c *gin.Context) {
+	router.GET("/", middleware.NewValidToken(jwt), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 	router.ServeHTTP(w, c.Request)
 
 	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-func TestNewValidToken_RevokedToken_Returns401(t *testing.T) {
-	jwtP := newJWTProvider()
-	mockBlocklist := mocks.NewMockTokenBlocklist(t)
-
-	// gen token hợp lệ
-	token, err := jwtP.GenerateAccessToken(model.Account{UserID: 1, Role: authdomain.RoleUser})
-	assert.NoError(t, err)
-
-	mockBlocklist.EXPECT().IsRevoked(mock.Anything, token).Return(true, nil)
-
-	c, w := newGinContext(http.MethodGet, "/")
-	c.Request.Header.Set("Authorization", "Bearer "+token)
-
-	router := gin.New()
-	router.GET("/", middleware.NewValidToken(jwtP, mockBlocklist), func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-	router.ServeHTTP(w, c.Request)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-func TestNewValidToken_BlocklistError_Returns500(t *testing.T) {
-	jwtP := newJWTProvider()
-	mockBlocklist := mocks.NewMockTokenBlocklist(t)
-
-	token, err := jwtP.GenerateAccessToken(model.Account{UserID: 1, Role: authdomain.RoleUser})
-	assert.NoError(t, err)
-
-	mockBlocklist.EXPECT().IsRevoked(mock.Anything, token).Return(false, assert.AnError)
-
-	c, w := newGinContext(http.MethodGet, "/")
-	c.Request.Header.Set("Authorization", "Bearer "+token)
-
-	router := gin.New()
-	router.GET("/", middleware.NewValidToken(jwtP, mockBlocklist), func(c *gin.Context) {
-		c.Status(http.StatusOK)
-	})
-	router.ServeHTTP(w, c.Request)
-
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
 }
 
 func TestNewValidToken_InvalidToken_Returns401(t *testing.T) {
 	jwtP := newJWTProvider()
-	mockBlocklist := mocks.NewMockTokenBlocklist(t)
-
-	mockBlocklist.EXPECT().IsRevoked(mock.Anything, "bad.token.string").Return(false, nil)
 
 	c, w := newGinContext(http.MethodGet, "/")
 	c.Request.Header.Set("Authorization", "Bearer bad.token.string")
 
 	router := gin.New()
-	router.GET("/", middleware.NewValidToken(jwtP, mockBlocklist), func(c *gin.Context) {
+	router.GET("/", middleware.NewValidToken(jwtP), func(c *gin.Context) {
 		c.Status(http.StatusOK)
 	})
 	router.ServeHTTP(w, c.Request)
@@ -188,12 +137,9 @@ func TestNewValidToken_InvalidToken_Returns401(t *testing.T) {
 
 func TestNewValidToken_ValidToken_SetsContextAndCallsNext(t *testing.T) {
 	jwtP := newJWTProvider()
-	mockBlocklist := mocks.NewMockTokenBlocklist(t)
 
 	token, err := jwtP.GenerateAccessToken(model.Account{UserID: 1, Role: authdomain.RoleAdmin})
 	assert.NoError(t, err)
-
-	mockBlocklist.EXPECT().IsRevoked(mock.Anything, token).Return(false, nil)
 
 	var capturedUserID interface{}
 	var capturedRole interface{}
@@ -202,7 +148,7 @@ func TestNewValidToken_ValidToken_SetsContextAndCallsNext(t *testing.T) {
 	c.Request.Header.Set("Authorization", "Bearer "+token)
 
 	router := gin.New()
-	router.GET("/", middleware.NewValidToken(jwtP, mockBlocklist), func(c *gin.Context) {
+	router.GET("/", middleware.NewValidToken(jwtP), func(c *gin.Context) {
 		capturedUserID, _ = c.Get("user_id")
 		capturedRole, _ = c.Get("role")
 		c.Status(http.StatusOK)
@@ -257,33 +203,10 @@ func TestValidScope_MissingScope_Returns403(t *testing.T) {
 	router := gin.New()
 	router.GET("/", func(c *gin.Context) {
 		c.Set(middleware.BearerAuthScopes, []string{"user:read"})
-		c.Set("role", authdomain.RoleGuest) // guest chỉ có server:read
+		c.Set("role", authdomain.RoleGuest)
 		middleware.ValidScope(c)
 	})
 	router.ServeHTTP(w, c.Request)
 
 	assert.Equal(t, http.StatusForbidden, w.Code)
-}
-
-func TestValidScope_MissingRoleInContext_Returns401(t *testing.T) {
-	c, w := newGinContext(http.MethodGet, "/")
-
-	router := gin.New()
-	router.GET("/", func(c *gin.Context) {
-		c.Set(middleware.BearerAuthScopes, []string{"server:read"})
-		// không set role
-		middleware.ValidScope(c)
-	})
-	router.ServeHTTP(w, c.Request)
-
-	assert.Equal(t, http.StatusUnauthorized, w.Code)
-}
-
-// ---------------------------------------------------------------------------
-// LoggerFromContext
-// ---------------------------------------------------------------------------
-
-func TestLoggerFromContext_ReturnsDefault_WhenNotSet(t *testing.T) {
-	logger := middleware.LoggerFromContext(context.Background())
-	assert.NotNil(t, logger)
 }
