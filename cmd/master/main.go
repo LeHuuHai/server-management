@@ -276,7 +276,7 @@ func main() {
 	authService := service.NewAuthService(jwtProvider, tokenBlocklistRedis, accountRepo)
 
 	// middleware
-	authmw := middleware.NewAuthStrictMiddleware(jwtProvider, tokenBlocklistRedis, rt.Config.AppConfig.ReportKey)
+	authmw := middleware.NewAuthStrictMiddleware(jwtProvider, rt.Config.AppConfig.ReportKey)
 	logmw := middleware.NewLogStrictMiddleware(logger)
 
 	// handler
