@@ -12,6 +12,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestExportServerXLSX_FileType(t *testing.T) {
+	exporter := xlsxexport.NewServerXLSXExporter()
+	assert.Equal(t, "xlsx", exporter.FileType())
+}
+
+func TestExportServerXLSX_ContentType(t *testing.T) {
+	exporter := xlsxexport.NewServerXLSXExporter()
+	assert.Equal(t, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", exporter.ContentType())
+}
+
 func TestExportServerXLSX_Success(t *testing.T) {
 	now := time.Now()
 	servers := []model.Server{
