@@ -13,11 +13,11 @@ import (
 	"gorm.io/gorm/clause"
 )
 
-type serverRepo struct {
+type ServerRepo struct {
 	db *gorm.DB
 }
 
-func (r *serverRepo) Create(ctx context.Context, s *model.Server) error {
+func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
 	s.Status = model.StatusUnknown
 	err := r.db.WithContext(ctx).
 		Create(s).
@@ -36,7 +36,7 @@ func (r *serverRepo) Create(ctx context.Context, s *model.Server) error {
 	return nil
 }
 
-func (r *serverRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
+func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
 	var updated model.Server
 
 	res := r.db.WithContext(ctx).
@@ -56,7 +56,7 @@ func (r *serverRepo) Update(ctx context.Context, id string, fields map[string]an
 	return &updated, nil
 }
 
-func (r *serverRepo) Delete(ctx context.Context, id string) error {
+func (r *ServerRepo) Delete(ctx context.Context, id string) error {
 	res := r.db.WithContext(ctx).
 		Model(&model.Server{}).
 		Where("server_id = ? AND is_deleted = false", id).
@@ -73,7 +73,7 @@ func (r *serverRepo) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *serverRepo) List(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
+func (r *ServerRepo) List(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
 	var servers []model.Server
 	var total int64
 
@@ -100,7 +100,7 @@ func (r *serverRepo) List(ctx context.Context, filter model.ListServerFilter) (*
 	}, err
 }
 
-func (r *serverRepo) CreateBatch(ctx context.Context, servers []model.Server) (*model.CreateBatchServerResult, error) {
+func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*model.CreateBatchServerResult, error) {
 	res := &model.CreateBatchServerResult{
 		Success:    make([]string, 0),
 		Failed:     make([]string, 0),
@@ -127,7 +127,7 @@ func (r *serverRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 	return res, nil
 }
 
-func (r *serverRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, error) {
+func (r *ServerRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, error) {
 	var result []model.ServerMetadata
 
 	err := r.db.WithContext(ctx).
@@ -144,7 +144,7 @@ func (r *serverRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, e
 	return result, nil
 }
 
-func (r *serverRepo) BulkUpdateServers(ctx context.Context, items []model.Server) error {
+func (r *ServerRepo) BulkUpdateServers(ctx context.Context, items []model.Server) error {
 	var b strings.Builder
 	b.WriteString(`
 		UPDATE servers AS s
@@ -184,6 +184,6 @@ func (r *serverRepo) BulkUpdateServers(ctx context.Context, items []model.Server
 	return res.Error
 }
 
-func NewServerRepository(db *gorm.DB) *serverRepo {
-	return &serverRepo{db: db}
+func NewServerRepository(db *gorm.DB) *ServerRepo {
+	return &ServerRepo{db: db}
 }
