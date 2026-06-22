@@ -1,0 +1,44 @@
+# Tiến độ dự án và Các quyết định quan trọng
+
+## 1. Các phần đã hoàn thành
+- Setup dự án và chia tách kiến trúc các services (Gateway, Master, Worker, Agent, Writers).
+- Triển khai thành công luồng Active & Passive Checking (ICMP Ping & HTTP Heartbeat).
+- Lưu trữ decoupling thông qua Kafka, ghi log ra Elasticsearch và Postgres.
+- Cài đặt hệ thống Cron xuất báo cáo XLSX và gửi qua Email tự động.
+- **[Cập nhật mới] Dự án đã được deploy và chạy demo thành công.**
+
+## 2. Tiến độ tổng thể
+- [x] Kiến trúc Event-Driven với Kafka
+- [x] Master CRUD API cho Servers (JWT & Roles)
+- [x] Bulk Import/Export Excel
+- [x] Worker ICMP Pinger & Mail Dispatch
+- [x] Deploy và chạy Demo hệ thống hiện tại
+- [ ] **Transfer sang hệ thống Microservice hoàn chỉnh**
+- [ ] **Deploy hệ thống lên hạ tầng Docker Swarm**
+
+## 3. Các quyết định thiết kế và triển khai quan trọng (Scalability Rationales)
+Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng mở rộng cho hàng ngàn server).
+
+### Quyết định 1: Tách biệt việc nhận Heartbeat và Ghi Database (Gateway & Kafka)
+- **Bối cảnh:** Nếu API ghi trực tiếp heartbeat từ ngàn server vào DB ngay trong response HTTP sẽ làm chậm thread và gây I/O bottleneck.
+- **Quyết định:** Dùng Gateway chỉ nhận HTTP request và publish message vào Kafka (tốn < 5ms).
+- **Lý do:** Tránh nghẽn DB. Kafka đóng vai trò "giảm xóc" (Backpressure). Dù Postgres hay Elasticsearch chậm lại, Gateway cũng không sập và dữ liệu không bị mất.
+
+### Quyết định 2: Ghi dữ liệu theo lô (Buffered Micro-Batch Writing)
+- **Bối cảnh:** Ghi lẻ tẻ (insert/update từng record) làm quá tải database vì overhead network và lock tranh chấp bảng.
+- **Quyết định:** Tạo ra các service riêng biệt `PGWriter`, `ESWriter` đứng đọc Kafka. Chúng sẽ gom nhóm/buffer message trong RAM, khi đủ 1 batch (hoặc đủ thời gian) thì write bulk xuống DB.
+- **Lý do:** Giảm tới 99% network handshakes và overhead truy vấn, giúp DB nhẹ nhàng xử lý luồng ghi khủng.
+
+### Quyết định 3: Cache Memory & Horizontal Worker Pools cho Active Ping
+- **Bối cảnh:** Quét database liên tục để tìm server bị timeout rất tốn kém (SQL read locks). Chạy hàng ngàn network ICMP Ping trực tiếp trên Master API sẽ block OS threads.
+- **Quyết định:** Master API sẽ duy trì 1 `ServerInmemCache` trên RAM (Zero-Lookup Cache) để check timeout mà không cần truy vấn DB. Khi cần ping, Master ném lệnh vào Kafka. Một đàn Worker (`cmd/worker`) nhận lệnh và ping ICMP (có thể scale nhiều container worker tùy ý).
+- **Lý do:** Scale ngang (Horizontal Scale) dễ dàng. Đẩy workload xử lý network I/O xuống các Worker, giữ Master API nhẹ và phản hồi nhanh.
+
+### Quyết định 4: Cơ chế "Asynchronous 202" & "HTTP Pull" cho báo cáo
+- **Bối cảnh:** Tạo báo cáo Uptime và gửi SMTP tốn nhiều thời gian. Đẩy đính kèm file XLSX to qua Kafka làm chậm broker và chiếm RAM hệ thống queue.
+- **Quyết định:**
+  - API Report trả về `202 Accepted` ngay lập tức để giải phóng HTTP client thread.
+  - Đẩy một event `RequestMail` vào Kafka chỉ chứa `filename` (Payload cực nhỏ < 1KB).
+  - Worker đọc event này, dùng HTTP để "Pull" cái file binary từ Master API rồi gửi qua gomail.
+  - Sử dụng Redis để cache các kết quả `count` từ Elasticsearch (tránh query dữ liệu timeseries khổng lồ mỗi ngày).
+- **Lý do:** Tối ưu kích cỡ payload Kafka, giữ tốc độ messaging cao. Giảm tải nặng cho Master API.
