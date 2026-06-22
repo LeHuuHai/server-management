@@ -1,0 +1,83 @@
+package config
+
+import (
+	"log/slog"
+	"os"
+	"strconv"
+	"strings"
+
+	pkgconfig "github.com/LeHuuHai/server-management/microservices/pkg/config"
+	"github.com/joho/godotenv"
+)
+
+type AppConfig struct {
+	Port        int
+	Host        string
+	CORSOrigins []string
+}
+
+type Config struct {
+	AppConfig   *AppConfig
+	JWTConfig   *pkgconfig.JWTConfig
+	DBConfig    *pkgconfig.PostgresConfig
+	RedisConfig *pkgconfig.RedisConfig
+}
+
+func Load() (*Config, error) {
+	err := godotenv.Load("./microservices/auth-service/.env")
+	if err != nil {
+		slog.Warn("Error loading .env file, fallback to os env")
+	}
+
+	accessExpired, err := strconv.Atoi(os.Getenv("JWT_ACCESS_EXPIRED"))
+	if err != nil {
+		accessExpired = 3600
+	}
+
+	refreshExpired, err := strconv.Atoi(os.Getenv("JWT_REFRESH_EXPIRED"))
+	if err != nil {
+		refreshExpired = 86400
+	}
+
+	pgport, err := strconv.Atoi(os.Getenv("DB_PORT"))
+	if err != nil {
+		pgport = 5432
+	}
+
+	redisdb, err := strconv.Atoi(os.Getenv("REDIS_DB"))
+	if err != nil {
+		redisdb = 0
+	}
+
+	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
+	if err != nil {
+		appPort = 8081
+	}
+
+	cfg := Config{
+		AppConfig: &AppConfig{
+			Port:        appPort,
+			Host:        os.Getenv("APP_HOST"),
+			CORSOrigins: strings.Split(os.Getenv("APP_CORS_ORIGIN"), ","),
+		},
+		JWTConfig: &pkgconfig.JWTConfig{
+			AccessSecret:   os.Getenv("JWT_ACCESS_SECRET"),
+			RefreshSecret:  os.Getenv("JWT_REFRESH_SECRET"),
+			AccessExpired:  accessExpired,
+			RefreshExpired: refreshExpired,
+		},
+		DBConfig: &pkgconfig.PostgresConfig{
+			Host:     os.Getenv("DB_HOST"),
+			Username: os.Getenv("DB_USER"),
+			Password: os.Getenv("DB_PASSWORD"),
+			Port:     pgport,
+			Database: os.Getenv("DB_DBNAME"),
+		},
+		RedisConfig: &pkgconfig.RedisConfig{
+			URL:      os.Getenv("REDIS_URL"),
+			Password: os.Getenv("REDIS_PASSWORD"),
+			DB:       redisdb,
+		},
+	}
+	return &cfg, nil
+}

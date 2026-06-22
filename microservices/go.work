@@ -1,0 +1,11 @@
+go 1.25.3
+
+use (
+	./auth-service
+	./heartbeat-gateway
+	./mail-worker
+	./monitor-service
+	./ping-worker
+	./pkg
+	./server-service
+)
