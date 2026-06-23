@@ -26,6 +26,7 @@ func (p *serverEventPublisher) publish(ctx context.Context, eventType string, se
 		ServerName: server.ServerName,
 		IPv4:       server.IPv4,
 		Timestamp:  time.Now(),
+		Version:    server.Version,
 	}
 
 	bytes, err := json.Marshal(event)

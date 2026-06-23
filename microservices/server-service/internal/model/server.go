@@ -18,5 +18,6 @@ type Server struct {
 	CreatedAt         time.Time    `gorm:"autoCreateTime"`
 	MetadataUpdatedAt time.Time    // for name, ip changes
 	LastPingAt        time.Time
-	IsDeleted         bool `gorm:"default:false"`
+	Version           int64 `gorm:"default:1"`
+	IsDeleted         bool  `gorm:"default:false"`
 }

@@ -40,6 +40,8 @@ func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
 func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
 	var updated model.Server
 
+	fields["version"] = gorm.Expr("version + 1")
+
 	db := getDB(ctx, r.db)
 	res := db.WithContext(ctx).
 		Model(&updated).

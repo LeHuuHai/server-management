@@ -34,6 +34,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) 
 			ServerName: server.ServerName,
 			IPv4:       server.IPv4,
 			Timestamp:  time.Now(),
+			Version:    server.Version,
 		})
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
@@ -97,6 +98,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) 
 			ServerName: newServer.ServerName,
 			IPv4:       newServer.IPv4,
 			Timestamp:  time.Now(),
+			Version:    newServer.Version,
 		})
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
@@ -174,6 +176,7 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 					ServerName: data.ServerName,
 					IPv4:       data.IPv4,
 					Timestamp:  time.Now(),
+					Version:    1,
 				})
 
 				err := s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
