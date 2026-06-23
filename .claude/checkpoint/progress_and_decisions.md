@@ -66,3 +66,10 @@ Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng 
 - **Bối cảnh:** Khi áp dụng Transactional Outbox Pattern, thao tác ghi `Server` và ghi `Outbox Event` phải nằm chung trong một Database Transaction. Tuy nhiên, nếu truyền trực tiếp `*gorm.DB` vào các interface ở tầng `Domain/Service` thì sẽ phá vỡ quy tắc Clean Architecture (tầng Domain không được biết về công nghệ Infra).
 - **Quyết định:** Xây dựng `TxManagerInterface` với hàm `WithTx(ctx context.Context, fn func(txCtx context.Context) error)`. Object Transaction được inject ngầm (ẩn) vào bên trong `context.Context` tại tầng Infra. Các Repository (`ServerRepo`, `OutboxRepo`) tự động kiểm tra `context` để lấy transaction ra sử dụng chung.
 - **Lý do:** Tầng `Service` (Business logic) hoàn toàn "mù" về Gorm hay Postgres, đảm bảo Decoupling tuyệt đối 100%. Code ở Service cực kỳ gọn gàng nhưng vẫn đạt được Data Consistency tối đa.
+
+### Quyết định 9: Đảm bảo Event Ordering và Ngăn chặn Lost Update
+- **Bối cảnh:** Khi gửi event qua Kafka, Consumer có thể nhận trùng event (duplicate) hoặc nhận sai thứ tự (Out-of-order).
+- **Quyết định:** 
+  1. **Idempotency:** Trong ngữ cảnh quản lý Server, hành vi của Consumer (`monitor-service`) luôn là cập nhật trạng thái (UPSERT). Do đó, chúng ta **không cần quan tâm đến vấn đề Idempotency**. Việc nhận trùng event nhiều lần không gây ra side-effect.
+  2. **Ordering & Lost Update:** Để tránh việc Consumer lấy dữ liệu cũ (đến trễ) ghi đè lên dữ liệu mới (Lost Update), ta áp dụng **Entity Versioning**. Thêm trường `Version` vào model `Server`, mỗi lần cập nhật sẽ tăng `Version + 1` và đính kèm vào Event.
+- **Lý do:** Cách tiếp cận cực kỳ thực dụng. Mọi Consumer chỉ cần thực hiện câu truy vấn `UPSERT ... WHERE version < incoming_version` để tự động chặn các event tới sai thứ tự.

@@ -13,6 +13,10 @@
 - [x] Chuyển logic khởi tạo Kafka sang thư viện dùng chung `pkg/mq/writer.go`.
 - [x] Áp dụng chuẩn **Functional Option Pattern** cho các library infrastructure (`pkg/mq`) để đảm bảo không gãy đổ hệ thống khi thêm tuỳ chọn cấu hình mới.
 - [x] Triển khai **Transactional Outbox Pattern** với `TxManager` để giải quyết vấn đề Dual Write (Atomic Publishing), đảm bảo dữ liệu toàn vẹn tuyệt đối 100% giữa Postgres và Kafka.
+- [x] Xử lý bài toán **Event Ordering và Idempotency (Lost Update)** theo ngữ cảnh Server:
+  - Hành vi Consumer luôn là UPSERT nên hoàn toàn bỏ qua nỗi lo về Idempotency.
+  - Áp dụng **Entity Versioning** cho `Server` và Event Payload để Consumer tự chặn rủi ro ghi đè ngược (Lost Update) do nhận sai thứ tự sự kiện.
+- [x] Sửa lỗi Clean Architecture rò rỉ `gorm` vào tầng Service.
 - [x] Viết tài liệu quy chuẩn đặt tên thư mục, file và package (`naming_convention.md`).
 
 ### 3. Các công việc cần làm tiếp theo (TODO)
