@@ -1,0 +1,81 @@
+syntax = "proto3";
+
+package server;
+
+option go_package = "github.com/LeHuuHai/server-management/microservices/pkg/pb/server";
+
+// Cấu trúc map với model.Server
+message Server {
+  string server_id = 1;
+  string server_name = 2;
+  string ipv4 = 3;
+  string status = 4;
+  int64 created_at = 5;
+  int64 metadata_updated_at = 6;
+  int64 last_ping_at = 7;
+}
+
+message CreateServerRequest {
+  string server_id = 1;
+  string server_name = 2;
+  string ipv4 = 3;
+}
+
+message UpdateServerRequest {
+  string server_id = 1;
+  string server_name = 2;
+  string ipv4 = 3;
+}
+
+message DeleteServerRequest {
+  string server_id = 1;
+}
+
+message DeleteServerResponse {}
+
+// Cấu trúc map với model.ListServerFilter
+message ListServersRequest {
+  int32 from = 1;
+  int32 to = 2;
+  string sort_field = 3;
+  bool desc = 4;
+}
+
+// Cấu trúc map với model.ListServerResult
+message ListServersResponse {
+  repeated Server servers = 1;
+  int32 total = 2;
+}
+
+message ImportServersRequest {
+  bytes file_content = 1;
+}
+
+// Cấu trúc map với model.CreateBatchServerResult
+message ImportServersResponse {
+  repeated string success_ids = 1;
+  repeated string failed_ids = 2;
+  int32 success_cnt = 3;
+  int32 failed_cnt = 4;
+}
+
+message ExportServersRequest {
+  int32 from = 1;
+  int32 to = 2;
+  string sort_field = 3;
+  bool desc = 4;
+}
+
+message ExportServersResponse {
+  bytes file_content = 1;
+  string file_name = 2;
+}
+
+service ServerService {
+  rpc CreateServer(CreateServerRequest) returns (Server);
+  rpc UpdateServer(UpdateServerRequest) returns (Server);
+  rpc DeleteServer(DeleteServerRequest) returns (DeleteServerResponse);
+  rpc ListServers(ListServersRequest) returns (ListServersResponse);
+  rpc ImportServers(ImportServersRequest) returns (ImportServersResponse);
+  rpc ExportServers(ExportServersRequest) returns (ExportServersResponse);
+}

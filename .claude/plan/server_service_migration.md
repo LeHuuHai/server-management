@@ -1,192 +1,90 @@
-﻿# Kế hoạch di chuyển Server Service (`server-service`)
+# Kế hoạch di chuyển Server Service (`server-service`)
 
-Kế hoạch này chi tiết các bước bóc tách phần quản lý danh mục máy chủ từ Monolith cũ sang Bounded Context mới dưới thư mục `microservices/server-service`, đồng thời tận dụng các thư viện dùng chung trong `microservices/pkg` dựa trên cấu trúc đã định hình ở `auth-service`.
+Kế hoạch này chi tiết các bước bóc tách phần quản lý danh mục máy chủ từ Monolith cũ sang Bounded Context mới dưới thư mục `microservices/server-service`, đồng thời tận dụng các thư viện dùng chung trong `microservices/pkg` dựa trên kiến trúc **gRPC** đã định hình ở `auth-service`.
 
-## 0. Quy tắc thực thi
+## 0. Quy tắc thực thi (Bắt buộc tuân thủ)
 
-- Không chạy bất kỳ project command nào trong quá trình migration, trừ khi người dùng yêu cầu rõ ràng.
-- Không chạy `go mod tidy`, không gen API code, không chạy test, không build, không install/update dependency, không chạy Docker/deploy command.
-- Không tự sinh unit test hoặc unit-test helper code.
-- Chỉ migrate source code chính, config, API contract và wiring cần thiết.
-- Nếu có command nên chạy để kiểm tra, chỉ ghi chú lại như manual follow-up cho người dùng.
+- **Không tự chạy các lệnh sinh code/cài đặt:** Tuyệt đối không tự chạy `go mod tidy`, `protoc` (sinh code gRPC), `openapi-generator`, không build, không cài đặt dependency, không chạy Docker/deploy command. Người dùng sẽ tự thực thi các lệnh này.
+- **Không tự sinh test:** Không tự sinh unit test hoặc unit-test helper code.
+- **Chỉ migrate code chính:** Chỉ tập trung migrate source code chính, cấu hình (config), hợp đồng giao tiếp (API contract / gRPC) và wiring cần thiết.
+- **Theo Quyết định 5:** Service này **chỉ mở cổng gRPC**. Tầng HTTP REST Handler sẽ được gỡ bỏ và chuyển nhiệm vụ về Gateway.
+- **Theo Quyết định 6:** Implementation logic của nghiệp vụ (`Service`) phải đặt trong `internal/infra/service/`.
 
 ## 1. Tách và dùng lại Shared Packages trong `microservices/pkg`
 
-Các package chung đã được tách cho `auth-service` cần được dùng lại ở `server-service` để tránh duplicate logic:
+Các package chung đã được tách ở phase trước sẽ tiếp tục được tái sử dụng:
+- **`microservices/pkg/apperr`**: custom errors chung.
+- **`microservices/pkg/auth`**: role/scope definitions dùng cho phân quyền. *(Lưu ý: JWT sẽ không được parse trực tiếp tại service này. Thay vào đó, API Gateway sẽ xử lý JWT và truyền `user_id`, `role` vào qua **gRPC Metadata**).*
+- **`microservices/pkg/config`**: các struct config chung cho Postgres, Kafka, Redis.
+- **`microservices/pkg/db`**: tiện ích mở kết nối Postgres.
+- **`microservices/pkg/pb/server/`**: **[NEW]** Thư mục mới để chứa `server.proto` định nghĩa hợp đồng RPC cho quản lý máy chủ.
 
-- **`microservices/pkg/apperr`**: custom errors chung. Nguồn gốc từ `internal/error/error.go`.
-- **`microservices/pkg/auth`**: role/scope definitions dùng cho authorization.
-- **`microservices/pkg/jwt`**: verify JWT access token nếu `server-service` tự kiểm tra auth.
-- **`microservices/pkg/config`**: struct config chung như Postgres, Redis, JWT.
-- **`microservices/pkg/db`**: tiện ích mở kết nối Postgres dùng chung.
+## 2. Xây dựng thư mục `microservices/server-service` (gRPC Server)
 
-Nếu cần Kafka publisher cho server domain events, chỉ tạo shared package mới hoặc local infra riêng sau khi xác nhận pattern chung với các service tiếp theo. Không tự cài dependency mới nếu chưa được yêu cầu.
+Triển khai service quản lý danh mục máy chủ độc lập chạy gRPC (ví dụ port `:50052`). Service này chịu trách nhiệm CRUD server, validate dữ liệu server, list/filter/sort/pagination, import/export XLSX.
 
-## 2. Xây dựng thư mục `microservices/server-service`
-
-Triển khai service quản lý danh mục máy chủ độc lập chạy trên một cổng riêng (ví dụ: `:8082`). Service này chịu trách nhiệm cho Server Inventory Cataloging: CRUD server, validate dữ liệu server, list/filter/sort/pagination, import/export XLSX và publish event thay đổi server cho `monitor-service` đồng bộ local state.
-
-Các file/thư mục chính cần có:
-
-- **`api/openapi.yaml`**: trích xuất phần spec liên quan đến server inventory: `GET /servers`, `POST /servers`, `PATCH /servers/{server_id}`, `DELETE /servers/{server_id}`, `POST /servers/import`, `GET /servers/export`.
-- **`cmd/main.go`**: điểm khởi động ứng dụng. Khởi tạo config, Postgres, JWT middleware nếu có, Kafka publisher nếu có, repository, service, handler và router.
-- **`internal/config/config.go`**: load cấu hình môi trường riêng cho `server-service`.
-- **`internal/model/server.go`**: struct server map database Postgres và các request/response model liên quan đến server metadata.
-- **`internal/domain/repo/serverRepoInterface.go`**: interface repository server.
-- **`internal/domain/service/serverServiceInterface.go`**: interface logic nghiệp vụ server.
-- **`internal/service/serverService.go`**: logic CRUD/list/import/export server.
-- **`internal/infra/postgres/serverRepo.go`**: implementation repository bằng Postgres/GORM.
-- **`internal/infra/file/deserialize/*`**: importer XLSX nếu import server vẫn dùng Excel.
-- **`internal/infra/file/export/*`**: exporter XLSX nếu export server vẫn dùng Excel.
-- **`internal/infra/kafka/*`**: publisher domain events server, chỉ khi phase này triển khai event publishing.
-- **`internal/handler/serverHandler.go`**: handler cho CRUD/import/export server, bỏ logic report như `GenerateServerReport` và `GetReportFile`.
-
-Không đưa các chức năng sau vào `server-service`:
-
-- Heartbeat ingestion.
-- Active ping scheduling.
-- Uptime analytics/report generation.
-- Report file download.
-- Mail dispatch.
-- Auth login/refresh/logout.
+Các file/thư mục chính:
+- **`cmd/main.go`**: Điểm khởi động. Wire các dependency: cấu hình, Postgres, repository, Kafka Event Publisher, rpc handler, và khởi chạy `grpc.NewServer()`.
+- **`internal/config/config.go`**: Load cấu hình môi trường riêng cho `server-service`.
+- **`internal/domain/repo/serverRepoInterface.go`**: Interface repository cho server.
+- **`internal/domain/service/serverServiceInterface.go`**: Interface cho logic nghiệp vụ lõi.
+- **`internal/domain/publisher/eventPublisherInterface.go`**: **[NEW]** Interface cho việc đẩy sự kiện domain ra ngoài (tách biệt với service).
+- **`internal/infra/postgres/serverRepo.go`**: Implement thao tác Postgres.
+- **`internal/infra/file/*`**: Logic import/export XLSX (bóc từ tầng infra của monolith cũ).
+- **`internal/infra/kafka/serverEventPublisher.go`**: **[NEW]** Implement gửi các sự kiện `ServerCreated`, `ServerUpdated`, `ServerDeleted` qua Kafka topic để `monitor-service` đồng bộ.
+- **`internal/infra/runtime/rt.go`**: Khởi tạo hạ tầng (Database connection, Kafka Producer).
+- **`internal/infra/service/serverService.go`**: Implement business logic của `ServerServiceInterface`.
+- **`internal/model/server.go`**: Struct map dữ liệu DB.
+- **`internal/rpc/server_server.go`**: gRPC Server handler, trích xuất User Context từ gRPC Metadata và gọi logic từ `ServerServiceInterface`.
 
 ## 3. Cấu trúc service code mục tiêu
 
-`server-service` cần tổ chức cùng style với `auth-service`: API/handler chỉ nhận request và map response, service giữ nghiệp vụ, domain khai báo interface, infra hiện thực kết nối ngoài, còn `microservices/pkg` chứa phần dùng chung giữa các service.
-
 ```text
 microservices/
-+-- pkg/
-|   +-- apperr/          # error dùng chung
-|   +-- auth/            # Role, Scope dùng trong authorization
-|   +-- config/          # config structs dùng chung
-|   +-- db/              # Postgres connection helper
-|   +-- jwt/             # JWTProvider và claims
-+-- server-service/
-    +-- api/             # openapi.yaml và api.gen.go nếu đã được chuẩn bị
-    +-- cmd/             # main.go bootstrap service
-    +-- internal/
-        +-- config/      # load env riêng cho server-service
-        +-- domain/
-        |   +-- repo/    # ServerRepoInterface
-        |   +-- service/ # ServerServiceInterface
-        +-- handler/     # OpenAPI/Gin handler implementation
-        +-- infra/
-        |   +-- postgres/# ServerRepo GORM implementation
-        |   +-- file/    # XLSX import/export implementation
-        |   +-- kafka/   # Server event publisher nếu triển khai phase này
-        |   +-- runtime/ # App struct, DB/JWT/Kafka bootstrap nếu cần
-        +-- model/       # Server và request/response model
-        +-- service/     # ServerService nghiệp vụ
+├── pkg/
+│   ├── pb/server/     # Chứa server.proto
+└── server-service/    # Backend thuần gRPC
+    ├── cmd/           # main.go (Khởi động gRPC server port 50052)
+    └── internal/
+        ├── config/
+        ├── domain/
+        │   ├── publisher/   # Chứa EventPublisherInterface
+        │   ├── repo/
+        │   └── service/     # Chứa ServerServiceInterface
+        ├── infra/
+        │   ├── file/        # Import/Export XLSX
+        │   ├── kafka/       # Kafka Event Publisher
+        │   ├── postgres/    # GORM Implementation
+        │   ├── runtime/     # Khởi tạo DB, MQ
+        │   └── service/     # Implement logic nghiệp vụ ServerService
+        ├── model/           # Struct Server
+        └── rpc/             # gRPC Handler (đọc gRPC Metadata)
 ```
 
-Luồng dependency cần giữ trong quá trình migration:
+**Nguyên tắc Abstraction & Luồng Dependency:**
+1. **Giao tiếp qua Interface:** Mọi nghiệp vụ, data source, message queue đều phải được định nghĩa bằng Interface trong `internal/domain/`.
+2. **Dependency Inversion:** Tầng logic lõi (`infra/service/serverService`) tuyệt đối không phụ thuộc vào thư viện cụ thể, mà chỉ giao tiếp qua các Interface `ServerRepoInterface`, `FileExporterInterface`, `EventPublisherInterface`.
+3. **gRPC Isolation:** Tầng giao tiếp (`rpc/server_server.go`) tách biệt với logic nghiệp vụ, làm nhiệm vụ bóc tách payload, đọc gRPC Metadata, và gọi interface nghiệp vụ.
+4. **Wiring Tập Trung:** Chỉ có duy nhất `cmd/main.go` là nơi inject các Implementation cụ thể (Postgres, Kafka, File) vào Service.
 
-1. `handler.ServerHandler` phụ thuộc `domain/service.ServerServiceInterface`, không phụ thuộc trực tiếp infra.
-2. `service.ServerService` phụ thuộc `domain/repo.ServerRepoInterface`, các importer/exporter interface nếu cần, và event publisher interface nếu phase này có publish Kafka.
-3. `infra/postgres.ServerRepo` implement `domain/repo.ServerRepoInterface` bằng GORM.
-4. `infra/file` giữ implementation import/export XLSX, không đặt parsing file trực tiếp trong handler.
-5. `infra/kafka` giữ implementation publish `ServerCreated`, `ServerUpdated`, `ServerDeleted` nếu phase này bật domain events.
-6. `cmd/main.go` là nơi wiring concrete dependencies: config/runtime -> DB -> repo -> file importer/exporter -> event publisher -> server service -> server handler -> router.
-7. `internal/infra/runtime.App` chỉ giữ tài nguyên hạ tầng dùng lúc bootstrap; nghiệp vụ không đặt trong runtime.
+## 4. API Contract (gRPC) cần tách
+Giao thức RPC sẽ thay thế toàn bộ REST endpoints cũ:
+- `ListServers` (thay thế GET `/servers`)
+- `CreateServer` (thay thế POST `/servers`)
+- `UpdateServer` (thay thế PATCH `/servers/{id}`)
+- `DeleteServer` (thay thế DELETE `/servers/{id}`)
+- `ImportServers` (Nhận byte array trực tiếp thay thế POST `/servers/import`)
+- `ExportServers` (Trả về byte array thay thế GET `/servers/export`)
 
-Các struct chính cần giữ ổn định:
+*Tuyệt đối Không đưa luồng tạo báo cáo (report/download), auth, hoặc nhận heartbeat HTTP vào service này.*
 
-- `service.ServerService`: gồm `serverRepo`, importer/exporter nếu có, event publisher nếu có.
-- `handler.ServerHandler`: gồm `serverService`.
-- `runtime.App`: gồm `Config`, `DB`, `JWTProvider` nếu service tự verify token, và Kafka publisher/client nếu phase này triển khai event publishing.
-- `model.Server`: giữ các field server metadata đang được Postgres và API dùng.
+## 5. Các bước thực thi (Execution Steps)
 
-## 4. API contract cần tách
+**Lưu ý Quan Trọng:** Agent sẽ KHÔNG chạy lệnh cài đặt dependency, KHÔNG chạy lệnh sinh code (`protoc`), và KHÔNG chạy `go mod tidy`. Người dùng sẽ tự thực hiện các bước này sau khi Agent bàn giao code.
 
-Giữ các endpoint server inventory:
-
-- `GET /servers`
-- `POST /servers`
-- `PATCH /servers/{server_id}`
-- `DELETE /servers/{server_id}`
-- `POST /servers/import`
-- `GET /servers/export`
-
-Không đưa vào server-service:
-
-- `POST /servers/report`
-- `GET /report/{filename}`
-- `/auth/*`
-- `/heartbeat`
-
-## 5. Domain events dự kiến
-
-Khi server inventory thay đổi, `server-service` nên publish event để `monitor-service` đồng bộ danh sách server cần theo dõi:
-
-- `ServerCreated`
-- `ServerUpdated`
-- `ServerDeleted`
-- `ServersImported` hoặc nhiều event `ServerCreated`/`ServerUpdated` theo từng record import.
-
-Payload tối thiểu:
-
-```json
-{
-  "event_id": "uuid",
-  "event_type": "ServerCreated",
-  "server_id": "srv-001",
-  "server_name": "web-01",
-  "ipv4": "10.0.0.1",
-  "occurred_at": "2026-06-22T00:00:00Z"
-}
-```
-
-Phase đầu có thể để Kafka publisher là TODO nếu chưa có shared MQ package ổn định. Không tự thêm command/dependency để hoàn thiện Kafka nếu chưa được yêu cầu.
-
-## 6. Auth và authorization
-
-`server-service` cần bảo vệ endpoint bằng JWT access token và scope:
-
-- `server:read` cho list/export.
-- `server:create` cho create/import.
-- `server:update` cho update.
-- `server:delete` cho delete.
-
-Có thể triển khai middleware local dựa trên `microservices/pkg/jwt` và `microservices/pkg/auth`, hoặc tạm đánh dấu TODO nếu phase này chỉ migrate business code.
-
-## 7. Config dự kiến
-
-Các biến môi trường chính:
-
-- `APP_HOST`
-- `APP_PORT`
-- `APP_CORS_ORIGIN`
-- `DB_HOST`
-- `DB_PORT`
-- `DB_USER`
-- `DB_PASSWORD`
-- `DB_DBNAME`
-- `JWT_ACCESS_SECRET`
-- `KAFKA_BROKER` nếu publish domain events.
-- `KAFKA_SERVER_EVENT_TOPIC` nếu publish domain events.
-
-## 8. Các bước thực thi (Execution Steps)
-
-1. Tạo cấu trúc thư mục cho `microservices/server-service`.
-2. Trích xuất OpenAPI contract chỉ gồm endpoint server inventory.
-3. Copy/chuyển model server liên quan sang `internal/model` của service mới.
-4. Copy/chuyển repo interface và Postgres implementation sang `internal/domain/repo` và `internal/infra/postgres`.
-5. Copy/chuyển `serverService.go` sang `internal/service`, cập nhật import path sang `microservices/pkg` và package local.
-6. Copy/chuyển handler server sang `internal/handler`, bỏ report/download logic khỏi handler.
-7. Copy/chuyển XLSX import/export infra nếu service vẫn giữ import/export Excel.
-8. Tạo `internal/config/config.go` để load app, Postgres, JWT và Kafka config nếu cần publish event.
-9. Tạo `cmd/main.go` để wire config, DB, repository, service, handler và Gin router.
-10. Kiểm tra lại dependency flow để đảm bảo chỉ tầng bootstrap tạo concrete infra, còn handler/service vẫn nhận interface theo cấu trúc ở mục 3.
-11. Ghi chú các manual follow-up command cho người dùng nếu cần, nhưng không tự chạy.
-
-## 9. Manual follow-up sau migration
-
-Sau khi code được migrate, người dùng có thể tự chạy nếu muốn:
-
-- `go mod tidy` trong `microservices/server-service`.
-- API code generation nếu dự án quyết định dùng generated server từ OpenAPI.
-- Build/test thủ công.
-- Docker compose/swarm update thủ công.
-
-Agent không tự chạy các command trên trong migration.
+1. **Định nghĩa Proto:** Tạo `microservices/pkg/pb/server/server.proto`.
+2. **Setup Server-Service Models & Domain:** Copy các file model (`server.go`) và các interface (`serverServiceInterface.go`, `serverRepoInterface.go`) từ khối monolith sang cấu trúc `server-service/internal/domain/`. Tạo thêm `eventPublisherInterface.go` trong `internal/domain/publisher/`.
+3. **Setup Infra & Service Core:** Copy/sửa GORM repository, file importer/exporter (xlsx), tạo implementation `serverEventPublisher.go` dùng Kafka, và chuyển `serverService.go` vào `internal/infra/service/`.
+4. **Viết gRPC Handler:** Tạo `internal/rpc/server_server.go` đọc Context Metadata và gọi Business Layer.
+5. **Bootstrap:** Tạo `internal/infra/runtime/rt.go` khởi tạo connections, và cập nhật `cmd/main.go` để lắng nghe TCP cho gRPC traffic.
+6. **Bàn giao:** Dừng agent để người dùng tự chạy `protoc`, cài đặt module gRPC và thực thi `go mod tidy`.

@@ -19,6 +19,7 @@ Dưới đây là danh sách các tài liệu liên quan và thứ tự ưu tiê
 | [`microservice_migration_guide.md`](microservice_migration_guide.md) | **Đọc đầu tiên.** Quy tắc chung, kiến trúc tổng thể của Microservice, phân chia Bounded Contexts và danh sách 6 services mục tiêu. |
 | [`monolith_structure.md`](monolith_structure.md) | Phân tích cấu trúc thư mục của dự án Monolith cũ. Cần đọc để biết tìm code cũ ở đâu khi tiến hành di chuyển. |
 | [`auth_service_migration.md`](auth_service_migration.md) | Kế hoạch di chuyển chi tiết cho **Auth Service** (xử lý đăng nhập, JWT, quản lý tài khoản). |
+| [`naming_convention.md`](naming_convention.md) | **Quy tắc bắt buộc:** Chuẩn đặt tên thư mục, file, và interface dựa trên cấu trúc đã chuẩn hóa của các service hiện tại. |
 | [`server_service_migration.md`](server_service_migration.md) | Kế hoạch di chuyển chi tiết cho **Server Service** (quản lý danh mục máy chủ, CRUD, import/export). |
 
 ---

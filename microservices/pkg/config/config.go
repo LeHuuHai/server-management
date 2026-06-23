@@ -49,3 +49,15 @@ func (c *JWTConfig) LogValue() slog.Value {
 		slog.Int("refresh_expired", c.RefreshExpired),
 	)
 }
+
+type KafkaConfig struct {
+	Broker      string
+	ServerTopic string
+}
+
+func (c *KafkaConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("broker", c.Broker),
+		slog.String("server_topic", c.ServerTopic),
+	)
+}

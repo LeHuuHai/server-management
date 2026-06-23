@@ -1,4 +1,4 @@
-﻿# Microservice Migration Guide
+# Microservice Migration Guide
 
 ## Migration Execution Rules
 
@@ -15,6 +15,13 @@ These rules are mandatory while following the migration plans.
   wiring described by the plan.
 - Keep the existing monolith code frozen. New microservice code belongs under
   the new `microservices/` workspace.
+
+## Shared Infrastructure Design Patterns
+
+When building shared wrapper libraries in `microservices/pkg/` (like Database or Kafka connections), strictly follow the **Functional Options Pattern** (e.g., `opts ...WriterOption`). 
+- This ensures constructors remain backward-compatible when new configurations are added.
+- It prevents breaking changes across multiple services when one service requires a new specific configuration.
+- Shared initialization logic should be kept fully decoupled from domain logic.
 
 ## Business Capabilities
 
