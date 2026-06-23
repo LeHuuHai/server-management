@@ -12,8 +12,10 @@ import (
 	pg "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/postgres"
 	rt "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/runtime"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/service"
+	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/worker"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/rpc"
 	"google.golang.org/grpc"
+	"context"
 )
 
 func main() {
@@ -28,9 +30,12 @@ func main() {
 	}
 
 	serverRepo := pg.NewServerRepository(app.DB)
+	txManager := pg.NewTxManager(app.DB)
+	outboxRepo := pg.NewOutboxRepository(app.DB)
+	
 	eventPublisher := kafka.NewServerEventPublisher(app.ServerEventWriter)
 
-	serverSvc := service.NewServerService(serverRepo, eventPublisher)
+	serverSvc := service.NewServerService(txManager, serverRepo, outboxRepo)
 
 	grpcHandler := rpc.NewServerHandler(serverSvc)
 
@@ -42,6 +47,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to listen: %v", err)
 	}
+
+	outboxPoller := worker.NewOutboxPoller(outboxRepo, eventPublisher)
+	go outboxPoller.Start(context.Background())
 
 	slog.Info("Starting Server Service gRPC Server", "addr", addr)
 	if err := grpcServer.Serve(lis); err != nil {

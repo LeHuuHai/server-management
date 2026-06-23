@@ -2,18 +2,27 @@ package service
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/json"
+	"fmt"
 	"net"
 	"time"
 
 	apperr "github.com/LeHuuHai/server-management/microservices/pkg/apperr"
-	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/publisher"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/repo"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
 )
 
 type ServerService struct {
-	repo           repo.ServerRepositoryInterface
-	eventPublisher publisher.EventPublisherInterface
+	txManager  repo.TxManagerInterface
+	repo       repo.ServerRepositoryInterface
+	outboxRepo repo.OutboxRepositoryInterface
+}
+
+func generateID() string {
+	b := make([]byte, 16)
+	_, _ = rand.Read(b)
+	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
 func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
@@ -21,26 +30,42 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) 
 	if ip == nil || ip.To4() == nil {
 		return nil, apperr.ErrInvalidIP
 	}
-	err := s.repo.Create(ctx, server)
+
+	err := s.txManager.WithTx(ctx, func(txCtx context.Context) error {
+		if err := s.repo.Create(txCtx, server); err != nil {
+			return err
+		}
+
+		payload, _ := json.Marshal(model.ServerEvent{
+			ServerID:   server.ServerID,
+			ServerName: server.ServerName,
+			IPv4:       server.IPv4,
+			Timestamp:  time.Now(),
+		})
+
+		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
+			ID:        generateID(),
+			Topic:     "server_created",
+			Payload:   payload,
+			Status:    model.OutboxStatusPending,
+			CreatedAt: time.Now(),
+		})
+	})
+
 	if err != nil {
 		return nil, err
 	}
-
-	// publish event
-	_ = s.eventPublisher.PublishServerCreated(ctx, server)
 
 	return server, nil
 }
 
 func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
-	// sorting
 	switch filter.SortField {
-	case model.SortByName,
-		model.SortByCreatedAt:
+	case model.SortByName, model.SortByCreatedAt:
 	default:
 		return nil, apperr.ErrInvalidSort
 	}
-	// pagination
+
 	if filter.To-filter.From <= 0 || filter.From < 0 || filter.To <= 0 {
 		return nil, apperr.ErrInvalidPagination
 	}
@@ -48,11 +73,7 @@ func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerF
 		filter.To = filter.From + 100
 	}
 
-	res, err := s.repo.List(ctx, filter)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return s.repo.List(ctx, filter)
 }
 
 func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
@@ -68,39 +89,70 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) 
 		fields["ipv4"] = server.IPv4
 	}
 	fields["metadata_updated_at"] = time.Now()
-	newServer, err := s.repo.Update(ctx, server.ServerID, fields)
+
+	var newServer *model.Server
+
+	err := s.txManager.WithTx(ctx, func(txCtx context.Context) error {
+		var err error
+		newServer, err = s.repo.Update(txCtx, server.ServerID, fields)
+		if err != nil {
+			return err
+		}
+
+		payload, _ := json.Marshal(model.ServerEvent{
+			ServerID:   newServer.ServerID,
+			ServerName: newServer.ServerName,
+			IPv4:       newServer.IPv4,
+			Timestamp:  time.Now(),
+		})
+
+		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
+			ID:        generateID(),
+			Topic:     "server_updated",
+			Payload:   payload,
+			Status:    model.OutboxStatusPending,
+			CreatedAt: time.Now(),
+		})
+	})
+
 	if err != nil {
 		return nil, err
 	}
-
-	// publish event
-	_ = s.eventPublisher.PublishServerUpdated(ctx, newServer)
 
 	return newServer, nil
 }
 
 func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error {
-	err := s.repo.Delete(ctx, serverID)
-	if err != nil {
-		return err
-	}
+	return s.txManager.WithTx(ctx, func(txCtx context.Context) error {
+		if err := s.repo.Delete(txCtx, serverID); err != nil {
+			return err
+		}
 
-	// publish event
-	_ = s.eventPublisher.PublishServerDeleted(ctx, serverID)
+		payload, _ := json.Marshal(model.ServerEvent{
+			ServerID:  serverID,
+			Timestamp: time.Now(),
+		})
 
-	return nil
+		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
+			ID:        generateID(),
+			Topic:     "server_deleted",
+			Payload:   payload,
+			Status:    model.OutboxStatusPending,
+			CreatedAt: time.Now(),
+		})
+	})
 }
 
 func (s *ServerService) ImportServer(ctx context.Context, serversData []model.ServerImport) (*model.CreateBatchServerResult, error) {
 	invalid := make([]string, 0)
 	valid := make([]model.Server, 0)
+	
 	for _, item := range serversData {
 		ip := net.ParseIP(item.IPv4)
 		if ip == nil || ip.To4() == nil {
 			invalid = append(invalid, item.ServerID)
 			continue
 		}
-
 		valid = append(valid, model.Server{
 			ServerID:   item.ServerID,
 			ServerName: item.ServerName,
@@ -108,25 +160,46 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 		})
 	}
 
-	res, err := s.repo.CreateBatch(ctx, valid)
+	var res *model.CreateBatchServerResult
+
+	err := s.txManager.WithTx(ctx, func(txCtx context.Context) error {
+		var err error
+		res, err = s.repo.CreateBatch(txCtx, valid)
+		if err != nil {
+			return err
+		}
+
+		isSuccess := make(map[string]bool)
+		for _, serverID := range res.Success {
+			isSuccess[serverID] = true
+		}
+
+		for _, data := range serversData {
+			if isSuccess[data.ServerID] {
+				payload, _ := json.Marshal(model.ServerEvent{
+					ServerID:   data.ServerID,
+					ServerName: data.ServerName,
+					IPv4:       data.IPv4,
+					Timestamp:  time.Now(),
+				})
+
+				err := s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
+					ID:        generateID(),
+					Topic:     "server_created",
+					Payload:   payload,
+					Status:    model.OutboxStatusPending,
+					CreatedAt: time.Now(),
+				})
+				if err != nil {
+					return err
+				}
+			}
+		}
+		return nil
+	})
+
 	if err != nil {
 		return nil, err
-	}
-
-	// publish event
-	isSuccess := make(map[string]bool)
-	for _, serverID := range res.Success {
-		isSuccess[serverID] = true
-	}
-	for _, data := range serversData {
-		success, ok := isSuccess[data.ServerID]
-		if success && ok {
-			_ = s.eventPublisher.PublishServerCreated(ctx, &model.Server{
-				ServerID:   data.ServerID,
-				ServerName: data.ServerName,
-				IPv4:       data.IPv4,
-			})
-		}
 	}
 
 	res.Failed = append(res.Failed, invalid...)
@@ -136,11 +209,13 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 }
 
 func NewServerService(
+	tm repo.TxManagerInterface,
 	r repo.ServerRepositoryInterface,
-	p publisher.EventPublisherInterface,
+	outbox repo.OutboxRepositoryInterface,
 ) *ServerService {
 	return &ServerService{
-		repo:           r,
-		eventPublisher: p,
+		txManager:  tm,
+		repo:       r,
+		outboxRepo: outbox,
 	}
 }

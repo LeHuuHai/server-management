@@ -16,7 +16,8 @@
 - [ ] **Transfer sang hệ thống Microservice hoàn chỉnh**
   - [x] Kế hoạch tổng thể và cấu trúc thư mục chung
   - [x] Migrate `auth-service` (gRPC Server)
-  - [ ] Migrate các service khác (`server-service`, `gateway`, ...)
+  - [x] Migrate `server-service` (gRPC Server & Kafka Publisher)
+  - [ ] Migrate các service khác (`gateway`, `monitor-service`, ...)
 - [ ] **Deploy hệ thống lên hạ tầng Docker Swarm**
 
 ## 3. Các quyết định thiết kế và triển khai quan trọng (Scalability Rationales)
@@ -55,3 +56,13 @@ Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng 
 - **Bối cảnh:** Cần duy trì tính decoupling tuyệt đối giữa logic nghiệp vụ và cách nó được khởi tạo.
 - **Quyết định:** Chuyển phần implementation của `service` (ví dụ `AuthService`) vào thư mục `internal/infra/service/`. Interface vẫn ở `internal/domain/`. Bootstrap layer ở `cmd/main.go` sẽ phụ trách inject implementation.
 - **Lý do:** Đảm bảo kiến trúc Clean Architecture hoàn toàn tuân thủ Dependency Inversion Principle, tách bạch "việc cấu hình/khởi tạo" ra khỏi "logic lõi".
+
+### Quyết định 7: Sử dụng Functional Option Pattern cho Shared Infrastructure
+- **Bối cảnh:** Khi xây dựng các thư viện dùng chung cho nhiều microservices (`pkg/mq`, `pkg/db`), mỗi service có thể cần những cấu hình khác nhau (ví dụ: sync vs async, batch size, timeout). Nếu thêm tham số trực tiếp vào hàm khởi tạo sẽ làm phá vỡ interface của các service cũ.
+- **Quyết định:** Áp dụng **Functional Options Pattern** (ví dụ: `opts ...WriterOption`) cho các constructor dùng chung trong thư mục `microservices/pkg/`.
+- **Lý do:** Đảm bảo tính tương thích ngược (backward compatibility) 100%. Các service có thể dễ dàng override cấu hình mặc định (như `WithAsync(true)`) mà không ảnh hưởng tới code của các service khác. Giữ cho việc khởi tạo luôn sạch sẽ và có thể mở rộng vô hạn.
+
+### Quyết định 8: Quản lý Transaction qua Context (TxManager Pattern)
+- **Bối cảnh:** Khi áp dụng Transactional Outbox Pattern, thao tác ghi `Server` và ghi `Outbox Event` phải nằm chung trong một Database Transaction. Tuy nhiên, nếu truyền trực tiếp `*gorm.DB` vào các interface ở tầng `Domain/Service` thì sẽ phá vỡ quy tắc Clean Architecture (tầng Domain không được biết về công nghệ Infra).
+- **Quyết định:** Xây dựng `TxManagerInterface` với hàm `WithTx(ctx context.Context, fn func(txCtx context.Context) error)`. Object Transaction được inject ngầm (ẩn) vào bên trong `context.Context` tại tầng Infra. Các Repository (`ServerRepo`, `OutboxRepo`) tự động kiểm tra `context` để lấy transaction ra sử dụng chung.
+- **Lý do:** Tầng `Service` (Business logic) hoàn toàn "mù" về Gorm hay Postgres, đảm bảo Decoupling tuyệt đối 100%. Code ở Service cực kỳ gọn gàng nhưng vẫn đạt được Data Consistency tối đa.

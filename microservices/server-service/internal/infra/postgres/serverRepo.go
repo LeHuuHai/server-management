@@ -19,7 +19,8 @@ type ServerRepo struct {
 
 func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
 	s.Status = model.StatusUnknown
-	err := r.db.WithContext(ctx).
+	db := getDB(ctx, r.db)
+	err := db.WithContext(ctx).
 		Create(s).
 		Error
 	if err != nil {
@@ -39,7 +40,8 @@ func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
 func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
 	var updated model.Server
 
-	res := r.db.WithContext(ctx).
+	db := getDB(ctx, r.db)
+	res := db.WithContext(ctx).
 		Model(&updated).
 		Clauses(clause.Returning{}).
 		Where("server_id = ? AND is_deleted = false", id).
@@ -57,7 +59,8 @@ func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]an
 }
 
 func (r *ServerRepo) Delete(ctx context.Context, id string) error {
-	res := r.db.WithContext(ctx).
+	db := getDB(ctx, r.db)
+	res := db.WithContext(ctx).
 		Model(&model.Server{}).
 		Where("server_id = ? AND is_deleted = false", id).
 		Update("is_deleted", true)
@@ -77,7 +80,8 @@ func (r *ServerRepo) List(ctx context.Context, filter model.ListServerFilter) (*
 	var servers []model.Server
 	var total int64
 
-	query := r.db.WithContext(ctx).
+	db := getDB(ctx, r.db)
+	query := db.WithContext(ctx).
 		Model(&model.Server{}).
 		Where("is_deleted = false")
 
@@ -110,7 +114,8 @@ func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 
 	for _, s := range servers {
 		s.Status = model.StatusUnknown
-		err := r.db.WithContext(ctx).
+		db := getDB(ctx, r.db)
+		err := db.WithContext(ctx).
 			Create(&s).Error
 
 		if err != nil {
@@ -130,7 +135,8 @@ func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 func (r *ServerRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, error) {
 	var result []model.ServerMetadata
 
-	err := r.db.WithContext(ctx).
+	db := getDB(ctx, r.db)
+	err := db.WithContext(ctx).
 		Model(&model.Server{}).
 		Select("server_id", "server_name", "ipv4").
 		Where("is_deleted = false").
@@ -180,7 +186,8 @@ func (r *ServerRepo) BulkUpdateServers(ctx context.Context, items []model.Server
 		WHERE s.server_id = v.id
 		`)
 
-	res := r.db.WithContext(ctx).Exec(b.String(), args...)
+	db := getDB(ctx, r.db)
+	res := db.WithContext(ctx).Exec(b.String(), args...)
 	return res.Error
 }
 
