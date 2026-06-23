@@ -14,6 +14,9 @@
 - [x] Worker ICMP Pinger & Mail Dispatch
 - [x] Deploy và chạy Demo hệ thống hiện tại
 - [ ] **Transfer sang hệ thống Microservice hoàn chỉnh**
+  - [x] Kế hoạch tổng thể và cấu trúc thư mục chung
+  - [x] Migrate `auth-service` (gRPC Server)
+  - [ ] Migrate các service khác (`server-service`, `gateway`, ...)
 - [ ] **Deploy hệ thống lên hạ tầng Docker Swarm**
 
 ## 3. Các quyết định thiết kế và triển khai quan trọng (Scalability Rationales)
@@ -42,3 +45,13 @@ Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng 
   - Worker đọc event này, dùng HTTP để "Pull" cái file binary từ Master API rồi gửi qua gomail.
   - Sử dụng Redis để cache các kết quả `count` từ Elasticsearch (tránh query dữ liệu timeseries khổng lồ mỗi ngày).
 - **Lý do:** Tối ưu kích cỡ payload Kafka, giữ tốc độ messaging cao. Giảm tải nặng cho Master API.
+
+### Quyết định 5: Chuyển đổi REST sang gRPC cho các Microservices nội bộ
+- **Bối cảnh:** Khi tách hệ thống thành các Microservices độc lập (ví dụ: `auth-service`), việc giao tiếp qua HTTP/REST sẽ cồng kềnh, thiếu type-safety và chậm hơn.
+- **Quyết định:** Các Backend Microservices chỉ mở cổng gRPC. API Gateway sẽ là component duy nhất nhận HTTP/REST từ Client bên ngoài và proxy thành request gRPC vào hệ thống nội bộ.
+- **Lý do:** Tối ưu hóa hiệu năng mạng, sử dụng Protobuf làm strict contract, tách biệt tầng routing HTTP ra khỏi logic service.
+
+### Quyết định 6: Cấu trúc thư mục Dependency Inversion (Service nằm trong Infra)
+- **Bối cảnh:** Cần duy trì tính decoupling tuyệt đối giữa logic nghiệp vụ và cách nó được khởi tạo.
+- **Quyết định:** Chuyển phần implementation của `service` (ví dụ `AuthService`) vào thư mục `internal/infra/service/`. Interface vẫn ở `internal/domain/`. Bootstrap layer ở `cmd/main.go` sẽ phụ trách inject implementation.
+- **Lý do:** Đảm bảo kiến trúc Clean Architecture hoàn toàn tuân thủ Dependency Inversion Principle, tách bạch "việc cấu hình/khởi tạo" ra khỏi "logic lõi".

@@ -28,3 +28,4 @@ Dưới đây là danh sách các tài liệu liên quan và thứ tự ưu tiê
 1. **Tuân thủ Migration Rules:** Luôn đọc và tuân thủ các "Migration Execution Rules" trong file `microservice_migration_guide.md`. Không tự ý chạy các lệnh thay đổi environment (như `go mod tidy`, sinh code, build, v.v.) trừ khi được yêu cầu.
 2. **Migration theo Phase:** Các file `*_migration.md` mô tả kế hoạch cho từng service cụ thể. Hãy tham chiếu vào tài liệu của service tương ứng khi thực hiện công việc.
 3. **Giữ nguyên codebase cũ:** Code của monolith cũ (`cmd/`, `internal/`) được xem là "frozen". Các thay đổi sẽ tập trung vào thư mục `microservices/` mới.
+4. **Không tự động chạy lệnh sinh code (gen code):** Tuyệt đối không tự chạy các lệnh như `protoc`, `openapi-generator`, v.v. Việc cài đặt dependency và sinh code do người dùng chủ động thực hiện.

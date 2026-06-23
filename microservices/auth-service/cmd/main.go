@@ -6,55 +6,48 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/LeHuuHai/server-management/microservices/auth-service/api"
 	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/config"
-	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/handler"
 	pg "github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/postgres"
 	rdb "github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/redis"
 	rt "github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/runtime"
-	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/service"
-	jwtprovider "github.com/LeHuuHai/server-management/microservices/pkg/jwt"
-	"github.com/gin-contrib/cors"
-	"github.com/gin-gonic/gin"
+	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/service"
+	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/rpc"
+	authpb "github.com/LeHuuHai/server-management/microservices/pkg/pb/auth"
+	"google.golang.org/grpc"
 )
 
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	rt, err := rt.NewApp(cfg)
+	app, err := rt.NewApp(cfg)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Failed to initialize runtime: %v", err)
 	}
 
-	jwtProvider := jwtprovider.NewJWTProvider(rt.Config.JWTConfig)
-	tokenBlocklistRedis := rdb.NewTokenBlocklistRedis(rt.RdbClient)
-	accountRepo := pg.NewAccountRepository(rt.DB)
+	blocklist := rdb.NewTokenBlocklistRedis(app.RdbClient)
+	repo := pg.NewAccountRepository(app.DB)
+	authService := service.NewAuthService(
+		app.JWTProvider,
+		blocklist,
+		repo,
+	)
 
-	authService := service.NewAuthService(jwtProvider, tokenBlocklistRedis, accountRepo)
-	authHandler := handler.NewAuthHandler(authService)
+	authServer := rpc.NewAuthServer(authService)
 
-	strictHandler := api.NewStrictHandler(authHandler, []api.StrictMiddlewareFunc{})
+	grpcServer := grpc.NewServer()
+	authpb.RegisterAuthServiceServer(grpcServer, authServer)
 
-	corsConfig := cors.Config{
-		AllowOrigins:     rt.Config.AppConfig.CORSOrigins,
-		AllowMethods:     []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "X-API-Key"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
+	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
+	lis, err := net.Listen("tcp", addr)
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
 	}
 
-	r := gin.Default()
-	r.Use(cors.New(corsConfig))
-
-	api.RegisterHandlers(r, strictHandler)
-
-	addr := net.JoinHostPort(rt.Config.AppConfig.Host, strconv.Itoa(rt.Config.AppConfig.Port))
-	slog.Info("Starting Auth Service", "addr", addr)
-
-	if err := r.Run(addr); err != nil {
-		log.Fatal(err)
+	slog.Info("Starting Auth Service gRPC Server", "addr", addr)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }
