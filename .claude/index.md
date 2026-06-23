@@ -28,7 +28,7 @@
 
 ## 3. Rule cho Agent
 
-1. **Luôn đọc file liên quan** trước khi thay đổi một module — xem mục 5 bên dưới để biết đường dẫn.
+1. **Luôn đọc file markdown liên quan trong thư mục .claude** trước khi suy luận — xem mục 5 bên dưới để biết đường dẫn.
 2. **Tuân thủ clean architecture**: domain → infra → handler, không import ngược.
 3. **Interface trước implementation**: mọi logic nghiệp vụ phải có interface trong `internal/domain/`.
 4. **Kafka là bus chính** giữa các service — không gọi thẳng DB từ Gateway hay Agent.
@@ -45,15 +45,14 @@
 │   ├── overview.md           ← Kiến trúc tổng quan, component diagram
 │   ├── directory-structure.md← Cấu trúc thư mục chi tiết
 │   └── tech-stack.md         ← Công nghệ và dependencies
-├── modules/
+├── module/                   ← Chi tiết các entrypoint cũ (Monolith)
+│   ├── index.md              ← Danh sách và điều hướng các Module
 │   ├── agent.md              ← Module: cmd/agent
-│   ├── gateway.md            ← Module: cmd/gw
+│   ├── gw.md                 ← Module: cmd/gw
 │   ├── master.md             ← Module: cmd/master
 │   ├── worker.md             ← Module: cmd/worker
 │   ├── pgwriter.md           ← Module: cmd/pgwriter
-│   ├── eswriter.md           ← Module: cmd/eswriter
-│   ├── domain.md             ← internal/domain (interfaces)
-│   └── infra.md              ← internal/infra (implementations)
+│   └── eswriter.md           ← Module: cmd/eswriter
 ├── plan/                     ← Kế hoạch migrate sang microservice 
 └── checkpoint/               ← Checkpoint tiến độ migrate 
 ```
@@ -67,14 +66,8 @@
 | Kiến trúc tổng quan & flow | `architecture/overview.md` |
 | Cấu trúc thư mục dự án | `architecture/directory-structure.md` |
 | Công nghệ, thư viện, dependencies | `architecture/tech-stack.md` |
-| Agent (heartbeat sender) | `modules/agent.md` |
-| Gateway (HTTP ingress) | `modules/gateway.md` |
-| Master API (CRUD + scheduler) | `modules/master.md` |
-| Worker (ICMP pinger + mailer) | `modules/worker.md` |
-| PGWriter / ESWriter | `modules/pgwriter.md`, `modules/eswriter.md` |
-| Domain interfaces (contracts) | `modules/domain.md` |
-| Infrastructure implementations | `modules/infra.md` |
-| Kế hoạch microservice migration | `plan/`  |
+| Chi tiết các Module cũ (Monolith) | `module/index.md` |
+| Kế hoạch microservice migration | `plan/index.md`  |
 | Tiến độ migration hiện tại | `checkpoint/`  |
 
 ---
