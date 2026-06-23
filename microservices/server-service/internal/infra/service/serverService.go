@@ -2,27 +2,20 @@ package service
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
-	"fmt"
 	"net"
 	"time"
 
 	apperr "github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/repo"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
+	"github.com/google/uuid"
 )
 
 type ServerService struct {
 	txManager  repo.TxManagerInterface
 	repo       repo.ServerRepositoryInterface
 	outboxRepo repo.OutboxRepositoryInterface
-}
-
-func generateID() string {
-	b := make([]byte, 16)
-	_, _ = rand.Read(b)
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
 }
 
 func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
@@ -44,7 +37,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) 
 		})
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
-			ID:        generateID(),
+			ID:        uuid.New().String(),
 			Topic:     "server_created",
 			Payload:   payload,
 			Status:    model.OutboxStatusPending,
@@ -107,7 +100,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) 
 		})
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
-			ID:        generateID(),
+			ID:        uuid.New().String(),
 			Topic:     "server_updated",
 			Payload:   payload,
 			Status:    model.OutboxStatusPending,
@@ -134,7 +127,7 @@ func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error
 		})
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
-			ID:        generateID(),
+			ID:        uuid.New().String(),
 			Topic:     "server_deleted",
 			Payload:   payload,
 			Status:    model.OutboxStatusPending,
@@ -146,7 +139,7 @@ func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error
 func (s *ServerService) ImportServer(ctx context.Context, serversData []model.ServerImport) (*model.CreateBatchServerResult, error) {
 	invalid := make([]string, 0)
 	valid := make([]model.Server, 0)
-	
+
 	for _, item := range serversData {
 		ip := net.ParseIP(item.IPv4)
 		if ip == nil || ip.To4() == nil {
@@ -184,7 +177,7 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 				})
 
 				err := s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
-					ID:        generateID(),
+					ID:        uuid.New().String(),
 					Topic:     "server_created",
 					Payload:   payload,
 					Status:    model.OutboxStatusPending,
