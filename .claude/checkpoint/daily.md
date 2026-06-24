@@ -1,5 +1,27 @@
 # Checkpoint Hàng Ngày (Daily Standup)
 
+## Ngày: 24/06/2026
+
+### 1. Trạng thái hiện tại
+- Hoàn thành di chuyển/migrate **`heartbeat-gateway`** và **`monitor-service`** sang kiến trúc Microservices.
+- Hệ thống hỗ trợ sinh báo cáo và tải báo cáo thông qua cả cơ chế chạy định kỳ (cron-like loop) và gọi chủ động qua gRPC (`GenerateReport` và `DownloadReport`).
+
+### 2. Các công việc đã hoàn thành trong ngày
+- [x] Migrate `heartbeat-gateway` sang microservice nhận HTTP heartbeats và chuyển tiếp trực tiếp vào Kafka.
+- [x] Migrate `monitor-service` hoàn chỉnh với:
+  - Tách biệt Postgres lưu trữ thông tin cấu hình (`monitored_servers`) và operational status (`live_statuses`).
+  - Ghi log lịch sử thay đổi trạng thái sang Elasticsearch (`StatusLog` model).
+  - Tối ưu hóa ghi cơ sở dữ liệu qua micro-batching (1-second flush) cho Postgres và Elasticsearch.
+  - Xây dựng active checker quét server bị quá hạn heartbeat định kỳ 5 giây.
+  - Implement gRPC server hỗ trợ `DownloadReport` (stream chunks) và `GenerateReport` (gọi trực tiếp) đồng bộ với tầng nghiệp vụ sinh báo cáo (`ReportService`).
+- [x] Đồng bộ hóa các trường thời gian (`MetadataUpdatedAt` đổi thành `UpdatedAt`) và loại bỏ trường thừa ở các gRPC contract và models.
+
+### 3. Các công việc cần làm tiếp theo (TODO)
+- [ ] Migrate `mail-worker` và `ping-worker`.
+- [ ] Nghiên cứu và thiết kế file cấu hình Stack/Compose cho Docker Swarm.
+
+---
+
 ## Ngày: 23/06/2026
 
 ### 1. Trạng thái hiện tại

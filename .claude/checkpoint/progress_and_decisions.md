@@ -17,7 +17,9 @@
   - [x] Kế hoạch tổng thể và cấu trúc thư mục chung
   - [x] Migrate `auth-service` (gRPC Server)
   - [x] Migrate `server-service` (gRPC Server & Kafka Publisher)
-  - [ ] Migrate các service khác (`gateway`, `monitor-service`, ...)
+  - [x] Migrate `heartbeat-gateway`
+  - [x] Migrate `monitor-service` (gRPC Server with DownloadReport/GenerateReport, Kafka Consumers/Publishers, Checker, Batchers, & Report generator)
+  - [ ] Migrate `mail-worker` và `ping-worker`
 - [ ] **Deploy hệ thống lên hạ tầng Docker Swarm**
 
 ## 3. Các quyết định thiết kế và triển khai quan trọng (Scalability Rationales)
@@ -73,3 +75,11 @@ Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng 
   1. **Idempotency:** Trong ngữ cảnh quản lý Server, hành vi của Consumer (`monitor-service`) luôn là cập nhật trạng thái (UPSERT). Do đó, chúng ta **không cần quan tâm đến vấn đề Idempotency**. Việc nhận trùng event nhiều lần không gây ra side-effect.
   2. **Ordering & Lost Update:** Để tránh việc Consumer lấy dữ liệu cũ (đến trễ) ghi đè lên dữ liệu mới (Lost Update), ta áp dụng **Entity Versioning**. Thêm trường `Version` vào model `Server`, mỗi lần cập nhật sẽ tăng `Version + 1` và đính kèm vào Event.
 - **Lý do:** Cách tiếp cận cực kỳ thực dụng. Mọi Consumer chỉ cần thực hiện câu truy vấn `UPSERT ... WHERE version < incoming_version` để tự động chặn các event tới sai thứ tự.
+
+### Quyết định 10: Điều chỉnh Acknowledgment (RequiredAcks) theo tính chất dữ liệu
+- **Bối cảnh:** Các microservice khác nhau giao tiếp qua Kafka có các yêu cầu khác nhau về độ tin cậy của dữ liệu (Consistency vs Availability/Performance).
+- **Quyết định:**
+  1. **Đối với `server-service` (Dữ liệu cấu hình hệ thống):** Cấu hình `RequiredAcks = -1` (`RequireAll`). Writer sẽ đợi phản hồi ghi nhận từ toàn bộ replica (In-Sync Replicas). Tránh mất mát dữ liệu vòng đời Server, kết hợp với Entity Versioning ở Consumer để khử trùng (Idempotency).
+  2. **Đối với `heartbeat-gateway` (Dữ liệu metric thời gian thực):** Cấu hình `RequiredAcks = 0` (`RequireNone`). Writer gửi tin nhắn theo dạng fire-and-forget mà không đợi phản hồi từ broker. Dữ liệu heartbeat có tính chất tần suất cao và tạm thời (ephemeral), mất mát một vài tin nhắn không ảnh hưởng tới tính đúng đắn chung của hệ thống.
+- **Lý do:** Tối ưu hóa hiệu năng và thông lượng (throughput) cho dịch vụ thu thập heartbeat (`heartbeat-gateway`) đạt độ trễ cực thấp (< 1ms), trong khi bảo toàn tính nhất quán mạnh mẽ cho cấu hình server (`server-service`).
+
