@@ -19,7 +19,7 @@ func (e *serverXLSXExporter) ContentType() string {
 	return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 }
 
-func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data []model.Server) error {
+func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data []model.ServerProfile) error {
 	f := excelize.NewFile()
 	sheet := "Servers"
 	f.SetSheetName("Sheet1", sheet)
@@ -29,7 +29,7 @@ func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data 
 	f.SetCellValue(sheet, "D1", "Ipv4")
 	f.SetCellValue(sheet, "E1", "Status")
 	f.SetCellValue(sheet, "F1", "CreateAt")
-	f.SetCellValue(sheet, "G1", "MetadataUpdatedAt")
+	f.SetCellValue(sheet, "G1", "UpdatedAt")
 	f.SetCellValue(sheet, "H1", "LastPingAt")
 
 	for idx, item := range data {
@@ -38,10 +38,10 @@ func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data 
 		f.SetCellValue(sheet, "B"+row, item.ServerID)
 		f.SetCellValue(sheet, "C"+row, item.ServerName)
 		f.SetCellValue(sheet, "D"+row, item.IPv4)
-		f.SetCellValue(sheet, "E"+row, item.Status)
+		f.SetCellValue(sheet, "E"+row, "UNKNOWN")
 		f.SetCellValue(sheet, "F"+row, item.CreatedAt.Format("2006-01-02 15:04:05"))
-		f.SetCellValue(sheet, "G"+row, item.MetadataUpdatedAt.Format("2006-01-02 15:04:05"))
-		f.SetCellValue(sheet, "H"+row, item.LastPingAt.Format("2006-01-02 15:04:05"))
+		f.SetCellValue(sheet, "G"+row, item.UpdatedAt.Format("2006-01-02 15:04:05"))
+		f.SetCellValue(sheet, "H"+row, "")
 	}
 
 	return f.Write(writer)

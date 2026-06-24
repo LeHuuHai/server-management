@@ -1,6 +1,6 @@
 package model
 
 type ListServerResult struct {
-	Servers []Server
+	Servers []ServerProfile
 	Total   int
 }

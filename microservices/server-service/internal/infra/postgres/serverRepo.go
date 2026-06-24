@@ -3,8 +3,6 @@ package pg
 import (
 	"context"
 	"errors"
-	"fmt"
-	"strings"
 
 	apperr "github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
@@ -17,8 +15,7 @@ type ServerRepo struct {
 	db *gorm.DB
 }
 
-func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
-	s.Status = model.StatusUnknown
+func (r *ServerRepo) Create(ctx context.Context, s *model.ServerProfile) error {
 	db := getDB(ctx, r.db)
 	err := db.WithContext(ctx).
 		Create(s).
@@ -37,8 +34,8 @@ func (r *ServerRepo) Create(ctx context.Context, s *model.Server) error {
 	return nil
 }
 
-func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.Server, error) {
-	var updated model.Server
+func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]any) (*model.ServerProfile, error) {
+	var updated model.ServerProfile
 
 	fields["version"] = gorm.Expr("version + 1")
 
@@ -63,7 +60,7 @@ func (r *ServerRepo) Update(ctx context.Context, id string, fields map[string]an
 func (r *ServerRepo) Delete(ctx context.Context, id string) error {
 	db := getDB(ctx, r.db)
 	res := db.WithContext(ctx).
-		Model(&model.Server{}).
+		Model(&model.ServerProfile{}).
 		Where("server_id = ? AND is_deleted = false", id).
 		Update("is_deleted", true)
 
@@ -79,12 +76,12 @@ func (r *ServerRepo) Delete(ctx context.Context, id string) error {
 }
 
 func (r *ServerRepo) List(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
-	var servers []model.Server
+	var servers []model.ServerProfile
 	var total int64
 
 	db := getDB(ctx, r.db)
 	query := db.WithContext(ctx).
-		Model(&model.Server{}).
+		Model(&model.ServerProfile{}).
 		Where("is_deleted = false")
 
 	if err := query.Count(&total).Error; err != nil {
@@ -106,7 +103,7 @@ func (r *ServerRepo) List(ctx context.Context, filter model.ListServerFilter) (*
 	}, err
 }
 
-func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*model.CreateBatchServerResult, error) {
+func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.ServerProfile) (*model.CreateBatchServerResult, error) {
 	res := &model.CreateBatchServerResult{
 		Success:    make([]string, 0),
 		Failed:     make([]string, 0),
@@ -115,7 +112,6 @@ func (r *ServerRepo) CreateBatch(ctx context.Context, servers []model.Server) (*
 	}
 
 	for _, s := range servers {
-		s.Status = model.StatusUnknown
 		db := getDB(ctx, r.db)
 		err := db.WithContext(ctx).
 			Create(&s).Error
@@ -139,7 +135,7 @@ func (r *ServerRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, e
 
 	db := getDB(ctx, r.db)
 	err := db.WithContext(ctx).
-		Model(&model.Server{}).
+		Model(&model.ServerProfile{}).
 		Select("server_id", "server_name", "ipv4").
 		Where("is_deleted = false").
 		Find(&result).
@@ -150,47 +146,6 @@ func (r *ServerRepo) AllMetadata(ctx context.Context) ([]model.ServerMetadata, e
 	}
 
 	return result, nil
-}
-
-func (r *ServerRepo) BulkUpdateServers(ctx context.Context, items []model.Server) error {
-	var b strings.Builder
-	b.WriteString(`
-		UPDATE servers AS s
-		SET
-			status = v.status,
-			last_ping_at = v.last_ping_at
-		FROM (VALUES `)
-
-	args := make([]any, 0, len(items)*3)
-
-	for i, it := range items {
-		if i > 0 {
-			b.WriteString(",")
-		}
-
-		// QUAN TRá»ŒNG: Ã‰p kiá»ƒu á»Ÿ dÃ²ng Ä‘áº§u tiÃªn Ä‘á»ƒ Postgres nháº­n diá»‡n Ä‘Ãºng kiá»ƒu dá»¯ liá»‡u
-		if i == 0 {
-			// Ã‰p kiá»ƒu id thÃ nh varchar/text (hoáº·c int/uuid tÃ¹y DB cá»§a báº¡n), status thÃ nh varchar, vÃ  last_ping_at thÃ nh timestamp
-			b.WriteString(fmt.Sprintf("($%d::varchar, $%d::varchar, $%d::timestamp)", i*3+1, i*3+2, i*3+3))
-		} else {
-			b.WriteString(fmt.Sprintf("($%d,$%d,$%d)", i*3+1, i*3+2, i*3+3))
-		}
-
-		args = append(args,
-			it.ServerID,
-			it.Status,
-			it.LastPingAt,
-		)
-	}
-
-	b.WriteString(`
-		) AS v(id, status, last_ping_at)
-		WHERE s.server_id = v.id
-		`)
-
-	db := getDB(ctx, r.db)
-	res := db.WithContext(ctx).Exec(b.String(), args...)
-	return res.Error
 }
 
 func NewServerRepository(db *gorm.DB) *ServerRepo {

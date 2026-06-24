@@ -7,7 +7,7 @@ import (
 )
 
 type EventPublisherInterface interface {
-	PublishServerCreated(ctx context.Context, server *model.Server) error
-	PublishServerUpdated(ctx context.Context, server *model.Server) error
+	PublishServerCreated(ctx context.Context, server *model.ServerProfile) error
+	PublishServerUpdated(ctx context.Context, server *model.ServerProfile) error
 	PublishServerDeleted(ctx context.Context, serverID string) error
 }

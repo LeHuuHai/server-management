@@ -62,13 +62,13 @@ func (p *OutboxPoller) processBatch(ctx context.Context) {
 		var pubErr error
 		switch ev.Topic {
 		case "server_created":
-			pubErr = p.publisher.PublishServerCreated(ctx, &model.Server{
+			pubErr = p.publisher.PublishServerCreated(ctx, &model.ServerProfile{
 				ServerID:   serverEvent.ServerID,
 				ServerName: serverEvent.ServerName,
 				IPv4:       serverEvent.IPv4,
 			})
 		case "server_updated":
-			pubErr = p.publisher.PublishServerUpdated(ctx, &model.Server{
+			pubErr = p.publisher.PublishServerUpdated(ctx, &model.ServerProfile{
 				ServerID:   serverEvent.ServerID,
 				ServerName: serverEvent.ServerName,
 				IPv4:       serverEvent.IPv4,

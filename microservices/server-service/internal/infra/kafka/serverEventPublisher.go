@@ -21,7 +21,7 @@ func NewServerEventPublisher(w *kafka.Writer) publisher.EventPublisherInterface 
 	}
 }
 
-func (p *serverEventPublisher) publish(ctx context.Context, eventType string, server *model.Server) error {
+func (p *serverEventPublisher) publish(ctx context.Context, eventType string, server *model.ServerProfile) error {
 	event := pkgmodel.ServerEvent{
 		ServerID:   server.ServerID,
 		ServerName: server.ServerName,
@@ -45,18 +45,18 @@ func (p *serverEventPublisher) publish(ctx context.Context, eventType string, se
 	return err
 }
 
-func (p *serverEventPublisher) PublishServerCreated(ctx context.Context, server *model.Server) error {
+func (p *serverEventPublisher) PublishServerCreated(ctx context.Context, server *model.ServerProfile) error {
 	return p.publish(ctx, "ServerCreated", server)
 }
 
-func (p *serverEventPublisher) PublishServerUpdated(ctx context.Context, server *model.Server) error {
+func (p *serverEventPublisher) PublishServerUpdated(ctx context.Context, server *model.ServerProfile) error {
 	return p.publish(ctx, "ServerUpdated", server)
 }
 
 func (p *serverEventPublisher) PublishServerDeleted(ctx context.Context, serverID string) error {
 	// For deleted, we might not have the full Server model readily available.
 	// We'll create a dummy server object with just the ID.
-	dummyServer := &model.Server{
+	dummyServer := &model.ServerProfile{
 		ServerID: serverID,
 	}
 	return p.publish(ctx, "ServerDeleted", dummyServer)

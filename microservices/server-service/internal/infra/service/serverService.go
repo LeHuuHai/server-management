@@ -19,7 +19,7 @@ type ServerService struct {
 	outboxRepo repo.OutboxRepositoryInterface
 }
 
-func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
+func (s *ServerService) CreateServer(ctx context.Context, server *model.ServerProfile) (*model.ServerProfile, error) {
 	ip := net.ParseIP(server.IPv4)
 	if ip == nil || ip.To4() == nil {
 		return nil, apperr.ErrInvalidIP
@@ -71,7 +71,7 @@ func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerF
 	return s.repo.List(ctx, filter)
 }
 
-func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) (*model.Server, error) {
+func (s *ServerService) UpdateServer(ctx context.Context, server *model.ServerProfile) (*model.ServerProfile, error) {
 	fields := map[string]any{}
 	if server.ServerName != "" {
 		fields["server_name"] = server.ServerName
@@ -83,9 +83,9 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) 
 		}
 		fields["ipv4"] = server.IPv4
 	}
-	fields["metadata_updated_at"] = time.Now()
+	fields["updated_at"] = time.Now()
 
-	var newServer *model.Server
+	var newServer *model.ServerProfile
 
 	err := s.txManager.WithTx(ctx, func(txCtx context.Context) error {
 		var err error
@@ -141,7 +141,7 @@ func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error
 
 func (s *ServerService) ImportServer(ctx context.Context, serversData []model.ServerImport) (*model.CreateBatchServerResult, error) {
 	invalid := make([]string, 0)
-	valid := make([]model.Server, 0)
+	valid := make([]model.ServerProfile, 0)
 
 	for _, item := range serversData {
 		ip := net.ParseIP(item.IPv4)
@@ -149,7 +149,7 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 			invalid = append(invalid, item.ServerID)
 			continue
 		}
-		valid = append(valid, model.Server{
+		valid = append(valid, model.ServerProfile{
 			ServerID:   item.ServerID,
 			ServerName: item.ServerName,
 			IPv4:       item.IPv4,

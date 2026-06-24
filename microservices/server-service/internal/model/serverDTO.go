@@ -14,7 +14,7 @@ type ServerResponseDTO struct {
 	IPv4              string
 	Status            string
 	CreatedTime       time.Time
-	MetadataUpdatedAt time.Time
+	UpdatedAt         time.Time
 	LastPingAt        time.Time
 }
 

@@ -7,11 +7,11 @@ import (
 )
 
 type ServerServiceInterface interface {
-	CreateServer(ctx context.Context, server *model.Server) (*model.Server, error)
+	CreateServer(ctx context.Context, server *model.ServerProfile) (*model.ServerProfile, error)
 
 	ListServer(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error)
 
-	UpdateServer(ctx context.Context, server *model.Server) (*model.Server, error)
+	UpdateServer(ctx context.Context, server *model.ServerProfile) (*model.ServerProfile, error)
 
 	DeleteServer(ctx context.Context, serverID string) error
 

@@ -8,13 +8,13 @@ import (
 
 	// "google.golang.org/grpc/metadata"
 
-	"github.com/LeHuuHai/server-management/microservices/pkg/pb/server"
+	serverpb "github.com/LeHuuHai/server-management/microservices/pkg/pb/server"
 	service "github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/service"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
 )
 
 type ServerHandler struct {
-	server.UnimplementedServerServiceServer
+	serverpb.UnimplementedServerServiceServer
 	svc service.ServerServiceInterface
 }
 
@@ -24,23 +24,21 @@ func NewServerHandler(svc service.ServerServiceInterface) *ServerHandler {
 	}
 }
 
-func mapModelToServerPb(m *model.Server) *server.Server {
-	return &server.Server{
-		ServerId:          m.ServerID,
-		ServerName:        m.ServerName,
-		Ipv4:              m.IPv4,
-		Status:            string(m.Status),
-		CreatedAt:         m.CreatedAt.Unix(),
-		MetadataUpdatedAt: m.MetadataUpdatedAt.Unix(),
-		LastPingAt:        m.LastPingAt.Unix(),
+func mapModelToServerPb(m *model.ServerProfile) *serverpb.ServerProfile {
+	return &serverpb.ServerProfile{
+		ServerId:   m.ServerID,
+		ServerName: m.ServerName,
+		Ipv4:       m.IPv4,
+		CreatedAt:  m.CreatedAt.Unix(),
+		UpdatedAt:  m.UpdatedAt.Unix(),
 	}
 }
 
-func (h *ServerHandler) CreateServer(ctx context.Context, req *server.CreateServerRequest) (*server.Server, error) {
+func (h *ServerHandler) CreateServer(ctx context.Context, req *serverpb.CreateServerRequest) (*serverpb.ServerProfile, error) {
 	// md, ok := metadata.FromIncomingContext(ctx)
 	// if ok { ... } // Extract User info if needed
 
-	m := &model.Server{
+	m := &model.ServerProfile{
 		ServerID:   req.ServerId,
 		ServerName: req.ServerName,
 		IPv4:       req.Ipv4,
@@ -53,8 +51,8 @@ func (h *ServerHandler) CreateServer(ctx context.Context, req *server.CreateServ
 	return mapModelToServerPb(res), nil
 }
 
-func (h *ServerHandler) UpdateServer(ctx context.Context, req *server.UpdateServerRequest) (*server.Server, error) {
-	m := &model.Server{
+func (h *ServerHandler) UpdateServer(ctx context.Context, req *serverpb.UpdateServerRequest) (*serverpb.ServerProfile, error) {
+	m := &model.ServerProfile{
 		ServerID:   req.ServerId,
 		ServerName: req.ServerName,
 		IPv4:       req.Ipv4,
@@ -67,15 +65,15 @@ func (h *ServerHandler) UpdateServer(ctx context.Context, req *server.UpdateServ
 	return mapModelToServerPb(res), nil
 }
 
-func (h *ServerHandler) DeleteServer(ctx context.Context, req *server.DeleteServerRequest) (*server.DeleteServerResponse, error) {
+func (h *ServerHandler) DeleteServer(ctx context.Context, req *serverpb.DeleteServerRequest) (*serverpb.DeleteServerResponse, error) {
 	err := h.svc.DeleteServer(ctx, req.ServerId)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to delete server: %v", err)
 	}
-	return &server.DeleteServerResponse{}, nil
+	return &serverpb.DeleteServerResponse{}, nil
 }
 
-func (h *ServerHandler) ListServers(ctx context.Context, req *server.ListServersRequest) (*server.ListServersResponse, error) {
+func (h *ServerHandler) ListServers(ctx context.Context, req *serverpb.ListServersRequest) (*serverpb.ListServersResponse, error) {
 	filter := model.ListServerFilter{
 		From:      int(req.From),
 		To:        int(req.To),
@@ -88,19 +86,19 @@ func (h *ServerHandler) ListServers(ctx context.Context, req *server.ListServers
 		return nil, status.Errorf(codes.Internal, "failed to list servers: %v", err)
 	}
 
-	var pbServers []*server.Server
+	var pbServers []*serverpb.ServerProfile
 	for _, s := range res.Servers {
 		sCopy := s // prevent pointer loop issue
 		pbServers = append(pbServers, mapModelToServerPb(&sCopy))
 	}
 
-	return &server.ListServersResponse{
+	return &serverpb.ListServersResponse{
 		Servers: pbServers,
 		Total:   int32(res.Total),
 	}, nil
 }
 
-func (h *ServerHandler) ImportServers(ctx context.Context, req *server.ImportServersRequest) (*server.ImportServersResponse, error) {
+func (h *ServerHandler) ImportServers(ctx context.Context, req *serverpb.ImportServersRequest) (*serverpb.ImportServersResponse, error) {
 	// 1. Dùng req.FileContent (bytes array của file xlsx)
 	// 2. Chuyển cho FileService deserialize -> []model.ServerImport
 	// (Note: Cần thêm method Deserialize cho FileService hoặc thực hiện ở đây,
@@ -113,7 +111,7 @@ func (h *ServerHandler) ImportServers(ctx context.Context, req *server.ImportSer
 	return nil, status.Errorf(codes.Unimplemented, "ImportServers not implemented fully yet")
 }
 
-func (h *ServerHandler) ExportServers(ctx context.Context, req *server.ExportServersRequest) (*server.ExportServersResponse, error) {
+func (h *ServerHandler) ExportServers(ctx context.Context, req *serverpb.ExportServersRequest) (*serverpb.ExportServersResponse, error) {
 	// filter := model.ListServerFilter{
 	// 	From:      int(req.From),
 	// 	To:        int(req.To),

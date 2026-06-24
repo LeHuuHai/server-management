@@ -6,7 +6,9 @@ import (
 	"net"
 	"strconv"
 
-	"github.com/LeHuuHai/server-management/microservices/pkg/pb/server"
+	"context"
+
+	serverpb "github.com/LeHuuHai/server-management/microservices/pkg/pb/server"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/postgres"
@@ -15,7 +17,6 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/worker"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/rpc"
 	"google.golang.org/grpc"
-	"context"
 )
 
 func main() {
@@ -32,7 +33,7 @@ func main() {
 	serverRepo := pg.NewServerRepository(app.DB)
 	txManager := pg.NewTxManager(app.DB)
 	outboxRepo := pg.NewOutboxRepository(app.DB)
-	
+
 	eventPublisher := kafka.NewServerEventPublisher(app.ServerEventWriter)
 
 	serverSvc := service.NewServerService(txManager, serverRepo, outboxRepo)
@@ -40,7 +41,7 @@ func main() {
 	grpcHandler := rpc.NewServerHandler(serverSvc)
 
 	grpcServer := grpc.NewServer()
-	server.RegisterServerServiceServer(grpcServer, grpcHandler)
+	serverpb.RegisterServerServiceServer(grpcServer, grpcHandler)
 
 	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
 	lis, err := net.Listen("tcp", addr)

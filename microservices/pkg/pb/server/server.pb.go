@@ -4,7 +4,7 @@
 // 	protoc        v7.34.1
 // source: server.proto
 
-package server
+package serverpb
 
 import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
@@ -21,34 +21,32 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Cấu trúc map với model.Server
-type Server struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	ServerId          string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	ServerName        string                 `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
-	Ipv4              string                 `protobuf:"bytes,3,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
-	Status            string                 `protobuf:"bytes,4,opt,name=status,proto3" json:"status,omitempty"`
-	CreatedAt         int64                  `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
-	MetadataUpdatedAt int64                  `protobuf:"varint,6,opt,name=metadata_updated_at,json=metadataUpdatedAt,proto3" json:"metadata_updated_at,omitempty"`
-	LastPingAt        int64                  `protobuf:"varint,7,opt,name=last_ping_at,json=lastPingAt,proto3" json:"last_ping_at,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+// Cấu trúc map với model.ServerProfile
+type ServerProfile struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerId      string                 `protobuf:"bytes,1,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	ServerName    string                 `protobuf:"bytes,2,opt,name=server_name,json=serverName,proto3" json:"server_name,omitempty"`
+	Ipv4          string                 `protobuf:"bytes,3,opt,name=ipv4,proto3" json:"ipv4,omitempty"`
+	CreatedAt     int64                  `protobuf:"varint,4,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	UpdatedAt     int64                  `protobuf:"varint,5,opt,name=updated_at,json=updatedAt,proto3" json:"updated_at,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *Server) Reset() {
-	*x = Server{}
+func (x *ServerProfile) Reset() {
+	*x = ServerProfile{}
 	mi := &file_server_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *Server) String() string {
+func (x *ServerProfile) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*Server) ProtoMessage() {}
+func (*ServerProfile) ProtoMessage() {}
 
-func (x *Server) ProtoReflect() protoreflect.Message {
+func (x *ServerProfile) ProtoReflect() protoreflect.Message {
 	mi := &file_server_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -60,56 +58,42 @@ func (x *Server) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use Server.ProtoReflect.Descriptor instead.
-func (*Server) Descriptor() ([]byte, []int) {
+// Deprecated: Use ServerProfile.ProtoReflect.Descriptor instead.
+func (*ServerProfile) Descriptor() ([]byte, []int) {
 	return file_server_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *Server) GetServerId() string {
+func (x *ServerProfile) GetServerId() string {
 	if x != nil {
 		return x.ServerId
 	}
 	return ""
 }
 
-func (x *Server) GetServerName() string {
+func (x *ServerProfile) GetServerName() string {
 	if x != nil {
 		return x.ServerName
 	}
 	return ""
 }
 
-func (x *Server) GetIpv4() string {
+func (x *ServerProfile) GetIpv4() string {
 	if x != nil {
 		return x.Ipv4
 	}
 	return ""
 }
 
-func (x *Server) GetStatus() string {
-	if x != nil {
-		return x.Status
-	}
-	return ""
-}
-
-func (x *Server) GetCreatedAt() int64 {
+func (x *ServerProfile) GetCreatedAt() int64 {
 	if x != nil {
 		return x.CreatedAt
 	}
 	return 0
 }
 
-func (x *Server) GetMetadataUpdatedAt() int64 {
+func (x *ServerProfile) GetUpdatedAt() int64 {
 	if x != nil {
-		return x.MetadataUpdatedAt
-	}
-	return 0
-}
-
-func (x *Server) GetLastPingAt() int64 {
-	if x != nil {
-		return x.LastPingAt
+		return x.UpdatedAt
 	}
 	return 0
 }
@@ -386,7 +370,7 @@ func (x *ListServersRequest) GetDesc() bool {
 // Cấu trúc map với model.ListServerResult
 type ListServersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Servers       []*Server              `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`
+	Servers       []*ServerProfile       `protobuf:"bytes,1,rep,name=servers,proto3" json:"servers,omitempty"`
 	Total         int32                  `protobuf:"varint,2,opt,name=total,proto3" json:"total,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -422,7 +406,7 @@ func (*ListServersResponse) Descriptor() ([]byte, []int) {
 	return file_server_proto_rawDescGZIP(), []int{6}
 }
 
-func (x *ListServersResponse) GetServers() []*Server {
+func (x *ListServersResponse) GetServers() []*ServerProfile {
 	if x != nil {
 		return x.Servers
 	}
@@ -673,18 +657,16 @@ var File_server_proto protoreflect.FileDescriptor
 
 const file_server_proto_rawDesc = "" +
 	"\n" +
-	"\fserver.proto\x12\x06server\"\xe3\x01\n" +
-	"\x06Server\x12\x1b\n" +
+	"\fserver.proto\x12\x06server\"\x9f\x01\n" +
+	"\rServerProfile\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x1f\n" +
 	"\vserver_name\x18\x02 \x01(\tR\n" +
 	"serverName\x12\x12\n" +
-	"\x04ipv4\x18\x03 \x01(\tR\x04ipv4\x12\x16\n" +
-	"\x06status\x18\x04 \x01(\tR\x06status\x12\x1d\n" +
+	"\x04ipv4\x18\x03 \x01(\tR\x04ipv4\x12\x1d\n" +
 	"\n" +
-	"created_at\x18\x05 \x01(\x03R\tcreatedAt\x12.\n" +
-	"\x13metadata_updated_at\x18\x06 \x01(\x03R\x11metadataUpdatedAt\x12 \n" +
-	"\flast_ping_at\x18\a \x01(\x03R\n" +
-	"lastPingAt\"g\n" +
+	"created_at\x18\x04 \x01(\x03R\tcreatedAt\x12\x1d\n" +
+	"\n" +
+	"updated_at\x18\x05 \x01(\x03R\tupdatedAt\"g\n" +
 	"\x13CreateServerRequest\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\x12\x1f\n" +
 	"\vserver_name\x18\x02 \x01(\tR\n" +
@@ -703,9 +685,9 @@ const file_server_proto_rawDesc = "" +
 	"\x02to\x18\x02 \x01(\x05R\x02to\x12\x1d\n" +
 	"\n" +
 	"sort_field\x18\x03 \x01(\tR\tsortField\x12\x12\n" +
-	"\x04desc\x18\x04 \x01(\bR\x04desc\"U\n" +
-	"\x13ListServersResponse\x12(\n" +
-	"\aservers\x18\x01 \x03(\v2\x0e.server.ServerR\aservers\x12\x14\n" +
+	"\x04desc\x18\x04 \x01(\bR\x04desc\"\\\n" +
+	"\x13ListServersResponse\x12/\n" +
+	"\aservers\x18\x01 \x03(\v2\x15.server.ServerProfileR\aservers\x12\x14\n" +
 	"\x05total\x18\x02 \x01(\x05R\x05total\"9\n" +
 	"\x14ImportServersRequest\x12!\n" +
 	"\ffile_content\x18\x01 \x01(\fR\vfileContent\"\x97\x01\n" +
@@ -726,14 +708,14 @@ const file_server_proto_rawDesc = "" +
 	"\x04desc\x18\x04 \x01(\bR\x04desc\"W\n" +
 	"\x15ExportServersResponse\x12!\n" +
 	"\ffile_content\x18\x01 \x01(\fR\vfileContent\x12\x1b\n" +
-	"\tfile_name\x18\x02 \x01(\tR\bfileName2\xb8\x03\n" +
-	"\rServerService\x12;\n" +
-	"\fCreateServer\x12\x1b.server.CreateServerRequest\x1a\x0e.server.Server\x12;\n" +
-	"\fUpdateServer\x12\x1b.server.UpdateServerRequest\x1a\x0e.server.Server\x12I\n" +
+	"\tfile_name\x18\x02 \x01(\tR\bfileName2\xc6\x03\n" +
+	"\rServerService\x12B\n" +
+	"\fCreateServer\x12\x1b.server.CreateServerRequest\x1a\x15.server.ServerProfile\x12B\n" +
+	"\fUpdateServer\x12\x1b.server.UpdateServerRequest\x1a\x15.server.ServerProfile\x12I\n" +
 	"\fDeleteServer\x12\x1b.server.DeleteServerRequest\x1a\x1c.server.DeleteServerResponse\x12F\n" +
 	"\vListServers\x12\x1a.server.ListServersRequest\x1a\x1b.server.ListServersResponse\x12L\n" +
 	"\rImportServers\x12\x1c.server.ImportServersRequest\x1a\x1d.server.ImportServersResponse\x12L\n" +
-	"\rExportServers\x12\x1c.server.ExportServersRequest\x1a\x1d.server.ExportServersResponseBCZAgithub.com/LeHuuHai/server-management/microservices/pkg/pb/serverb\x06proto3"
+	"\rExportServers\x12\x1c.server.ExportServersRequest\x1a\x1d.server.ExportServersResponseBLZJgithub.com/LeHuuHai/server-management/microservices/pkg/pb/server;serverpbb\x06proto3"
 
 var (
 	file_server_proto_rawDescOnce sync.Once
@@ -749,7 +731,7 @@ func file_server_proto_rawDescGZIP() []byte {
 
 var file_server_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_server_proto_goTypes = []any{
-	(*Server)(nil),                // 0: server.Server
+	(*ServerProfile)(nil),         // 0: server.ServerProfile
 	(*CreateServerRequest)(nil),   // 1: server.CreateServerRequest
 	(*UpdateServerRequest)(nil),   // 2: server.UpdateServerRequest
 	(*DeleteServerRequest)(nil),   // 3: server.DeleteServerRequest
@@ -762,15 +744,15 @@ var file_server_proto_goTypes = []any{
 	(*ExportServersResponse)(nil), // 10: server.ExportServersResponse
 }
 var file_server_proto_depIdxs = []int32{
-	0,  // 0: server.ListServersResponse.servers:type_name -> server.Server
+	0,  // 0: server.ListServersResponse.servers:type_name -> server.ServerProfile
 	1,  // 1: server.ServerService.CreateServer:input_type -> server.CreateServerRequest
 	2,  // 2: server.ServerService.UpdateServer:input_type -> server.UpdateServerRequest
 	3,  // 3: server.ServerService.DeleteServer:input_type -> server.DeleteServerRequest
 	5,  // 4: server.ServerService.ListServers:input_type -> server.ListServersRequest
 	7,  // 5: server.ServerService.ImportServers:input_type -> server.ImportServersRequest
 	9,  // 6: server.ServerService.ExportServers:input_type -> server.ExportServersRequest
-	0,  // 7: server.ServerService.CreateServer:output_type -> server.Server
-	0,  // 8: server.ServerService.UpdateServer:output_type -> server.Server
+	0,  // 7: server.ServerService.CreateServer:output_type -> server.ServerProfile
+	0,  // 8: server.ServerService.UpdateServer:output_type -> server.ServerProfile
 	4,  // 9: server.ServerService.DeleteServer:output_type -> server.DeleteServerResponse
 	6,  // 10: server.ServerService.ListServers:output_type -> server.ListServersResponse
 	8,  // 11: server.ServerService.ImportServers:output_type -> server.ImportServersResponse

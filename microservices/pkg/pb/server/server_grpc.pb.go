@@ -4,7 +4,7 @@
 // - protoc             v7.34.1
 // source: server.proto
 
-package server
+package serverpb
 
 import (
 	context "context"
@@ -31,8 +31,8 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ServerServiceClient interface {
-	CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*Server, error)
-	UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*Server, error)
+	CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*ServerProfile, error)
+	UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*ServerProfile, error)
 	DeleteServer(ctx context.Context, in *DeleteServerRequest, opts ...grpc.CallOption) (*DeleteServerResponse, error)
 	ListServers(ctx context.Context, in *ListServersRequest, opts ...grpc.CallOption) (*ListServersResponse, error)
 	ImportServers(ctx context.Context, in *ImportServersRequest, opts ...grpc.CallOption) (*ImportServersResponse, error)
@@ -47,9 +47,9 @@ func NewServerServiceClient(cc grpc.ClientConnInterface) ServerServiceClient {
 	return &serverServiceClient{cc}
 }
 
-func (c *serverServiceClient) CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*Server, error) {
+func (c *serverServiceClient) CreateServer(ctx context.Context, in *CreateServerRequest, opts ...grpc.CallOption) (*ServerProfile, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Server)
+	out := new(ServerProfile)
 	err := c.cc.Invoke(ctx, ServerService_CreateServer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -57,9 +57,9 @@ func (c *serverServiceClient) CreateServer(ctx context.Context, in *CreateServer
 	return out, nil
 }
 
-func (c *serverServiceClient) UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*Server, error) {
+func (c *serverServiceClient) UpdateServer(ctx context.Context, in *UpdateServerRequest, opts ...grpc.CallOption) (*ServerProfile, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(Server)
+	out := new(ServerProfile)
 	err := c.cc.Invoke(ctx, ServerService_UpdateServer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
@@ -111,8 +111,8 @@ func (c *serverServiceClient) ExportServers(ctx context.Context, in *ExportServe
 // All implementations must embed UnimplementedServerServiceServer
 // for forward compatibility.
 type ServerServiceServer interface {
-	CreateServer(context.Context, *CreateServerRequest) (*Server, error)
-	UpdateServer(context.Context, *UpdateServerRequest) (*Server, error)
+	CreateServer(context.Context, *CreateServerRequest) (*ServerProfile, error)
+	UpdateServer(context.Context, *UpdateServerRequest) (*ServerProfile, error)
 	DeleteServer(context.Context, *DeleteServerRequest) (*DeleteServerResponse, error)
 	ListServers(context.Context, *ListServersRequest) (*ListServersResponse, error)
 	ImportServers(context.Context, *ImportServersRequest) (*ImportServersResponse, error)
@@ -127,10 +127,10 @@ type ServerServiceServer interface {
 // pointer dereference when methods are called.
 type UnimplementedServerServiceServer struct{}
 
-func (UnimplementedServerServiceServer) CreateServer(context.Context, *CreateServerRequest) (*Server, error) {
+func (UnimplementedServerServiceServer) CreateServer(context.Context, *CreateServerRequest) (*ServerProfile, error) {
 	return nil, status.Error(codes.Unimplemented, "method CreateServer not implemented")
 }
-func (UnimplementedServerServiceServer) UpdateServer(context.Context, *UpdateServerRequest) (*Server, error) {
+func (UnimplementedServerServiceServer) UpdateServer(context.Context, *UpdateServerRequest) (*ServerProfile, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateServer not implemented")
 }
 func (UnimplementedServerServiceServer) DeleteServer(context.Context, *DeleteServerRequest) (*DeleteServerResponse, error) {
