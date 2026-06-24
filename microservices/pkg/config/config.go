@@ -50,12 +50,12 @@ func (c *JWTConfig) LogValue() slog.Value {
 	)
 }
 
-type KafkaConfig struct {
+type KafkaWriterConfig struct {
 	Broker string
 	Topic  string
 }
 
-func (c *KafkaConfig) LogValue() slog.Value {
+func (c *KafkaWriterConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("broker", c.Broker),
 		slog.String("topic", c.Topic),

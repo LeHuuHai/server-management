@@ -19,7 +19,7 @@ type AppConfig struct {
 type Config struct {
 	AppConfig   *AppConfig
 	DBConfig    *pkgconfig.PostgresConfig
-	KafkaConfig *pkgconfig.KafkaConfig
+	KafkaConfig *pkgconfig.KafkaWriterConfig
 }
 
 func Load() (*Config, error) {
@@ -61,7 +61,7 @@ func Load() (*Config, error) {
 			Port:     pgport,
 			Database: os.Getenv("DB_DBNAME"),
 		},
-		KafkaConfig: &pkgconfig.KafkaConfig{
+		KafkaConfig: &pkgconfig.KafkaWriterConfig{
 			Broker: broker,
 			Topic:  topic,
 		},

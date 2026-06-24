@@ -48,7 +48,7 @@ func WithMaxAttempts(attempts int) WriterOption {
 
 // NewWriter creates a new standard Kafka writer for a specific topic.
 // It uses the Functional Options pattern so you can add new configs without breaking existing code.
-func NewWriter(config *config.KafkaConfig, opts ...WriterOption) *kafka.Writer {
+func NewWriter(config *config.KafkaWriterConfig, opts ...WriterOption) *kafka.Writer {
 	w := &kafka.Writer{
 		Addr:     kafka.TCP(config.Broker),
 		Topic:    config.Topic,
