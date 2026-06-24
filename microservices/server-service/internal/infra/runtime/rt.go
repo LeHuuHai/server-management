@@ -23,7 +23,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	kw := mq.NewWriter(cfg.KafkaConfig.Broker, cfg.KafkaConfig.ServerTopic)
+	kw := mq.NewWriter(cfg.KafkaConfig.Broker, cfg.KafkaConfig.ServerTopic, mq.WithRequiredAcks(-1))
 
 	return &App{
 		Config:            cfg,
