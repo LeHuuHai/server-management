@@ -34,7 +34,7 @@ Các file/thư mục chính:
 - **`internal/infra/kafka/serverEventPublisher.go`**: **[NEW]** Implement gửi các sự kiện `ServerCreated`, `ServerUpdated`, `ServerDeleted` qua Kafka topic để `monitor-service` đồng bộ.
 - **`internal/infra/runtime/rt.go`**: Khởi tạo hạ tầng (Database connection, Kafka Producer).
 - **`internal/infra/service/serverService.go`**: Implement business logic của `ServerServiceInterface`.
-- **`internal/model/server.go`**: Struct map dữ liệu DB.
+- **`internal/model/serverProfile.go`**: Struct map dữ liệu DB.
 - **`internal/rpc/server_server.go`**: gRPC Server handler, trích xuất User Context từ gRPC Metadata và gọi logic từ `ServerServiceInterface`.
 
 ## 3. Cấu trúc service code mục tiêu
@@ -57,7 +57,7 @@ microservices/
         │   ├── postgres/    # GORM Implementation
         │   ├── runtime/     # Khởi tạo DB, MQ
         │   └── service/     # Implement logic nghiệp vụ ServerService
-        ├── model/           # Struct Server
+        ├── model/           # Struct ServerProfile
         └── rpc/             # gRPC Handler (đọc gRPC Metadata)
 ```
 
@@ -83,7 +83,7 @@ Giao thức RPC sẽ thay thế toàn bộ REST endpoints cũ:
 **Lưu ý Quan Trọng:** Agent sẽ KHÔNG chạy lệnh cài đặt dependency, KHÔNG chạy lệnh sinh code (`protoc`), và KHÔNG chạy `go mod tidy`. Người dùng sẽ tự thực hiện các bước này sau khi Agent bàn giao code.
 
 1. **Định nghĩa Proto:** Tạo `microservices/pkg/pb/server/server.proto`.
-2. **Setup Server-Service Models & Domain:** Copy các file model (`server.go`) và các interface (`serverServiceInterface.go`, `serverRepoInterface.go`) từ khối monolith sang cấu trúc `server-service/internal/domain/`. Tạo thêm `eventPublisherInterface.go` trong `internal/domain/publisher/`.
+2. **Setup Server-Service Models & Domain:** Copy các file model (`serverProfile.go`) và các interface (`serverServiceInterface.go`, `serverRepoInterface.go`) từ khối monolith sang cấu trúc `server-service/internal/domain/`. Tạo thêm `eventPublisherInterface.go` trong `internal/domain/publisher/`.
 3. **Setup Infra & Service Core:** Copy/sửa GORM repository, file importer/exporter (xlsx), tạo implementation `serverEventPublisher.go` dùng Kafka, và chuyển `serverService.go` vào `internal/infra/service/`.
 4. **Viết gRPC Handler:** Tạo `internal/rpc/server_server.go` đọc Context Metadata và gọi Business Layer.
 5. **Bootstrap:** Tạo `internal/infra/runtime/rt.go` khởi tạo connections, và cập nhật `cmd/main.go` để lắng nghe TCP cho gRPC traffic.

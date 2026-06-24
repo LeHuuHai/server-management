@@ -61,3 +61,33 @@ func (c *KafkaWriterConfig) LogValue() slog.Value {
 		slog.String("topic", c.Topic),
 	)
 }
+
+type KafkaReaderConfig struct {
+	Broker     string
+	Topic      string
+	ConsumerID string
+}
+
+func (c *KafkaReaderConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("broker", c.Broker),
+		slog.String("topic", c.Topic),
+		slog.String("consumerID", c.ConsumerID),
+	)
+}
+
+type ElasticsearchConfig struct {
+	URL      string
+	Username string
+	Password string
+	Index    string
+}
+
+func (c *ElasticsearchConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.String("url", c.URL),
+		slog.String("username", c.Username),
+		slog.String("password", c.Password),
+		slog.String("index", c.Index),
+	)
+}

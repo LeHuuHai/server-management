@@ -1,6 +1,7 @@
 package mq
 
 import (
+	"strings"
 	"time"
 
 	"github.com/LeHuuHai/server-management/microservices/pkg/config"
@@ -50,7 +51,7 @@ func WithMaxAttempts(attempts int) WriterOption {
 // It uses the Functional Options pattern so you can add new configs without breaking existing code.
 func NewWriter(config *config.KafkaWriterConfig, opts ...WriterOption) *kafka.Writer {
 	w := &kafka.Writer{
-		Addr:     kafka.TCP(config.Broker),
+		Addr:     kafka.TCP(strings.Split(config.Broker, ",")...),
 		Topic:    config.Topic,
 		Balancer: &kafka.LeastBytes{},
 	}

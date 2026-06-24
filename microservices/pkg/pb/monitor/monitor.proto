@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package monitor;
+
+option go_package = "github.com/LeHuuHai/server-management/microservices/pkg/pb/monitor;monitorpb";
+
+service MonitorService {
+  rpc DownloadReport (DownloadReportRequest) returns (stream DownloadReportResponse);
+}
+
+message DownloadReportRequest {
+  string filename = 1;
+}
+
+message DownloadReportResponse {
+  bytes chunk_data = 1;
+}

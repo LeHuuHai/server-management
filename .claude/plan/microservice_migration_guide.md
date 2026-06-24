@@ -42,11 +42,18 @@ The target architecture uses six bounded contexts:
 | Context | Core Domain Terms |
 | --- | --- |
 | Auth Context | `Account`, `Token`, `Role` |
-| Server Context | `ServerProfile`, `IPAddress` |
+| Server Context | `ServerProfile`, `IPAddress`, `UpdatedAt` |
 | Gateway Context | `RawHeartbeat` |
 | Ping Context | `PingTask`, `ICMPResult` |
-| Monitor Context | `LiveStatus`, `TimeseriesEvent`, `UptimeAgg`, `ReportMetrics` |
+| Monitor Context | `LiveStatus`, `StatusLog`, `UptimeAgg`, `ReportMetrics` |
 | Mail Context | `EmailPayload`, `Attachment` |
+
+### Core Domain Term Definitions
+
+- **`ServerProfile` (Server Context)**: Represents static server registry details (`ServerID`, `ServerName`, `IPv4`), `CreatedAt`, and `UpdatedAt` (representing the timestamp of registry changes). It explicitly excludes active monitoring statuses and history (`Status`, `LastPingAt`) to respect domain separation.
+- **`LiveStatus` (Monitor Context)**: Tracks operational/uptime metrics. It records `Status` (ONLINE/OFFLINE/UNKNOWN), `LastPingAt`, and `LastHeartbeatAt`, while synchronizing name/IP alterations from server lifecycle events.
+- **`StatusLog` (Monitor Context)**: Represents a single historical time-series log entry stored in Elasticsearch. It contains the server's availability state (`ServerID`, `Status`, `Timestamp`) recorded from heartbeats or active checks, used for historical uptime calculations.
+- **`UpdatedAt` (Server Context)**: Denotes the timestamp when the server registry profile was last modified. This replaces the legacy `MetadataUpdatedAt` term.
 
 ## Context Mapping
 
