@@ -20,6 +20,7 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	MonitorService_DownloadReport_FullMethodName = "/monitor.MonitorService/DownloadReport"
+	MonitorService_GenerateReport_FullMethodName = "/monitor.MonitorService/GenerateReport"
 )
 
 // MonitorServiceClient is the client API for MonitorService service.
@@ -27,6 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MonitorServiceClient interface {
 	DownloadReport(ctx context.Context, in *DownloadReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadReportResponse], error)
+	GenerateReport(ctx context.Context, in *GenerateReportRequest, opts ...grpc.CallOption) (*GenerateReportResponse, error)
 }
 
 type monitorServiceClient struct {
@@ -56,11 +58,22 @@ func (c *monitorServiceClient) DownloadReport(ctx context.Context, in *DownloadR
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type MonitorService_DownloadReportClient = grpc.ServerStreamingClient[DownloadReportResponse]
 
+func (c *monitorServiceClient) GenerateReport(ctx context.Context, in *GenerateReportRequest, opts ...grpc.CallOption) (*GenerateReportResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GenerateReportResponse)
+	err := c.cc.Invoke(ctx, MonitorService_GenerateReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MonitorServiceServer is the server API for MonitorService service.
 // All implementations must embed UnimplementedMonitorServiceServer
 // for forward compatibility.
 type MonitorServiceServer interface {
 	DownloadReport(*DownloadReportRequest, grpc.ServerStreamingServer[DownloadReportResponse]) error
+	GenerateReport(context.Context, *GenerateReportRequest) (*GenerateReportResponse, error)
 	mustEmbedUnimplementedMonitorServiceServer()
 }
 
@@ -73,6 +86,9 @@ type UnimplementedMonitorServiceServer struct{}
 
 func (UnimplementedMonitorServiceServer) DownloadReport(*DownloadReportRequest, grpc.ServerStreamingServer[DownloadReportResponse]) error {
 	return status.Error(codes.Unimplemented, "method DownloadReport not implemented")
+}
+func (UnimplementedMonitorServiceServer) GenerateReport(context.Context, *GenerateReportRequest) (*GenerateReportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateReport not implemented")
 }
 func (UnimplementedMonitorServiceServer) mustEmbedUnimplementedMonitorServiceServer() {}
 func (UnimplementedMonitorServiceServer) testEmbeddedByValue()                        {}
@@ -106,13 +122,36 @@ func _MonitorService_DownloadReport_Handler(srv interface{}, stream grpc.ServerS
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type MonitorService_DownloadReportServer = grpc.ServerStreamingServer[DownloadReportResponse]
 
+func _MonitorService_GenerateReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MonitorServiceServer).GenerateReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: MonitorService_GenerateReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MonitorServiceServer).GenerateReport(ctx, req.(*GenerateReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // MonitorService_ServiceDesc is the grpc.ServiceDesc for MonitorService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var MonitorService_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "monitor.MonitorService",
 	HandlerType: (*MonitorServiceServer)(nil),
-	Methods:     []grpc.MethodDesc{},
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GenerateReport",
+			Handler:    _MonitorService_GenerateReport_Handler,
+		},
+	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "DownloadReport",

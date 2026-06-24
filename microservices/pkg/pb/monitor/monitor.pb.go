@@ -109,6 +109,110 @@ func (x *DownloadReportResponse) GetChunkData() []byte {
 	return nil
 }
 
+type GenerateReportRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	FromTimestamp int64                  `protobuf:"varint,1,opt,name=from_timestamp,json=fromTimestamp,proto3" json:"from_timestamp,omitempty"`
+	ToTimestamp   int64                  `protobuf:"varint,2,opt,name=to_timestamp,json=toTimestamp,proto3" json:"to_timestamp,omitempty"`
+	Receivers     []string               `protobuf:"bytes,3,rep,name=receivers,proto3" json:"receivers,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateReportRequest) Reset() {
+	*x = GenerateReportRequest{}
+	mi := &file_monitor_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateReportRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateReportRequest) ProtoMessage() {}
+
+func (x *GenerateReportRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_monitor_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateReportRequest.ProtoReflect.Descriptor instead.
+func (*GenerateReportRequest) Descriptor() ([]byte, []int) {
+	return file_monitor_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GenerateReportRequest) GetFromTimestamp() int64 {
+	if x != nil {
+		return x.FromTimestamp
+	}
+	return 0
+}
+
+func (x *GenerateReportRequest) GetToTimestamp() int64 {
+	if x != nil {
+		return x.ToTimestamp
+	}
+	return 0
+}
+
+func (x *GenerateReportRequest) GetReceivers() []string {
+	if x != nil {
+		return x.Receivers
+	}
+	return nil
+}
+
+type GenerateReportResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GenerateReportResponse) Reset() {
+	*x = GenerateReportResponse{}
+	mi := &file_monitor_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GenerateReportResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GenerateReportResponse) ProtoMessage() {}
+
+func (x *GenerateReportResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_monitor_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GenerateReportResponse.ProtoReflect.Descriptor instead.
+func (*GenerateReportResponse) Descriptor() ([]byte, []int) {
+	return file_monitor_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GenerateReportResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
 var File_monitor_proto protoreflect.FileDescriptor
 
 const file_monitor_proto_rawDesc = "" +
@@ -118,9 +222,16 @@ const file_monitor_proto_rawDesc = "" +
 	"\bfilename\x18\x01 \x01(\tR\bfilename\"7\n" +
 	"\x16DownloadReportResponse\x12\x1d\n" +
 	"\n" +
-	"chunk_data\x18\x01 \x01(\fR\tchunkData2e\n" +
+	"chunk_data\x18\x01 \x01(\fR\tchunkData\"\x7f\n" +
+	"\x15GenerateReportRequest\x12%\n" +
+	"\x0efrom_timestamp\x18\x01 \x01(\x03R\rfromTimestamp\x12!\n" +
+	"\fto_timestamp\x18\x02 \x01(\x03R\vtoTimestamp\x12\x1c\n" +
+	"\treceivers\x18\x03 \x03(\tR\treceivers\"2\n" +
+	"\x16GenerateReportResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb8\x01\n" +
 	"\x0eMonitorService\x12S\n" +
-	"\x0eDownloadReport\x12\x1e.monitor.DownloadReportRequest\x1a\x1f.monitor.DownloadReportResponse0\x01BNZLgithub.com/LeHuuHai/server-management/microservices/pkg/pb/monitor;monitorpbb\x06proto3"
+	"\x0eDownloadReport\x12\x1e.monitor.DownloadReportRequest\x1a\x1f.monitor.DownloadReportResponse0\x01\x12Q\n" +
+	"\x0eGenerateReport\x12\x1e.monitor.GenerateReportRequest\x1a\x1f.monitor.GenerateReportResponseBNZLgithub.com/LeHuuHai/server-management/microservices/pkg/pb/monitor;monitorpbb\x06proto3"
 
 var (
 	file_monitor_proto_rawDescOnce sync.Once
@@ -134,16 +245,20 @@ func file_monitor_proto_rawDescGZIP() []byte {
 	return file_monitor_proto_rawDescData
 }
 
-var file_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_monitor_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_monitor_proto_goTypes = []any{
 	(*DownloadReportRequest)(nil),  // 0: monitor.DownloadReportRequest
 	(*DownloadReportResponse)(nil), // 1: monitor.DownloadReportResponse
+	(*GenerateReportRequest)(nil),  // 2: monitor.GenerateReportRequest
+	(*GenerateReportResponse)(nil), // 3: monitor.GenerateReportResponse
 }
 var file_monitor_proto_depIdxs = []int32{
 	0, // 0: monitor.MonitorService.DownloadReport:input_type -> monitor.DownloadReportRequest
-	1, // 1: monitor.MonitorService.DownloadReport:output_type -> monitor.DownloadReportResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: monitor.MonitorService.GenerateReport:input_type -> monitor.GenerateReportRequest
+	1, // 2: monitor.MonitorService.DownloadReport:output_type -> monitor.DownloadReportResponse
+	3, // 3: monitor.MonitorService.GenerateReport:output_type -> monitor.GenerateReportResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -160,7 +275,7 @@ func file_monitor_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_monitor_proto_rawDesc), len(file_monitor_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
