@@ -7,6 +7,7 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/model"
 	"github.com/LeHuuHai/server-management/microservices/pkg/db"
 	"github.com/LeHuuHai/server-management/microservices/pkg/es"
+	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	pkgmq "github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	"github.com/LeHuuHai/server-management/microservices/pkg/rdb"
 	esclient "github.com/elastic/go-elasticsearch/v8"
@@ -59,7 +60,7 @@ func NewAppWithDB(cfg *config.Config, database *gorm.DB) (*App, error) {
 
 	// Kafka Writers
 	pingWriter := pkgmq.NewWriter(cfg.PingRequestWriterConfig)
-	mailWriter := pkgmq.NewWriter(cfg.MailWriterConfig)
+	mailWriter := pkgmq.NewWriter(cfg.MailWriterConfig, mq.WithRequiredAcks(-1))
 
 	// Kafka Readers
 	serverEventsReader := pkgmq.NewReader(cfg.ServerEventReaderConfig)
