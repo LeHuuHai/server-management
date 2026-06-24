@@ -12,7 +12,7 @@ type App struct {
 }
 
 func NewApp(cfg *config.Config) (*App, error) {
-	kw := mq.NewWriter(cfg.KafkaConfig.Broker, cfg.KafkaConfig.ServerTopic, mq.WithRequiredAcks(0))
+	kw := mq.NewWriter(cfg.KafkaConfig, mq.WithRequiredAcks(0))
 
 	return &App{
 		Config:      cfg,

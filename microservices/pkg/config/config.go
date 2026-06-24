@@ -51,13 +51,13 @@ func (c *JWTConfig) LogValue() slog.Value {
 }
 
 type KafkaConfig struct {
-	Broker      string
-	ServerTopic string
+	Broker string
+	Topic  string
 }
 
 func (c *KafkaConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("broker", c.Broker),
-		slog.String("server_topic", c.ServerTopic),
+		slog.String("topic", c.Topic),
 	)
 }

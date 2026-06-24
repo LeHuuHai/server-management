@@ -62,8 +62,8 @@ func Load() (*Config, error) {
 			Database: os.Getenv("DB_DBNAME"),
 		},
 		KafkaConfig: &pkgconfig.KafkaConfig{
-			Broker:      broker,
-			ServerTopic: topic,
+			Broker: broker,
+			Topic:  topic,
 		},
 	}
 	return &cfg, nil

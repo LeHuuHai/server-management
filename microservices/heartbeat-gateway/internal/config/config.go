@@ -46,8 +46,8 @@ func Load() (*Config, error) {
 			Host: os.Getenv("APP_HOST"),
 		},
 		KafkaConfig: &pkgconfig.KafkaConfig{
-			Broker:      broker,
-			ServerTopic: topic, // Using ServerTopic field from package config as the generic topic holder
+			Broker: broker,
+			Topic:  topic,
 		},
 	}
 	return &cfg, nil
