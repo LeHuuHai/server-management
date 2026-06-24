@@ -110,7 +110,7 @@ func main() {
 	}()
 
 	// Start gRPC Server
-	grpcHandler := rpc.NewMonitorHandler()
+	grpcHandler := rpc.NewMonitorHandler(reportSvc)
 	grpcServer := grpc.NewServer()
 	pb.RegisterMonitorServiceServer(grpcServer, grpcHandler)
 
