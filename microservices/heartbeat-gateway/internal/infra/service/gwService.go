@@ -5,7 +5,7 @@ import (
 
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/domain/mq"
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/domain/service"
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/model"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 )
 
 type GwService struct {
@@ -18,6 +18,6 @@ func NewGwService(publisher mq.PublisherInterface) service.GwServiceInterface {
 	}
 }
 
-func (s *GwService) PublishHeartbeat(ctx context.Context, heartbeat model.Heartbeat) error {
+func (s *GwService) PublishHeartbeat(ctx context.Context, heartbeat pkgmodel.Heartbeat) error {
 	return s.publisher.Publish(ctx, heartbeat)
 }

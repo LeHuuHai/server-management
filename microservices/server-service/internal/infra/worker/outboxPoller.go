@@ -9,6 +9,7 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/publisher"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/repo"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 )
 
 type OutboxPoller struct {
@@ -52,7 +53,7 @@ func (p *OutboxPoller) processBatch(ctx context.Context) {
 	var successfulIDs []string
 
 	for _, ev := range events {
-		var serverEvent model.ServerEvent
+		var serverEvent pkgmodel.ServerEvent
 		if err := json.Unmarshal(ev.Payload, &serverEvent); err != nil {
 			slog.Error("Failed to unmarshal outbox payload", "error", err, "id", ev.ID)
 			continue

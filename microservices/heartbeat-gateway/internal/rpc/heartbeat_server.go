@@ -8,7 +8,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/domain/service"
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/model"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	pb "github.com/LeHuuHai/server-management/microservices/pkg/pb/heartbeat"
 )
 
@@ -33,7 +33,7 @@ func (h *HeartbeatHandler) SendHeartbeat(ctx context.Context, req *pb.SendHeartb
 		timestamp = time.Now()
 	}
 
-	hb := model.Heartbeat{
+	hb := pkgmodel.Heartbeat{
 		ServerID:  req.ServerId,
 		Timestamp: timestamp,
 	}

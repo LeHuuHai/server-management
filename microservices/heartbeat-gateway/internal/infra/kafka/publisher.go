@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/domain/mq"
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/model"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -19,7 +19,7 @@ func NewKafkaPublisher(w *kafka.Writer) mq.PublisherInterface {
 	}
 }
 
-func (p *KafkaPublisher) Publish(ctx context.Context, hb model.Heartbeat) error {
+func (p *KafkaPublisher) Publish(ctx context.Context, hb pkgmodel.Heartbeat) error {
 	bytes, err := json.Marshal(hb)
 	if err != nil {
 		return err

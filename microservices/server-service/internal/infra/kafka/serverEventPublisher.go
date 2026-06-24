@@ -7,6 +7,7 @@ import (
 
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/publisher"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -21,7 +22,7 @@ func NewServerEventPublisher(w *kafka.Writer) publisher.EventPublisherInterface 
 }
 
 func (p *serverEventPublisher) publish(ctx context.Context, eventType string, server *model.Server) error {
-	event := model.ServerEvent{
+	event := pkgmodel.ServerEvent{
 		ServerID:   server.ServerID,
 		ServerName: server.ServerName,
 		IPv4:       server.IPv4,

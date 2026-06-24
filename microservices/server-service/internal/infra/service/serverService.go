@@ -7,6 +7,7 @@ import (
 	"time"
 
 	apperr "github.com/LeHuuHai/server-management/microservices/pkg/apperr"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/repo"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
 	"github.com/google/uuid"
@@ -29,7 +30,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.Server) 
 			return err
 		}
 
-		payload, _ := json.Marshal(model.ServerEvent{
+		payload, _ := json.Marshal(pkgmodel.ServerEvent{
 			ServerID:   server.ServerID,
 			ServerName: server.ServerName,
 			IPv4:       server.IPv4,
@@ -93,7 +94,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.Server) 
 			return err
 		}
 
-		payload, _ := json.Marshal(model.ServerEvent{
+		payload, _ := json.Marshal(pkgmodel.ServerEvent{
 			ServerID:   newServer.ServerID,
 			ServerName: newServer.ServerName,
 			IPv4:       newServer.IPv4,
@@ -123,7 +124,7 @@ func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error
 			return err
 		}
 
-		payload, _ := json.Marshal(model.ServerEvent{
+		payload, _ := json.Marshal(pkgmodel.ServerEvent{
 			ServerID:  serverID,
 			Timestamp: time.Now(),
 		})
@@ -171,7 +172,7 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 
 		for _, data := range serversData {
 			if isSuccess[data.ServerID] {
-				payload, _ := json.Marshal(model.ServerEvent{
+				payload, _ := json.Marshal(pkgmodel.ServerEvent{
 					ServerID:   data.ServerID,
 					ServerName: data.ServerName,
 					IPv4:       data.IPv4,

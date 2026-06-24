@@ -3,9 +3,9 @@ package mq
 import (
 	"context"
 
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/model"
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 )
 
 type PublisherInterface interface {
-	Publish(ctx context.Context, hb model.Heartbeat) error
+	Publish(ctx context.Context, hb pkgmodel.Heartbeat) error
 }
