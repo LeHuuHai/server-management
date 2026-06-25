@@ -4,13 +4,13 @@
 
 ---
 
-## 1. Mục đích của thư mục `module/`
+## 1. Mục đích của thư mục `monolith/module/`
 
 Tài liệu trong thư mục này giúp Agent và lập trình viên hiểu rõ chi tiết từng thành phần (process) đang chạy trong hệ thống cũ, qua đó dễ dàng định hình và chia tách code khi tiến hành refactor sang Microservices.
 
 ---
 
-## 2. Navigation nhanh trong `module/`
+## 2. Navigation nhanh trong `monolith/module/`
 
 | Tài liệu / Module | Vai trò chính | Thư mục source cũ |
 |---|---|---|

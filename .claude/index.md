@@ -32,7 +32,6 @@
 2. **Tuân thủ clean architecture**: domain → infra → handler, không import ngược.
 3. **Interface trước implementation**: mọi logic nghiệp vụ phải có interface trong `internal/domain/`.
 4. **Kafka là bus chính** giữa các service — không gọi thẳng DB từ Gateway hay Agent.
-5. **In-memory cache** (`ServerInmemCache`) là nguồn truth cho trạng thái real-time, DB là persistent state.
 
 ---
 
@@ -41,18 +40,25 @@
 ```
 .claude/
 ├── index.md                  ← FILE NÀY (đọc đầu tiên)
-├── architecture/
-│   ├── overview.md           ← Kiến trúc tổng quan, component diagram
-│   ├── directory-structure.md← Cấu trúc thư mục chi tiết
-│   └── tech-stack.md         ← Công nghệ và dependencies
-├── module/                   ← Chi tiết các entrypoint cũ (Monolith)
-│   ├── index.md              ← Danh sách và điều hướng các Module
-│   ├── agent.md              ← Module: cmd/agent
-│   ├── gw.md                 ← Module: cmd/gw
-│   ├── master.md             ← Module: cmd/master
-│   ├── worker.md             ← Module: cmd/worker
-│   ├── pgwriter.md           ← Module: cmd/pgwriter
-│   └── eswriter.md           ← Module: cmd/eswriter
+├── monolith/                 ← Các tài liệu liên quan đến phiên bản Monolith cũ
+│   ├── project/              ← Tài liệu kiến trúc & cấu trúc monolith
+│   │   ├── overview.md
+│   │   ├── directory-structure.md
+│   │   └── tech-stack.md
+│   └── module/               ← Chi tiết các module monolith
+│       ├── index.md
+│       ├── agent.md
+│       ├── gw.md
+│       ├── master.md
+│       ├── worker.md
+│       ├── pgwriter.md
+│       └── eswriter.md
+├── microservice/             ← Kiến trúc, thiết kế & cấu trúc của phiên bản Microservice
+│   ├── index.md              ← Entrypoint chi tiết của Microservice
+│   ├── architecture.md       # Sơ đồ & luồng giao tiếp (gRPC, Kafka, Auth)
+│   ├── directory-structure.md# Chi tiết thư mục /microservices
+│   ├── services.md           # Chi tiết về 6 microservices độc lập
+│   └── shared-packages.md    # Các thư viện dùng chung (/pkg)
 ├── plan/                     ← Kế hoạch migrate sang microservice 
 └── checkpoint/               ← Checkpoint tiến độ migrate 
 ```
@@ -63,10 +69,11 @@
 
 | Cần tìm hiểu về... | Đọc file |
 |---|---|
-| Kiến trúc tổng quan & flow | `architecture/overview.md` |
-| Cấu trúc thư mục dự án | `architecture/directory-structure.md` |
-| Công nghệ, thư viện, dependencies | `architecture/tech-stack.md` |
-| Chi tiết các Module cũ (Monolith) | `module/index.md` |
+| Kiến trúc tổng quan & flow (Monolith) | [`monolith/project/overview.md`](file:///c:/Users/hailh22/WorkSpace/checkpoint1/server-management/.claude/monolith/project/overview.md) |
+| Cấu trúc thư mục dự án (Monolith) | [`monolith/project/directory-structure.md`](file:///c:/Users/hailh22/WorkSpace/checkpoint1/server-management/.claude/monolith/project/directory-structure.md) |
+| Công nghệ, thư viện, dependencies (Monolith) | [`monolith/project/tech-stack.md`](file:///c:/Users/hailh22/WorkSpace/checkpoint1/server-management/.claude/monolith/project/tech-stack.md) |
+| Chi tiết các Module cũ (Monolith) | [`monolith/module/index.md`](file:///c:/Users/hailh22/WorkSpace/checkpoint1/server-management/.claude/monolith/module/index.md) |
+| **Kiến trúc & Thiết kế Microservice** | [`microservice/index.md`](file:///c:/Users/hailh22/WorkSpace/checkpoint1/server-management/.claude/microservice/index.md) |
 | Kế hoạch microservice migration | `plan/index.md`  |
 | Tiến độ migration hiện tại | `checkpoint/`  |
 
