@@ -1,5 +1,24 @@
 # Checkpoint Hàng Ngày (Daily Standup)
 
+## Ngày: 25/06/2026
+
+### 1. Trạng thái hiện tại
+- Hoàn tất xây dựng và tích hợp cơ chế gRPC Authorization Middleware (interceptor) cho tất cả các microservices để thực thi kiểm tra Role & Scope, và xác thực API Key nội bộ.
+- Đồng bộ hóa các tài liệu kiến trúc bảo mật trong thư mục `.claude/`.
+
+### 2. Các công việc đã hoàn thành trong ngày
+- [x] Triển khai shared server-side interceptors (`RoleCheckUnaryGRPCInterceptor` và `APIKeyCheckStreamGRPCInterceptor`) trong thư viện dùng chung `pkg/auth`.
+- [x] Triển khai client-side shared interceptor (`APIKeyBindStreamGRPCInterceptor`) để tự động hóa việc đẩy API Key cho các client gọi RPC.
+- [x] Cấu hình và tích hợp interceptor bảo vệ endpoints cho `server-service` và `monitor-service`.
+- [x] Refactor loại bỏ việc truyền metadata thủ công ở client `mail-worker` nhờ áp dụng client-side interceptor.
+- [x] Thay thế các method paths dạng hardcoded strings bằng các hằng số được sinh tự động `FullMethodName` nhằm tăng tính an toàn và dễ bảo trì.
+- [x] Cập nhật tài liệu `architecture.md` và `shared-packages.md` trong `.claude/`.
+
+### 3. Các công việc cần làm tiếp theo (TODO)
+- [ ] Nghiên cứu và thiết kế file cấu hình Stack/Compose cho Docker Swarm.
+
+---
+
 ## Ngày: 24/06/2026
 
 ### 1. Trạng thái hiện tại

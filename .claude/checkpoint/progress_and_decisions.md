@@ -20,6 +20,7 @@
   - [x] Migrate `heartbeat-gateway`
   - [x] Migrate `monitor-service` (gRPC Server with DownloadReport/GenerateReport, Kafka Consumers/Publishers, Checker, Batchers, & Report generator)
   - [x] Migrate `mail-worker` và `ping-worker`
+  - [x] Tích hợp gRPC interceptors và phân quyền phi tập trung (Decentralized Auth) cho các microservices
 - [ ] **Deploy hệ thống lên hạ tầng Docker Swarm**
 
 ## 3. Các quyết định thiết kế và triển khai quan trọng (Scalability Rationales)
