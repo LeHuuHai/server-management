@@ -9,6 +9,7 @@ import (
 	"context"
 
 	serverpb "github.com/LeHuuHai/server-management/microservices/pkg/pb/server"
+	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/postgres"
@@ -40,7 +41,16 @@ func main() {
 
 	grpcHandler := rpc.NewServerHandler(serverSvc)
 
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.RoleCheckUnaryGRPCInterceptor(map[string]auth.Scope{
+			"/server.ServerService/CreateServer": auth.ScopeServerCreate,
+			"/server.ServerService/UpdateServer": auth.ScopeServerUpdate,
+			"/server.ServerService/DeleteServer": auth.ScopeServerDelete,
+			"/server.ServerService/ListServers":   auth.ScopeServerRead,
+			"/server.ServerService/ImportServers": auth.ScopeServerImport,
+			"/server.ServerService/ExportServers": auth.ScopeServerExport,
+		})),
+	)
 	serverpb.RegisterServerServiceServer(grpcServer, grpcHandler)
 
 	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))

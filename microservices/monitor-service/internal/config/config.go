@@ -15,6 +15,7 @@ type AppConfig struct {
 	CyclePing        int // in milliseconds
 	HeartbeatTimeout int // in milliseconds
 	AdMail           string
+	InternalAPIKey   string
 }
 
 type Config struct {
@@ -95,6 +96,11 @@ func Load() (*Config, error) {
 		mailTopic = "mail"
 	}
 
+	internalAPIKey := os.Getenv("INTERNAL_API_KEY")
+	if internalAPIKey == "" {
+		internalAPIKey = "internal-secret-key"
+	}
+
 	cfg := Config{
 		AppConfig: &AppConfig{
 			Port:             appPort,
@@ -102,6 +108,7 @@ func Load() (*Config, error) {
 			CyclePing:        cyclePing,
 			HeartbeatTimeout: hbTimeout,
 			AdMail:           os.Getenv("AD_MAIL"),
+			InternalAPIKey:   internalAPIKey,
 		},
 		DBConfig: &pkgconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),

@@ -9,8 +9,8 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// AuthInterceptor checks if the user's role has the required scope for the gRPC method.
-func AuthInterceptor(methodScopes map[string]Scope) grpc.UnaryServerInterceptor {
+// RoleCheckUnaryGRPCInterceptor checks if the user's role has the required scope for the gRPC unary method.
+func RoleCheckUnaryGRPCInterceptor(methodScopes map[string]Scope) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -62,8 +62,8 @@ func AuthInterceptor(methodScopes map[string]Scope) grpc.UnaryServerInterceptor 
 	}
 }
 
-// StreamAPIKeyInterceptor validates a shared API key from incoming gRPC metadata for streaming endpoints.
-func StreamAPIKeyInterceptor(validAPIKey string) grpc.StreamServerInterceptor {
+// APIKeyCheckStreamGRPCInterceptor validates a shared API key from incoming gRPC metadata for streaming endpoints.
+func APIKeyCheckStreamGRPCInterceptor(validAPIKey string) grpc.StreamServerInterceptor {
 	return func(
 		srv interface{},
 		ss grpc.ServerStream,
@@ -89,5 +89,20 @@ func StreamAPIKeyInterceptor(validAPIKey string) grpc.StreamServerInterceptor {
 
 		// 4. Authorized, proceed with stream handler
 		return handler(srv, ss)
+	}
+}
+
+// APIKeyBindStreamGRPCInterceptor injects the API key into the outgoing metadata of all streaming RPC calls.
+func APIKeyBindStreamGRPCInterceptor(apiKey string) grpc.StreamClientInterceptor {
+	return func(
+		ctx context.Context,
+		desc *grpc.StreamDesc,
+		cc *grpc.ClientConn,
+		method string,
+		streamer grpc.Streamer,
+		opts ...grpc.CallOption,
+	) (grpc.ClientStream, error) {
+		ctx = metadata.AppendToOutgoingContext(ctx, "x-api-key", apiKey)
+		return streamer(ctx, desc, cc, method, opts...)
 	}
 }

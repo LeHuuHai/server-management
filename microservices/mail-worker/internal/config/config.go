@@ -18,6 +18,7 @@ type SenderConfig struct {
 
 type AppConfig struct {
 	ReportRepoAddr string
+	InternalAPIKey string
 }
 
 type Config struct {
@@ -58,9 +59,15 @@ func Load() (*Config, error) {
 		monitorRPC = "localhost:50054"
 	}
 
+	internalAPIKey := os.Getenv("INTERNAL_API_KEY")
+	if internalAPIKey == "" {
+		internalAPIKey = "internal-secret-key"
+	}
+
 	cfg := Config{
 		AppConfig: &AppConfig{
 			ReportRepoAddr: os.Getenv("REPORT_REPO_ADDR"),
+			InternalAPIKey: internalAPIKey,
 		},
 		MailReaderConfig: &pkgconfig.KafkaReaderConfig{
 			Broker:     broker,

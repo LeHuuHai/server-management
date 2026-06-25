@@ -11,6 +11,7 @@ import (
 	rt "github.com/LeHuuHai/server-management/microservices/mail-worker/internal/infra/runtime"
 	"github.com/LeHuuHai/server-management/microservices/mail-worker/internal/infra/service"
 	"github.com/LeHuuHai/server-management/microservices/mail-worker/internal/infra/worker"
+	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -32,6 +33,7 @@ func main() {
 	conn, err := grpc.NewClient(
 		app.Config.AppConfig.ReportRepoAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithStreamInterceptor(auth.APIKeyBindStreamGRPCInterceptor(cfg.AppConfig.InternalAPIKey)),
 	)
 	if err != nil {
 		log.Fatalf("Failed to connect to report-repo: %v", err)

@@ -20,6 +20,7 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/worker"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/model"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/rpc"
+	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	pb "github.com/LeHuuHai/server-management/microservices/pkg/pb/monitor"
 	"google.golang.org/grpc"
 )
@@ -113,7 +114,12 @@ func main() {
 	// Start gRPC Server
 	grpcReportHandler := rpc.NewReportHandler(reportSvc)
 	grpcTransferHandler := rpc.NewTransferHandler()
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.RoleCheckUnaryGRPCInterceptor(map[string]auth.Scope{
+			"/monitor.ReportManagementService/GenerateReport": auth.ScopeServerReport,
+		})),
+		grpc.StreamInterceptor(auth.APIKeyCheckStreamGRPCInterceptor(cfg.AppConfig.InternalAPIKey)),
+	)
 	pb.RegisterReportManagementServiceServer(grpcServer, grpcReportHandler)
 	pb.RegisterInternalFileTransferServiceServer(grpcServer, grpcTransferHandler)
 
