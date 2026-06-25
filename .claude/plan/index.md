@@ -21,6 +21,7 @@ Dưới đây là danh sách các tài liệu liên quan và thứ tự ưu tiê
 | [`auth_service_migration.md`](auth_service_migration.md) | Kế hoạch di chuyển chi tiết cho **Auth Service** (xử lý đăng nhập, JWT, quản lý tài khoản). |
 | [`naming_convention.md`](naming_convention.md) | **Quy tắc bắt buộc:** Chuẩn đặt tên thư mục, file, và interface dựa trên cấu trúc đã chuẩn hóa của các service hiện tại. |
 | [`server_service_migration.md`](server_service_migration.md) | Kế hoạch di chuyển chi tiết cho **Server Service** (quản lý danh mục máy chủ, CRUD, import/export). |
+| [`deploy_plan.md`](deploy_plan.md) | **Kế hoạch triển khai:** Hướng dẫn cấu hình môi trường dùng chung, quản lý bí mật bằng Docker Secrets và triển khai lên Docker Swarm. |
 
 ---
 
