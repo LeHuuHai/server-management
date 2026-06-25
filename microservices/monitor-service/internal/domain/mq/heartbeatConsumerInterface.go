@@ -7,6 +7,6 @@ import (
 )
 
 type HeartbeatConsumerInterface interface {
-	Read(ctx context.Context) (pkgmodel.Heartbeat, error)
+	Read(ctx context.Context) (pkgmodel.Heartbeat, func(context.Context) error, error)
 	Close() error
 }

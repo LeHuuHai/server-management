@@ -22,7 +22,7 @@ func NewHeartbeatConsumer(consumer mq.HeartbeatConsumerInterface, svc service.Mo
 
 func (c *HeartbeatConsumer) Start(ctx context.Context) {
 	for {
-		hb, err := c.consumer.Read(ctx)
+		hb, commitFunc, err := c.consumer.Read(ctx)
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -37,6 +37,10 @@ func (c *HeartbeatConsumer) Start(ctx context.Context) {
 		if err != nil {
 			slog.Error("Failed to process heartbeat", "server_id", hb.ServerID, "err", err)
 			continue
+		}
+
+		if err := commitFunc(ctx); err != nil {
+			slog.Error("Failed to commit heartbeat message", "server_id", hb.ServerID, "err", err)
 		}
 	}
 }

@@ -22,7 +22,7 @@ func NewPingResultConsumer(consumer mq.PingResponseConsumerInterface, svc servic
 
 func (c *PingResultConsumer) Start(ctx context.Context) {
 	for {
-		res, err := c.consumer.Read(ctx)
+		res, commitFunc, err := c.consumer.Read(ctx)
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -37,6 +37,10 @@ func (c *PingResultConsumer) Start(ctx context.Context) {
 		if err != nil {
 			slog.Error("Failed to process ping result", "server_id", res.ServerID, "err", err)
 			continue
+		}
+
+		if err := commitFunc(ctx); err != nil {
+			slog.Error("Failed to commit ping result message", "server_id", res.ServerID, "err", err)
 		}
 	}
 }

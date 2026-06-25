@@ -22,7 +22,7 @@ func NewLifecycleConsumer(consumer mq.LifecycleConsumerInterface, svc service.Mo
 
 func (c *LifecycleConsumer) Start(ctx context.Context) {
 	for {
-		event, action, err := c.consumer.Read(ctx)
+		event, action, commitFunc, err := c.consumer.Read(ctx)
 		if err != nil {
 			select {
 			case <-ctx.Done():
@@ -38,6 +38,11 @@ func (c *LifecycleConsumer) Start(ctx context.Context) {
 			slog.Error("Failed to sync server lifecycle event", "action", action, "server_id", event.ServerID, "err", err)
 			continue
 		}
-		slog.Info("Successfully synced server lifecycle event", "action", action, "server_id", event.ServerID)
+
+		if err := commitFunc(ctx); err != nil {
+			slog.Error("Failed to commit lifecycle message", "server_id", event.ServerID, "err", err)
+		} else {
+			slog.Info("Successfully synced server lifecycle event", "action", action, "server_id", event.ServerID)
+		}
 	}
 }
