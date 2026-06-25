@@ -23,7 +23,7 @@ func (r Role) Scopes() []Scope {
 			ScopeServerImport,
 			ScopeServerExport,
 			ScopeServerReport,
-			ScopreReportDownload,
+			ScopeReportDownload,
 			ScopeUserRead,
 		}
 
@@ -36,7 +36,7 @@ func (r Role) Scopes() []Scope {
 			ScopeServerImport,
 			ScopeServerExport,
 			ScopeServerReport,
-			ScopreReportDownload,
+			ScopeReportDownload,
 		}
 
 	case RoleGuest:

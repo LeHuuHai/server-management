@@ -23,6 +23,16 @@ When building shared wrapper libraries in `microservices/pkg/` (like Database or
 - It prevents breaking changes across multiple services when one service requires a new specific configuration.
 - Shared initialization logic should be kept fully decoupled from domain logic.
 
+## Authentication & Authorization Design
+
+Authentication and Authorization inside the microservices workspace are decoupled to ensure loose coupling and security:
+
+- **Authentication (Gateway Level):** The API Gateway intercepts external client requests, validates the client JWT, extracts claims (`x-user-id`, `x-user-role`), and injects them as gRPC metadata headers into downstream requests.
+- **Authorization (Service Level - Unary RPCs):** Downstream services (`server-service`, `monitor-service`) utilize a shared `UnaryServerInterceptor` (`AuthInterceptor` in `pkg/auth`) to check if the caller's role possesses the required scopes for the requested RPC method.
+- **Agent Ingestion Authentication (heartbeat-gateway):** Heartbeats sent from the remote host `agent` are authenticated at `heartbeat-gateway` using a shared host-level **API Key** (`X-API-Key` HTTP header) rather than user-level JWTs or roles, as the agent is a headless background system service.
+- **Internal Service-to-Service Authorization (Streaming RPCs):** Internal system calls (e.g., `mail-worker` downloading reports from `monitor-service` via `DownloadReport` stream) bypass user JWT validation and are authenticated using a shared **internal API Key** (`x-api-key`) verified by `StreamAPIKeyInterceptor`.
+- **Security Boundaries:** Zero-trust is maintained through network isolation (Swarm private overlay networks). Downstream gRPC services are not exposed to the public host ports, ensuring only authenticated traffic routed through the API Gateway or internal workers can reach them.
+
 ## Business Capabilities
 
 The system is split around six business capabilities:
@@ -73,7 +83,7 @@ pattern for report files.
 - **Monitor Context -> Mail Context:** `monitor-service` generates scheduled
   reports and publishes `ReportAvailable` or `ReportGenerated`.
 - **Mail Context -> Monitor Context:** `mail-worker` consumes the report event,
-  then actively calls the `monitor-service` HTTP API to pull the report file and
+  then actively calls the `monitor-service` internal gRPC service (`InternalFileTransferService`) to stream/download the report file and
   send it by SMTP.
 
 ## Target Microservices
@@ -110,7 +120,8 @@ Storage:
 
 Responsibilities:
 
-- Expose a focused `POST /heartbeat` API.
+- Expose a focused `POST /heartbeat` HTTP API directly to remote agents (bypassing the main API Gateway to handle high-frequency throughput).
+- Authenticate incoming agent requests directly via HTTP header (`X-API-Key`).
 - Push heartbeat messages into Kafka quickly.
 - Avoid database ownership.
 
@@ -143,7 +154,7 @@ Responsibilities:
 - **Analyzer & Checker:** maintain an in-memory cache to request ping checks
   when heartbeat data expires.
 - **Reporter:** run scheduled aggregation jobs over Elasticsearch data, generate
-  reports, cache report artifacts, and expose a download API for `mail-worker`.
+  reports, cache report artifacts, and expose a download gRPC API (`InternalFileTransferService`) for `mail-worker`.
 
 Storage:
 
@@ -156,12 +167,25 @@ Storage:
 Responsibilities:
 
 - Consume mail/report commands from Kafka.
-- Call the `monitor-service` API to pull report files.
+- Call the `monitor-service` internal gRPC service (`InternalFileTransferService`) to stream/download report files.
 - Send email through SMTP.
 
 Storage:
 
 - No dedicated database is defined by the plan.
+
+## Host-Level Daemons
+
+### 1. `agent`
+
+Responsibilities:
+
+- Act as a lightweight daemon running on the remote monitored host servers.
+- Send active heartbeat notifications at configurable intervals to `heartbeat-gateway`.
+
+Storage:
+
+- No database.
 
 ## Monorepo Organization
 
@@ -180,6 +204,7 @@ server-management/
     +-- ping-worker/
     +-- monitor-service/
     +-- mail-worker/
+    +-- agent/
 ```
 
 ## Implementation Scope Checklist
