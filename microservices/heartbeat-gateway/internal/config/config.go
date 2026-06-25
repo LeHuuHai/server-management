@@ -10,8 +10,9 @@ import (
 )
 
 type AppConfig struct {
-	Port int
-	Host string
+	Port         int
+	Host         string
+	HeartbeatKey string
 }
 
 type Config struct {
@@ -42,8 +43,9 @@ func Load() (*Config, error) {
 
 	cfg := Config{
 		AppConfig: &AppConfig{
-			Port: appPort,
-			Host: os.Getenv("APP_HOST"),
+			Port:         appPort,
+			Host:         os.Getenv("APP_HOST"),
+			HeartbeatKey: os.Getenv("APP_HEARTBEAT_KEY"),
 		},
 		KafkaConfig: &pkgconfig.KafkaWriterConfig{
 			Broker: broker,
