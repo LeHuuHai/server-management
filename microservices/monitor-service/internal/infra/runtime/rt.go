@@ -59,7 +59,7 @@ func NewAppWithDB(cfg *config.Config, database *gorm.DB) (*App, error) {
 	}
 
 	// Kafka Writers
-	pingWriter := pkgmq.NewWriter(cfg.PingRequestWriterConfig)
+	pingWriter := pkgmq.NewWriter(cfg.PingRequestWriterConfig, mq.WithAsync(true), mq.WithRequiredAcks(0))
 	mailWriter := pkgmq.NewWriter(cfg.MailWriterConfig, mq.WithRequiredAcks(-1))
 
 	// Kafka Readers
