@@ -43,12 +43,12 @@ func main() {
 
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(auth.RoleCheckUnaryGRPCInterceptor(map[string]auth.Scope{
-			"/server.ServerService/CreateServer": auth.ScopeServerCreate,
-			"/server.ServerService/UpdateServer": auth.ScopeServerUpdate,
-			"/server.ServerService/DeleteServer": auth.ScopeServerDelete,
-			"/server.ServerService/ListServers":   auth.ScopeServerRead,
-			"/server.ServerService/ImportServers": auth.ScopeServerImport,
-			"/server.ServerService/ExportServers": auth.ScopeServerExport,
+			serverpb.ServerService_CreateServer_FullMethodName:  auth.ScopeServerCreate,
+			serverpb.ServerService_UpdateServer_FullMethodName:  auth.ScopeServerUpdate,
+			serverpb.ServerService_DeleteServer_FullMethodName:  auth.ScopeServerDelete,
+			serverpb.ServerService_ListServers_FullMethodName:   auth.ScopeServerRead,
+			serverpb.ServerService_ImportServers_FullMethodName: auth.ScopeServerImport,
+			serverpb.ServerService_ExportServers_FullMethodName: auth.ScopeServerExport,
 		})),
 	)
 	serverpb.RegisterServerServiceServer(grpcServer, grpcHandler)

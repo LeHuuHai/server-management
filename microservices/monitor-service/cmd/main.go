@@ -116,7 +116,7 @@ func main() {
 	grpcTransferHandler := rpc.NewTransferHandler()
 	grpcServer := grpc.NewServer(
 		grpc.UnaryInterceptor(auth.RoleCheckUnaryGRPCInterceptor(map[string]auth.Scope{
-			"/monitor.ReportManagementService/GenerateReport": auth.ScopeServerReport,
+			pb.ReportManagementService_GenerateReport_FullMethodName: auth.ScopeServerReport,
 		})),
 		grpc.StreamInterceptor(auth.APIKeyCheckStreamGRPCInterceptor(cfg.AppConfig.InternalAPIKey)),
 	)
