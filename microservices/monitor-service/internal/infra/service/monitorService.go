@@ -33,14 +33,14 @@ func NewMonitorService(
 func (s *MonitorService) ProcessHeartbeat(ctx context.Context, hb pkgmodel.Heartbeat) error {
 	server := model.LiveStatus{
 		ServerID:        hb.ServerID,
-		Status:          model.StatusOnline,
+		Status:          pkgmodel.StatusOnline,
 		LastHeartbeatAt: &hb.Timestamp,
 	}
 	s.pgChan <- server
 
 	event := model.StatusLog{
 		ServerID:  hb.ServerID,
-		Status:    "ONLINE",
+		Status:    pkgmodel.StatusOnline,
 		Timestamp: hb.Timestamp,
 	}
 	s.esChan <- event
@@ -49,9 +49,9 @@ func (s *MonitorService) ProcessHeartbeat(ctx context.Context, hb pkgmodel.Heart
 }
 
 func (s *MonitorService) ProcessPingResult(ctx context.Context, res pkgmodel.ResponsePing) error {
-	statusVal := model.StatusOffline
-	if res.Status == "ONLINE" {
-		statusVal = model.StatusOnline
+	statusVal := pkgmodel.StatusOffline
+	if res.Status == string(pkgmodel.StatusOnline) {
+		statusVal = pkgmodel.StatusOnline
 	}
 
 	server := model.LiveStatus{
@@ -63,7 +63,7 @@ func (s *MonitorService) ProcessPingResult(ctx context.Context, res pkgmodel.Res
 
 	event := model.StatusLog{
 		ServerID:  res.ServerID,
-		Status:    res.Status,
+		Status:    statusVal,
 		Timestamp: res.PingAt,
 	}
 	s.esChan <- event
@@ -86,7 +86,7 @@ func (s *MonitorService) SyncServerLifecycle(ctx context.Context, event pkgmodel
 
 		status := &model.LiveStatus{
 			ServerID: event.ServerID,
-			Status:   model.StatusUnknown,
+			Status:   pkgmodel.StatusUnknown,
 		}
 		return s.liveStatusRepo.Create(ctx, status)
 
