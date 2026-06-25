@@ -106,11 +106,11 @@ Hệ thống hoạt động theo mô hình **Hybrid Event-Driven & gRPC**:
         │   x-user-role: "admin"
         ▼
 ┌───────────────┐
-│ Backend gRPC  │  (Chạy AuthInterceptor so khớp role với required scope)
+│ Backend gRPC  │  (Chạy RoleCheckUnaryGRPCInterceptor so khớp role với required scope)
 └───────────────┘
 ```
 
 1. **Kiểm tra JWT tại API Gateway:** API Gateway là nơi duy nhất giải mã và kiểm tra chữ ký JWT từ các client bên ngoài. Sau đó, nó tự động inject các header metadata (`x-user-id`, `x-user-role`) trước khi forward request gRPC xuống các service nội bộ.
-2. **Ủy quyền tại Service (Unary Interceptor):** `server-service` và `monitor-service` sử dụng `AuthInterceptor` để chặn các unary RPC. Nó lấy metadata `x-user-role`, gọi hàm `Scopes()` của Role đó và so sánh xem có quyền thực thi RPC hay không. Quyền được biểu diễn bằng các struct `Scope` chặt chẽ (như `ScopeServerRead`, `ScopeServerWrite`).
-3. **Mã API Key nội bộ (Streaming Interceptor):** Các luồng streaming (như `DownloadReport`) không đi qua API Gateway mà được kết nối trực tiếp bởi `mail-worker`. Luồng này được bảo vệ bằng API Key dùng chung, xác thực qua `StreamAPIKeyInterceptor` bằng metadata `x-api-key`.
+2. **Ủy quyền tại Service (Unary Interceptor):** `server-service` và `monitor-service` sử dụng `RoleCheckUnaryGRPCInterceptor` để chặn các unary RPC. Nó lấy metadata `x-user-role`, gọi hàm `Scopes()` của Role đó và so sánh xem có quyền thực thi RPC hay không. Quyền được biểu diễn bằng các struct `Scope` chặt chẽ (như `ScopeServerRead`, `ScopeServerWrite`).
+3. **Mã API Key nội bộ (Streaming Interceptor):** Các luồng streaming (như `DownloadReport`) không đi qua API Gateway mà được kết nối trực tiếp bởi `mail-worker`. Luồng này được bảo vệ bằng API Key dùng chung, tự động inject ở Client qua `APIKeyBindStreamGRPCInterceptor` và được xác thực ở Server qua `APIKeyCheckStreamGRPCInterceptor` bằng metadata `x-api-key`.
 4. **Agent Verification:** `heartbeat-gateway` không dùng JWT hay role, nó xác thực request gửi lên từ Agent bằng header HTTP `X-API-Key` với cấu hình cứng trong secret.
