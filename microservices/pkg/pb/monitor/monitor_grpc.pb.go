@@ -19,29 +19,136 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	MonitorService_DownloadReport_FullMethodName = "/monitor.MonitorService/DownloadReport"
-	MonitorService_GenerateReport_FullMethodName = "/monitor.MonitorService/GenerateReport"
+	ReportManagementService_GenerateReport_FullMethodName = "/monitor.ReportManagementService/GenerateReport"
 )
 
-// MonitorServiceClient is the client API for MonitorService service.
+// ReportManagementServiceClient is the client API for ReportManagementService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
-type MonitorServiceClient interface {
-	DownloadReport(ctx context.Context, in *DownloadReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadReportResponse], error)
+//
+// 1. Dành cho External (Gateway gọi vào)
+type ReportManagementServiceClient interface {
 	GenerateReport(ctx context.Context, in *GenerateReportRequest, opts ...grpc.CallOption) (*GenerateReportResponse, error)
 }
 
-type monitorServiceClient struct {
+type reportManagementServiceClient struct {
 	cc grpc.ClientConnInterface
 }
 
-func NewMonitorServiceClient(cc grpc.ClientConnInterface) MonitorServiceClient {
-	return &monitorServiceClient{cc}
+func NewReportManagementServiceClient(cc grpc.ClientConnInterface) ReportManagementServiceClient {
+	return &reportManagementServiceClient{cc}
 }
 
-func (c *monitorServiceClient) DownloadReport(ctx context.Context, in *DownloadReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadReportResponse], error) {
+func (c *reportManagementServiceClient) GenerateReport(ctx context.Context, in *GenerateReportRequest, opts ...grpc.CallOption) (*GenerateReportResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &MonitorService_ServiceDesc.Streams[0], MonitorService_DownloadReport_FullMethodName, cOpts...)
+	out := new(GenerateReportResponse)
+	err := c.cc.Invoke(ctx, ReportManagementService_GenerateReport_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// ReportManagementServiceServer is the server API for ReportManagementService service.
+// All implementations must embed UnimplementedReportManagementServiceServer
+// for forward compatibility.
+//
+// 1. Dành cho External (Gateway gọi vào)
+type ReportManagementServiceServer interface {
+	GenerateReport(context.Context, *GenerateReportRequest) (*GenerateReportResponse, error)
+	mustEmbedUnimplementedReportManagementServiceServer()
+}
+
+// UnimplementedReportManagementServiceServer must be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedReportManagementServiceServer struct{}
+
+func (UnimplementedReportManagementServiceServer) GenerateReport(context.Context, *GenerateReportRequest) (*GenerateReportResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GenerateReport not implemented")
+}
+func (UnimplementedReportManagementServiceServer) mustEmbedUnimplementedReportManagementServiceServer() {
+}
+func (UnimplementedReportManagementServiceServer) testEmbeddedByValue() {}
+
+// UnsafeReportManagementServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to ReportManagementServiceServer will
+// result in compilation errors.
+type UnsafeReportManagementServiceServer interface {
+	mustEmbedUnimplementedReportManagementServiceServer()
+}
+
+func RegisterReportManagementServiceServer(s grpc.ServiceRegistrar, srv ReportManagementServiceServer) {
+	// If the following call panics, it indicates UnimplementedReportManagementServiceServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&ReportManagementService_ServiceDesc, srv)
+}
+
+func _ReportManagementService_GenerateReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GenerateReportRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ReportManagementServiceServer).GenerateReport(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ReportManagementService_GenerateReport_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ReportManagementServiceServer).GenerateReport(ctx, req.(*GenerateReportRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// ReportManagementService_ServiceDesc is the grpc.ServiceDesc for ReportManagementService service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var ReportManagementService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "monitor.ReportManagementService",
+	HandlerType: (*ReportManagementServiceServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GenerateReport",
+			Handler:    _ReportManagementService_GenerateReport_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "monitor.proto",
+}
+
+const (
+	InternalFileTransferService_DownloadReport_FullMethodName = "/monitor.InternalFileTransferService/DownloadReport"
+)
+
+// InternalFileTransferServiceClient is the client API for InternalFileTransferService service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// 2. Dành cho Internal (Mail Worker gọi vào)
+type InternalFileTransferServiceClient interface {
+	DownloadReport(ctx context.Context, in *DownloadReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadReportResponse], error)
+}
+
+type internalFileTransferServiceClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewInternalFileTransferServiceClient(cc grpc.ClientConnInterface) InternalFileTransferServiceClient {
+	return &internalFileTransferServiceClient{cc}
+}
+
+func (c *internalFileTransferServiceClient) DownloadReport(ctx context.Context, in *DownloadReportRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[DownloadReportResponse], error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	stream, err := c.cc.NewStream(ctx, &InternalFileTransferService_ServiceDesc.Streams[0], InternalFileTransferService_DownloadReport_FullMethodName, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -56,106 +163,72 @@ func (c *monitorServiceClient) DownloadReport(ctx context.Context, in *DownloadR
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MonitorService_DownloadReportClient = grpc.ServerStreamingClient[DownloadReportResponse]
+type InternalFileTransferService_DownloadReportClient = grpc.ServerStreamingClient[DownloadReportResponse]
 
-func (c *monitorServiceClient) GenerateReport(ctx context.Context, in *GenerateReportRequest, opts ...grpc.CallOption) (*GenerateReportResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GenerateReportResponse)
-	err := c.cc.Invoke(ctx, MonitorService_GenerateReport_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// MonitorServiceServer is the server API for MonitorService service.
-// All implementations must embed UnimplementedMonitorServiceServer
+// InternalFileTransferServiceServer is the server API for InternalFileTransferService service.
+// All implementations must embed UnimplementedInternalFileTransferServiceServer
 // for forward compatibility.
-type MonitorServiceServer interface {
+//
+// 2. Dành cho Internal (Mail Worker gọi vào)
+type InternalFileTransferServiceServer interface {
 	DownloadReport(*DownloadReportRequest, grpc.ServerStreamingServer[DownloadReportResponse]) error
-	GenerateReport(context.Context, *GenerateReportRequest) (*GenerateReportResponse, error)
-	mustEmbedUnimplementedMonitorServiceServer()
+	mustEmbedUnimplementedInternalFileTransferServiceServer()
 }
 
-// UnimplementedMonitorServiceServer must be embedded to have
+// UnimplementedInternalFileTransferServiceServer must be embedded to have
 // forward compatible implementations.
 //
 // NOTE: this should be embedded by value instead of pointer to avoid a nil
 // pointer dereference when methods are called.
-type UnimplementedMonitorServiceServer struct{}
+type UnimplementedInternalFileTransferServiceServer struct{}
 
-func (UnimplementedMonitorServiceServer) DownloadReport(*DownloadReportRequest, grpc.ServerStreamingServer[DownloadReportResponse]) error {
+func (UnimplementedInternalFileTransferServiceServer) DownloadReport(*DownloadReportRequest, grpc.ServerStreamingServer[DownloadReportResponse]) error {
 	return status.Error(codes.Unimplemented, "method DownloadReport not implemented")
 }
-func (UnimplementedMonitorServiceServer) GenerateReport(context.Context, *GenerateReportRequest) (*GenerateReportResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GenerateReport not implemented")
+func (UnimplementedInternalFileTransferServiceServer) mustEmbedUnimplementedInternalFileTransferServiceServer() {
 }
-func (UnimplementedMonitorServiceServer) mustEmbedUnimplementedMonitorServiceServer() {}
-func (UnimplementedMonitorServiceServer) testEmbeddedByValue()                        {}
+func (UnimplementedInternalFileTransferServiceServer) testEmbeddedByValue() {}
 
-// UnsafeMonitorServiceServer may be embedded to opt out of forward compatibility for this service.
-// Use of this interface is not recommended, as added methods to MonitorServiceServer will
+// UnsafeInternalFileTransferServiceServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to InternalFileTransferServiceServer will
 // result in compilation errors.
-type UnsafeMonitorServiceServer interface {
-	mustEmbedUnimplementedMonitorServiceServer()
+type UnsafeInternalFileTransferServiceServer interface {
+	mustEmbedUnimplementedInternalFileTransferServiceServer()
 }
 
-func RegisterMonitorServiceServer(s grpc.ServiceRegistrar, srv MonitorServiceServer) {
-	// If the following call panics, it indicates UnimplementedMonitorServiceServer was
+func RegisterInternalFileTransferServiceServer(s grpc.ServiceRegistrar, srv InternalFileTransferServiceServer) {
+	// If the following call panics, it indicates UnimplementedInternalFileTransferServiceServer was
 	// embedded by pointer and is nil.  This will cause panics if an
 	// unimplemented method is ever invoked, so we test this at initialization
 	// time to prevent it from happening at runtime later due to I/O.
 	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
 		t.testEmbeddedByValue()
 	}
-	s.RegisterService(&MonitorService_ServiceDesc, srv)
+	s.RegisterService(&InternalFileTransferService_ServiceDesc, srv)
 }
 
-func _MonitorService_DownloadReport_Handler(srv interface{}, stream grpc.ServerStream) error {
+func _InternalFileTransferService_DownloadReport_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(DownloadReportRequest)
 	if err := stream.RecvMsg(m); err != nil {
 		return err
 	}
-	return srv.(MonitorServiceServer).DownloadReport(m, &grpc.GenericServerStream[DownloadReportRequest, DownloadReportResponse]{ServerStream: stream})
+	return srv.(InternalFileTransferServiceServer).DownloadReport(m, &grpc.GenericServerStream[DownloadReportRequest, DownloadReportResponse]{ServerStream: stream})
 }
 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MonitorService_DownloadReportServer = grpc.ServerStreamingServer[DownloadReportResponse]
+type InternalFileTransferService_DownloadReportServer = grpc.ServerStreamingServer[DownloadReportResponse]
 
-func _MonitorService_GenerateReport_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GenerateReportRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MonitorServiceServer).GenerateReport(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MonitorService_GenerateReport_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MonitorServiceServer).GenerateReport(ctx, req.(*GenerateReportRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-// MonitorService_ServiceDesc is the grpc.ServiceDesc for MonitorService service.
+// InternalFileTransferService_ServiceDesc is the grpc.ServiceDesc for InternalFileTransferService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
-var MonitorService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "monitor.MonitorService",
-	HandlerType: (*MonitorServiceServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GenerateReport",
-			Handler:    _MonitorService_GenerateReport_Handler,
-		},
-	},
+var InternalFileTransferService_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "monitor.InternalFileTransferService",
+	HandlerType: (*InternalFileTransferServiceServer)(nil),
+	Methods:     []grpc.MethodDesc{},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "DownloadReport",
-			Handler:       _MonitorService_DownloadReport_Handler,
+			Handler:       _InternalFileTransferService_DownloadReport_Handler,
 			ServerStreams: true,
 		},
 	},

@@ -111,9 +111,11 @@ func main() {
 	}()
 
 	// Start gRPC Server
-	grpcHandler := rpc.NewMonitorHandler(reportSvc)
+	grpcReportHandler := rpc.NewReportHandler(reportSvc)
+	grpcTransferHandler := rpc.NewTransferHandler()
 	grpcServer := grpc.NewServer()
-	pb.RegisterMonitorServiceServer(grpcServer, grpcHandler)
+	pb.RegisterReportManagementServiceServer(grpcServer, grpcReportHandler)
+	pb.RegisterInternalFileTransferServiceServer(grpcServer, grpcTransferHandler)
 
 	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
 	lis, err := net.Listen("tcp", addr)

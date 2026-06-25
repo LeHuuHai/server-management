@@ -228,10 +228,11 @@ const file_monitor_proto_rawDesc = "" +
 	"\fto_timestamp\x18\x02 \x01(\x03R\vtoTimestamp\x12\x1c\n" +
 	"\treceivers\x18\x03 \x03(\tR\treceivers\"2\n" +
 	"\x16GenerateReportResponse\x12\x18\n" +
-	"\asuccess\x18\x01 \x01(\bR\asuccess2\xb8\x01\n" +
-	"\x0eMonitorService\x12S\n" +
-	"\x0eDownloadReport\x12\x1e.monitor.DownloadReportRequest\x1a\x1f.monitor.DownloadReportResponse0\x01\x12Q\n" +
-	"\x0eGenerateReport\x12\x1e.monitor.GenerateReportRequest\x1a\x1f.monitor.GenerateReportResponseBNZLgithub.com/LeHuuHai/server-management/microservices/pkg/pb/monitor;monitorpbb\x06proto3"
+	"\asuccess\x18\x01 \x01(\bR\asuccess2l\n" +
+	"\x17ReportManagementService\x12Q\n" +
+	"\x0eGenerateReport\x12\x1e.monitor.GenerateReportRequest\x1a\x1f.monitor.GenerateReportResponse2r\n" +
+	"\x1bInternalFileTransferService\x12S\n" +
+	"\x0eDownloadReport\x12\x1e.monitor.DownloadReportRequest\x1a\x1f.monitor.DownloadReportResponse0\x01BNZLgithub.com/LeHuuHai/server-management/microservices/pkg/pb/monitor;monitorpbb\x06proto3"
 
 var (
 	file_monitor_proto_rawDescOnce sync.Once
@@ -253,10 +254,10 @@ var file_monitor_proto_goTypes = []any{
 	(*GenerateReportResponse)(nil), // 3: monitor.GenerateReportResponse
 }
 var file_monitor_proto_depIdxs = []int32{
-	0, // 0: monitor.MonitorService.DownloadReport:input_type -> monitor.DownloadReportRequest
-	2, // 1: monitor.MonitorService.GenerateReport:input_type -> monitor.GenerateReportRequest
-	1, // 2: monitor.MonitorService.DownloadReport:output_type -> monitor.DownloadReportResponse
-	3, // 3: monitor.MonitorService.GenerateReport:output_type -> monitor.GenerateReportResponse
+	2, // 0: monitor.ReportManagementService.GenerateReport:input_type -> monitor.GenerateReportRequest
+	0, // 1: monitor.InternalFileTransferService.DownloadReport:input_type -> monitor.DownloadReportRequest
+	3, // 2: monitor.ReportManagementService.GenerateReport:output_type -> monitor.GenerateReportResponse
+	1, // 3: monitor.InternalFileTransferService.DownloadReport:output_type -> monitor.DownloadReportResponse
 	2, // [2:4] is the sub-list for method output_type
 	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -277,7 +278,7 @@ func file_monitor_proto_init() {
 			NumEnums:      0,
 			NumMessages:   4,
 			NumExtensions: 0,
-			NumServices:   1,
+			NumServices:   2,
 		},
 		GoTypes:           file_monitor_proto_goTypes,
 		DependencyIndexes: file_monitor_proto_depIdxs,
