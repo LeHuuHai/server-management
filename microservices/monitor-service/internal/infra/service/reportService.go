@@ -8,7 +8,6 @@ import (
 	"os"
 
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/domain/aggregator"
-	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/domain/cache"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/domain/mq"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/domain/service"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/file"
@@ -20,20 +19,17 @@ import (
 
 type ReportService struct {
 	aggregator aggregator.ReportAggregator
-	cache      cache.DailyReportCacheInterface
 	exporter   *file.ReportExporter
 	publisher  mq.MailPublisherInterface
 }
 
 func NewReportService(
 	agg aggregator.ReportAggregator,
-	cache cache.DailyReportCacheInterface,
 	publisher mq.MailPublisherInterface,
 ) service.ReportServiceInterface {
 	_ = os.MkdirAll("./tmp", 0755)
 	return &ReportService{
 		aggregator: agg,
-		cache:      cache,
 		exporter:   file.NewReportExporter(),
 		publisher:  publisher,
 	}
@@ -55,26 +51,9 @@ func (s *ReportService) ReportServer(ctx context.Context, request model.GenServe
 	var report []model.ServerUptimeAgg
 	var err error
 
-	// Try reading from cache if checking a completed day
-	// To keep it simple and match monolith behavior, check if we have cached results.
-	// For simplicity, we try to Get from cache first.
-	report, err = s.cache.Get(ctx, request.From)
+	report, err = s.aggregator.Aggregation(ctx, request.From, request.To)
 	if err != nil {
-		slog.Warn("Failed to read report cache from Redis, fallback to aggregator", "err", err)
-	}
-
-	if report == nil {
-		// Cache miss, aggregate from Elasticsearch
-		report, err = s.aggregator.Aggregation(ctx, request.From, request.To)
-		if err != nil {
-			return err
-		}
-
-		// Cache aggregated result in Redis
-		err = s.cache.Set(ctx, request.From, report)
-		if err != nil {
-			slog.Warn("Failed to write report cache to Redis", "err", err)
-		}
+		return err
 	}
 
 	fileName := fmt.Sprintf("report-%s.%s", uuid.NewString(), s.exporter.FileType())

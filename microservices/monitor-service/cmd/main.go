@@ -51,10 +51,11 @@ func main() {
 	esWriter := esagg.NewESWriter[model.StatusLog](app.ESClient, cfg.ESConfig.Index)
 	esAggregator := esagg.NewESAggregator(app.ESClient, cfg.ESConfig.Index)
 	redisCache := rdb.NewDailyReportRedisCache(app.RedisClient)
+	cachedAggregator := esagg.NewCachedAggregator(esAggregator, redisCache)
 
 	// Core Services
 	monitorSvc := service.NewMonitorService(monitoredServerRepo, liveStatusRepo, pgChan, esChan)
-	reportSvc := service.NewReportService(esAggregator, redisCache, mailPublisher)
+	reportSvc := service.NewReportService(cachedAggregator, mailPublisher)
 	batchPG := service.NewBatchPGService(pgChan, 2000, time.Second, liveStatusRepo)
 	batchES := service.NewBatchESService(esChan, 2000, time.Second, esWriter)
 
