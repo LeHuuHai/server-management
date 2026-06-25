@@ -49,21 +49,16 @@ func (s *MonitorService) ProcessHeartbeat(ctx context.Context, hb pkgmodel.Heart
 }
 
 func (s *MonitorService) ProcessPingResult(ctx context.Context, res pkgmodel.ResponsePing) error {
-	statusVal := pkgmodel.StatusOffline
-	if res.Status == string(pkgmodel.StatusOnline) {
-		statusVal = pkgmodel.StatusOnline
-	}
-
 	server := model.LiveStatus{
 		ServerID:   res.ServerID,
-		Status:     statusVal,
+		Status:     res.Status,
 		LastPingAt: res.PingAt,
 	}
 	s.pgChan <- server
 
 	event := model.StatusLog{
 		ServerID:  res.ServerID,
-		Status:    statusVal,
+		Status:    res.Status,
 		Timestamp: res.PingAt,
 	}
 	s.esChan <- event
