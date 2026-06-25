@@ -113,3 +113,9 @@ message DownloadReportResponse {
 5. **Setup gRPC Handler:** Viết `internal/rpc/monitor_server.go` hỗ trợ stream dữ liệu chunk-by-chunk.
 6. **Bootstrap:** Tạo `internal/infra/runtime/rt.go` để gom toàn bộ kết nối tài nguyên, và `cmd/main.go` khởi chạy.
 7. **Bàn giao:** Dừng agent để người dùng tự sinh code gRPC, chạy `go mod tidy` và kiểm thử.
+
+## 6. Các quyết định kiến trúc cốt lõi (Cập nhật sau triển khai)
+1. **At-Least-Once Delivery (Closure-based Commits)**:
+   Các Kafka consumer (Heartbeat, Lifecycle, PingResponse) được thiết kế ở chế độ Stateless. Chúng sử dụng `FetchMessage` (thay vì auto-commit) và trả về một closure `commitFunc func(context.Context) error`. Worker background chỉ gọi hàm commit này sau khi logic nghiệp vụ đã được thực thi thành công, qua đó bảo toàn Metadata của Kafka (Topic, Partition, Offset) mà không bị rò rỉ lên tầng Domain.
+2. **CachedAggregator (Decorator Pattern & MapReduce)**:
+   Để tối ưu truy vấn Elasticsearch khi sinh báo cáo Uptime, dịch vụ áp dụng một Decorator (`CachedAggregator`) bọc quanh base aggregator. Logic này chia nhỏ khoảng thời gian truy vấn `[from, to)` thành các phần lẻ (truy vấn trực tiếp ES) và các ngày hoàn chỉnh đã kết thúc (cache ở Redis với `TTL = 0`). Sau đó dùng cơ chế MapReduce để gộp lại theo `ServerID`, tăng tốc độ sinh báo cáo lên đáng kể và tái sử dụng bộ nhớ đệm an toàn.
