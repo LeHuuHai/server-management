@@ -16,6 +16,4 @@ type ServerRepositoryInterface interface {
 	List(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error)
 
 	CreateBatch(ctx context.Context, servers []model.ServerProfile) (*model.CreateBatchServerResult, error)
-
-	AllMetadata(ctx context.Context) ([]model.ServerMetadata, error)
 }

@@ -11,7 +11,7 @@ import (
 
 type serverXLSXImporter struct{}
 
-func (i *serverXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) ([]model.ServerImport, error) {
+func (i *serverXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) ([]model.ServerAddress, error) {
 	file, err := excelize.OpenReader(reader)
 	if err != nil {
 		return nil, err
@@ -28,10 +28,10 @@ func (i *serverXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) 
 	}
 
 	if len(rows) <= 1 {
-		return []model.ServerImport{}, nil
+		return []model.ServerAddress{}, nil
 	}
 
-	servers := make([]model.ServerImport, 0, len(rows)-1)
+	servers := make([]model.ServerAddress, 0, len(rows)-1)
 
 	for _, row := range rows[1:] {
 
@@ -39,7 +39,7 @@ func (i *serverXLSXImporter) Deserialize(ctx context.Context, reader io.Reader) 
 			return nil, apperr.ErrInvalidImportData
 		}
 
-		server := model.ServerImport{
+		server := model.ServerAddress{
 			ServerID:   row[1],
 			ServerName: row[2],
 			IPv4:       row[3],

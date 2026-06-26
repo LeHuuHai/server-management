@@ -9,59 +9,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// RoleCheckUnaryGRPCInterceptor checks if the user's role has the required scope for the gRPC unary method.
-func RoleCheckUnaryGRPCInterceptor(methodScopes map[string]Scope) grpc.UnaryServerInterceptor {
-	return func(
-		ctx context.Context,
-		req interface{},
-		info *grpc.UnaryServerInfo,
-		handler grpc.UnaryHandler,
-	) (interface{}, error) {
-		// 1. Check if the method requires authorization
-		requiredScope, exists := methodScopes[info.FullMethod]
-		if !exists {
-			// If not listed in methodScopes, bypass auth check (permit by default)
-			return handler(ctx, req)
-		}
-
-		// 2. Extract gRPC metadata
-		md, ok := metadata.FromIncomingContext(ctx)
-		if !ok {
-			return nil, status.Error(codes.Unauthenticated, "missing incoming metadata context")
-		}
-
-		roles := md.Get("x-user-role")
-		if len(roles) == 0 {
-			return nil, status.Error(codes.Unauthenticated, "missing user role in metadata")
-		}
-
-		// 3. Resolve role and verify it has the required scope
-		userRole := Role(roles[0])
-		userScopes := userRole.Scopes()
-
-		authorized := false
-		for _, s := range userScopes {
-			if s == requiredScope {
-				authorized = true
-				break
-			}
-		}
-
-		if !authorized {
-			return nil, status.Errorf(
-				codes.PermissionDenied,
-				"user with role %q does not have the required scope %q for method %q",
-				userRole,
-				requiredScope,
-				info.FullMethod,
-			)
-		}
-
-		// 4. Authorized, proceed to execute actual RPC method
-		return handler(ctx, req)
-	}
-}
-
 // APIKeyCheckStreamGRPCInterceptor validates a shared API key from incoming gRPC metadata for streaming endpoints.
 func APIKeyCheckStreamGRPCInterceptor(validAPIKey string) grpc.StreamServerInterceptor {
 	return func(

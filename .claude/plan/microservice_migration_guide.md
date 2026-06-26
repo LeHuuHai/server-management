@@ -27,11 +27,11 @@ When building shared wrapper libraries in `microservices/pkg/` (like Database or
 
 Authentication and Authorization inside the microservices workspace are decoupled to ensure loose coupling and security:
 
-- **Authentication (Gateway Level):** The API Gateway intercepts external client requests, validates the client JWT, extracts claims (`x-user-id`, `x-user-role`), and injects them as gRPC metadata headers into downstream requests.
-- **Authorization (Service Level - Unary RPCs):** Downstream services (`server-service`, `monitor-service`) utilize a shared `UnaryServerInterceptor` (`AuthInterceptor` in `pkg/auth`) to check if the caller's role possesses the required scopes for the requested RPC method.
+- **Authentication (Gateway Level):** The API Gateway (e.g., Traefik) intercepts external client requests, validates the client JWT, extracts claims, and injects them as HTTP headers (`X-User-Id`, `X-User-Role`) into downstream requests.
+- **Authorization (Service Level - REST APIs):** Downstream services (`server-service`, `monitor-service`, `auth-service`) expose REST APIs for client-facing endpoints. They utilize HTTP Middlewares to check if the caller's role (read from `X-User-Role` header) possesses the required scopes for the requested endpoint.
 - **Agent Ingestion Authentication (heartbeat-gateway):** Heartbeats sent from the remote host `agent` are authenticated at `heartbeat-gateway` using a shared host-level **API Key** (`X-API-Key` HTTP header) rather than user-level JWTs or roles, as the agent is a headless background system service.
-- **Internal Service-to-Service Authorization (Streaming RPCs):** Internal system calls (e.g., `mail-worker` downloading reports from `monitor-service` via `DownloadReport` stream) bypass user JWT validation and are authenticated using a shared **internal API Key** (`x-api-key`) verified by `StreamAPIKeyInterceptor`.
-- **Security Boundaries:** Zero-trust is maintained through network isolation (Swarm private overlay networks). Downstream gRPC services are not exposed to the public host ports, ensuring only authenticated traffic routed through the API Gateway or internal workers can reach them.
+- **Internal Service-to-Service Authorization (gRPC Streaming):** Internal system calls (e.g., `mail-worker` downloading reports from `monitor-service` via `DownloadReport` stream) still use gRPC. They bypass user JWT validation and are authenticated using a shared **internal API Key** (`x-api-key`) verified by `StreamAPIKeyInterceptor`.
+- **Security Boundaries:** Zero-trust is maintained through network isolation (Swarm private overlay networks). Downstream services are not exposed to the public host ports, ensuring only authenticated traffic routed through the API Gateway or internal workers can reach them.
 
 ## Business Capabilities
 

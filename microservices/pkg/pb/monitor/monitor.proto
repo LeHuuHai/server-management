@@ -4,11 +4,7 @@ package monitor;
 
 option go_package = "github.com/LeHuuHai/server-management/microservices/pkg/pb/monitor;monitorpb";
 
-// 1. Dành cho External (Gateway gọi vào)
-service ReportManagementService {
-  rpc GenerateReport (GenerateReportRequest) returns (GenerateReportResponse);
-}
-// 2. Dành cho Internal (Mail Worker gọi vào)
+// Dành cho Internal (Mail Worker gọi vào)
 service InternalFileTransferService {
   rpc DownloadReport (DownloadReportRequest) returns (stream DownloadReportResponse);
 }
@@ -20,14 +16,3 @@ message DownloadReportRequest {
 message DownloadReportResponse {
   bytes chunk_data = 1;
 }
-
-message GenerateReportRequest {
-  int64 from_timestamp = 1;
-  int64 to_timestamp = 2;
-  repeated string receivers = 3;
-}
-
-message GenerateReportResponse {
-  bool success = 1;
-}
-

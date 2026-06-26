@@ -19,6 +19,15 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/service"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/worker"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/model"
+	"errors"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
+	"github.com/gin-gonic/gin"
+	"github.com/LeHuuHai/server-management/microservices/monitor-service/api"
+	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/handler"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/rpc"
 	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	pb "github.com/LeHuuHai/server-management/microservices/pkg/pb/monitor"
@@ -111,30 +120,59 @@ func main() {
 		Report(ctx, cfg.AppConfig.AdMail, reportSvc)
 	}()
 
-	// Start gRPC Server
-	grpcReportHandler := rpc.NewReportHandler(reportSvc)
+	// Start gRPC Server (Internal File Transfer only)
 	grpcTransferHandler := rpc.NewTransferHandler()
 	grpcServer := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.RoleCheckUnaryGRPCInterceptor(map[string]auth.Scope{
-			pb.ReportManagementService_GenerateReport_FullMethodName: auth.ScopeServerReport,
-		})),
 		grpc.StreamInterceptor(auth.APIKeyCheckStreamGRPCInterceptor(cfg.AppConfig.InternalAPIKey)),
 	)
-	pb.RegisterReportManagementServiceServer(grpcServer, grpcReportHandler)
 	pb.RegisterInternalFileTransferServiceServer(grpcServer, grpcTransferHandler)
 
-	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
-	lis, err := net.Listen("tcp", addr)
+	// We use Port + 100 for internal gRPC
+	grpcPort := cfg.AppConfig.Port + 100
+	grpcAddr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(grpcPort))
+	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		log.Fatalf("Failed to listen on tcp: %v", err)
 	}
 
-	slog.Info("Starting Monitor Service gRPC Server", "addr", addr)
+	slog.Info("Starting Monitor Service internal gRPC Server", "addr", grpcAddr)
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
 			log.Fatalf("Failed to serve gRPC: %v", err)
 		}
 	}()
+
+	// Start REST Server
+	reportHandler := handler.NewReportRestHandler(reportSvc)
+	gin.SetMode(gin.ReleaseMode)
+	router := gin.Default()
+	strictHandler := api.NewStrictHandler(reportHandler, nil)
+	api.RegisterHandlers(router, strictHandler)
+
+	httpAddr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
+	srv := &http.Server{
+		Addr:    httpAddr,
+		Handler: router,
+	}
+
+	go func() {
+		slog.Info("Starting Monitor Service REST Server", "addr", httpAddr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("Failed to listen and serve HTTP: %v", err)
+		}
+	}()
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+	<-sigChan
+
+	slog.Info("Shutdown signal received, shutting down gracefully...")
+	ctxShut, cancelShut := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancelShut()
+	if err := srv.Shutdown(ctxShut); err != nil {
+		slog.Error("Server forced to shutdown", slog.Any("error", err))
+	}
+	grpcServer.GracefulStop()
 
 	// Wait for system exit / contexts
 	wg.Wait()

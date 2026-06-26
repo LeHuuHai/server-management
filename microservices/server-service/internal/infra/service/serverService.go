@@ -19,14 +19,19 @@ type ServerService struct {
 	outboxRepo repo.OutboxRepositoryInterface
 }
 
-func (s *ServerService) CreateServer(ctx context.Context, server *model.ServerProfile) (*model.ServerProfile, error) {
+func (s *ServerService) CreateServer(ctx context.Context, server *model.ServerAddress) (*model.ServerProfile, error) {
 	ip := net.ParseIP(server.IPv4)
 	if ip == nil || ip.To4() == nil {
 		return nil, apperr.ErrInvalidIP
 	}
 
+	serverProfile := &model.ServerProfile{
+		ServerID:   server.ServerID,
+		ServerName: server.ServerName,
+		IPv4:       server.IPv4,
+	}
 	err := s.txManager.WithTx(ctx, func(txCtx context.Context) error {
-		if err := s.repo.Create(txCtx, server); err != nil {
+		if err := s.repo.Create(txCtx, serverProfile); err != nil {
 			return err
 		}
 
@@ -35,7 +40,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.ServerPr
 			ServerName: server.ServerName,
 			IPv4:       server.IPv4,
 			Timestamp:  time.Now(),
-			Version:    server.Version,
+			Version:    1,
 		})
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
@@ -51,7 +56,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.ServerPr
 		return nil, err
 	}
 
-	return server, nil
+	return serverProfile, nil
 }
 
 func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerFilter) (*model.ListServerResult, error) {
@@ -71,7 +76,7 @@ func (s *ServerService) ListServer(ctx context.Context, filter model.ListServerF
 	return s.repo.List(ctx, filter)
 }
 
-func (s *ServerService) UpdateServer(ctx context.Context, server *model.ServerProfile) (*model.ServerProfile, error) {
+func (s *ServerService) UpdateServer(ctx context.Context, server *model.ServerAddress) (*model.ServerProfile, error) {
 	fields := map[string]any{}
 	if server.ServerName != "" {
 		fields["server_name"] = server.ServerName
@@ -139,7 +144,7 @@ func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error
 	})
 }
 
-func (s *ServerService) ImportServer(ctx context.Context, serversData []model.ServerImport) (*model.CreateBatchServerResult, error) {
+func (s *ServerService) ImportServer(ctx context.Context, serversData []model.ServerAddress) (*model.CreateBatchServerResult, error) {
 	invalid := make([]string, 0)
 	valid := make([]model.ServerProfile, 0)
 

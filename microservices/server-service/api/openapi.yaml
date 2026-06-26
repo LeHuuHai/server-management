@@ -1,0 +1,460 @@
+openapi: 3.0.3
+
+info:
+  title: Server Service API
+  version: 1.0.0
+  description: API for managing servers
+
+servers:
+  - url: http://localhost:8080
+
+tags:
+  - name: Server
+
+security:
+  - bearerAuth: []
+
+paths:
+  /servers:
+    get:
+      tags:
+        - Server
+      summary: Get list servers
+      operationId: GetListServers
+
+      security:
+        - bearerAuth:
+            - server:read
+
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 0
+
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 10
+
+        - name: sort_field
+          in: query
+          required: true
+          schema:
+            type: string
+
+        - name: desc
+          in: query
+          required: true
+          schema:
+            type: boolean
+
+      responses:
+        "200":
+          description: Get list servers successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetListServersResponse"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      tags:
+        - Server
+      summary: Create server
+      operationId: CreateServer
+
+      security:
+        - bearerAuth:
+            - server:create
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServerRequest"
+
+      responses:
+        "201":
+          description: Server created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /servers/{server_id}:
+    patch:
+      tags:
+        - Server
+      summary: Update server
+      operationId: UpdateServer
+
+      security:
+        - bearerAuth:
+            - server:update
+
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          schema:
+            type: string
+
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateServerRequest"
+
+      responses:
+        "200":
+          description: Updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Server"
+        
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    delete:
+      tags:
+        - Server
+      summary: Delete server
+      operationId: DeleteServer
+
+      security:
+        - bearerAuth:
+            - server:delete
+
+      parameters:
+        - name: server_id
+          in: path
+          required: true
+          schema:
+            type: string
+
+      responses:
+        "204":
+          description: Deleted successfully
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
+  
+  /servers/import:
+    post:
+      tags:
+        - Server
+      summary: Import server
+      operationId: ImportServer
+
+      security:
+        - bearerAuth:
+            - server:import
+
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+
+              required:
+                - file
+
+              properties:
+                file:
+                  type: string
+                  format: binary
+            
+            encoding:
+              file:
+                contentType: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+
+      responses:
+        "200":
+          description: Import accepted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportServerResponse"
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /servers/export:
+    get:
+      tags:
+        - Server
+      summary: Export servers
+      operationId: ExportServers
+
+      security:
+        - bearerAuth:
+            - server:export
+
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 0
+
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: integer
+            default: 10
+
+        - name: sort_field
+          in: query
+          required: true
+          schema:
+            type: string
+
+        - name: desc
+          in: query
+          required: true
+          schema:
+            type: boolean
+
+      responses:
+        "200":
+          description: Export servers successfully
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+              description: attachment; filename="servers.xlsx"
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema:
+                type: string
+                format: binary
+
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+        "403":
+          $ref: "#/components/responses/Forbidden"
+
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  schemas:
+    Server:
+      type: object
+      required:
+        - server_id
+        - server_name
+        - ipv4
+      properties:
+        server_id:
+          type: string
+
+        server_name:
+          type: string
+
+        ipv4:
+          type: string
+          format: ipv4
+
+        created_at:
+          type: string
+          format: date-time
+
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateServerRequest:
+      type: object
+      required:
+        - server_id
+        - server_name
+        - ipv4
+
+      properties:
+        server_id:
+          type: string
+
+        server_name:
+          type: string
+
+        ipv4:
+          type: string
+          format: ipv4
+
+    UpdateServerRequest:
+      type: object
+      properties:
+        server_name:
+          type: string
+
+        ipv4:
+          type: string
+          format: ipv4
+
+    GetListServersResponse:
+      type: object
+      properties:
+        total:
+          type: integer
+
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Server"
+    
+    ImportServerResponse:
+      type: object
+      required:
+        - total_success
+        - id_success
+        - total_failed
+        - id_failed
+      properties:
+        total_success:
+          type: integer
+
+        id_success:
+          type: array
+          items:
+            type: string
+
+        total_failed:
+          type: integer
+
+        id_failed:
+          type: array
+          items:
+            type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+
+        message:
+          type: string
+
+        request_id:
+          type: string
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+            
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
