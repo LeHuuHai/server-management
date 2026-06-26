@@ -13,14 +13,14 @@
 - [x] Bulk Import/Export Excel
 - [x] Worker ICMP Pinger & Mail Dispatch
 - [x] Deploy và chạy Demo hệ thống hiện tại
-- [ ] **Transfer sang hệ thống Microservice hoàn chỉnh**
+- [x] **Transfer sang hệ thống Microservice hoàn chỉnh**
   - [x] Kế hoạch tổng thể và cấu trúc thư mục chung
-  - [x] Migrate `auth-service` (gRPC Server)
-  - [x] Migrate `server-service` (gRPC Server & Kafka Publisher)
+  - [x] Migrate `auth-service` (REST Server)
+  - [x] Migrate `server-service` (REST Server & Kafka Publisher)
   - [x] Migrate `heartbeat-gateway`
-  - [x] Migrate `monitor-service` (gRPC Server with DownloadReport/GenerateReport, Kafka Consumers/Publishers, Checker, Batchers, & Report generator)
+  - [x] Migrate `monitor-service` (REST Server cho API đối ngoại, gRPC cho Internal Transfer, Kafka Consumers/Publishers, Checker, Batchers, & Report generator)
   - [x] Migrate `mail-worker` và `ping-worker`
-  - [x] Tích hợp gRPC interceptors và phân quyền phi tập trung (Decentralized Auth) cho các microservices
+  - [x] Tích hợp HTTP Middlewares (REST) và gRPC Interceptors cho phân quyền phi tập trung (Decentralized Auth)
 - [ ] **Deploy hệ thống lên hạ tầng Docker Swarm**
 
 ## 3. Các quyết định thiết kế và triển khai quan trọng (Scalability Rationales)
@@ -50,10 +50,10 @@ Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng 
   - Sử dụng Redis để cache các kết quả `count` từ Elasticsearch (tránh query dữ liệu timeseries khổng lồ mỗi ngày).
 - **Lý do:** Tối ưu kích cỡ payload Kafka, giữ tốc độ messaging cao. Giảm tải nặng cho monitor-service, truyền tải tệp tin hiệu quả và an toàn qua giao thức gRPC nội bộ thay vì HTTP công cộng.
 
-### Quyết định 5: Chuyển đổi REST sang gRPC cho các Microservices nội bộ
-- **Bối cảnh:** Khi tách hệ thống thành các Microservices độc lập (ví dụ: `auth-service`), việc giao tiếp qua HTTP/REST sẽ cồng kềnh, thiếu type-safety và chậm hơn.
-- **Quyết định:** Các Backend Microservices chỉ mở cổng gRPC. API Gateway sẽ là component duy nhất nhận HTTP/REST từ Client bên ngoài và proxy thành request gRPC vào hệ thống nội bộ (ngoại trừ `heartbeat-gateway` mở cổng HTTP trực tiếp để thu nhận heartbeat từ Agent).
-- **Lý do:** Tối ưu hóa hiệu năng mạng, sử dụng Protobuf làm strict contract, tách biệt tầng routing HTTP ra khỏi logic service. Dịch vụ heartbeat vẫn giữ HTTP do tính chất Agent gửi request đơn giản qua REST.
+### Quyết định 5: Sử dụng REST cho các API đối ngoại của Microservice, giữ gRPC cho giao tiếp đối nội
+- **Bối cảnh:** Mặc dù gRPC mang lại hiệu năng cao và type-safety, nhưng việc chuyển đổi mọi giao tiếp client-facing sang gRPC thông qua API Gateway có thể làm phức tạp hóa quá trình tích hợp với các client bên ngoài vốn chỉ hỗ trợ REST thuần túy.
+- **Quyết định:** Các dịch vụ như `auth-service`, `server-service`, và `monitor-service` sẽ trực tiếp cung cấp các REST API (sử dụng Gin và OpenAPI-codegen) cho các endpoint phục vụ client bên ngoài. API Gateway (Traefik) sẽ đơn thuần đóng vai trò proxy HTTP và xử lý JWT. Tuy nhiên, giao thức gRPC vẫn được giữ lại để xử lý **giao tiếp nội bộ** giữa các service với nhau (ví dụ: `mail-worker` stream file báo cáo từ `monitor-service`).
+- **Lý do:** Tận dụng được sự tiện lợi của REST/HTTP cho các giao tiếp công cộng, đồng thời vẫn giữ được hiệu năng tuyệt đối của gRPC Protobuf cho các tác vụ truyền tải luồng dữ liệu khổng lồ trong mạng nội bộ (streaming).
 
 ### Quyết định 6: Cấu trúc thư mục Dependency Inversion (Service nằm trong Infra)
 - **Bối cảnh:** Cần duy trì tính decoupling tuyệt đối giữa logic nghiệp vụ và cách nó được khởi tạo.

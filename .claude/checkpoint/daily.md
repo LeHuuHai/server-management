@@ -1,5 +1,25 @@
 # Checkpoint Hàng Ngày (Daily Standup)
 
+## Ngày: 26/06/2026
+
+### 1. Trạng thái hiện tại
+- Đã hoàn tất 100% quá trình "Transfer sang hệ thống Microservice hoàn chỉnh".
+- Nhóm đã quyết định chuyển đổi các API đối ngoại từ gRPC sang **REST** (sử dụng Gin và `oapi-codegen`) để đơn giản hóa giao tiếp với Client, trong khi vẫn giữ gRPC cho các luồng truyền tải nội bộ (Internal Stream).
+
+### 2. Các công việc đã hoàn thành trong ngày
+- [x] Áp dụng chuẩn REST API cho các microservice public-facing (`auth-service`, `server-service`, `monitor-service`). Xóa bỏ hoàn toàn hợp đồng protobuf của các dịch vụ này.
+- [x] Thiết lập `Traefik` (API Gateway) đóng vai trò phân giải JWT và đẩy Claim (như `X-User-Role`) vào Header HTTP của Downstream.
+- [x] Tạo mới HTTP Middleware (`RoleCheckMiddleware`) trong `pkg/auth` để tự động kiểm tra quyền hạn dữa trên scopes do `oapi-codegen` sinh ra.
+- [x] Hoàn thiện Clean Architecture cho `server-service` và `monitor-service`: Tách biệt hoàn toàn Data Transfer Object (`ServerAddress`, `LoginResult`) khỏi Persistence Model (`ServerProfile`).
+- [x] Loại bỏ triệt để việc rò rỉ dữ liệu chéo domain (ví dụ: `server-service` không còn trả về `Status` thuộc sở hữu của `monitor-service`).
+- [x] Cập nhật toàn bộ tài liệu kiến trúc (Microservice Migration Guide & Progress Decisions) để phản ánh các thay đổi.
+
+### 3. Các công việc cần làm tiếp theo (TODO)
+- [ ] Xây dựng các file `docker-compose.yml` (hoặc Stack) cho Docker Swarm.
+- [ ] Triển khai và kiểm thử hệ thống Microservice lên nền tảng hạ tầng Swarm.
+
+---
+
 ## Ngày: 25/06/2026
 
 ### 1. Trạng thái hiện tại
