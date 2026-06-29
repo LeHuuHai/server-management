@@ -1,12 +1,10 @@
 package config
 
 import (
-	"log/slog"
 	"os"
 	"strconv"
 
 	pkgconfig "github.com/LeHuuHai/server-management/microservices/pkg/config"
-	"github.com/joho/godotenv"
 )
 
 type AppConfig struct {
@@ -20,11 +18,6 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load("./microservices/ping-worker/.env")
-	if err != nil {
-		slog.Warn("Error loading .env file, fallback to os env")
-	}
-
 	numThread, err := strconv.Atoi(os.Getenv("APP_NUM_THREAD"))
 	if err != nil {
 		return nil, err

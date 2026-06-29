@@ -1,12 +1,10 @@
 package config
 
 import (
-	"log/slog"
 	"os"
 	"strconv"
 
 	pkgconfig "github.com/LeHuuHai/server-management/microservices/pkg/config"
-	"github.com/joho/godotenv"
 )
 
 type SenderConfig struct {
@@ -28,11 +26,6 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load("./microservices/mail-worker/.env")
-	if err != nil {
-		slog.Warn("Error loading .env file, fallback to os env")
-	}
-
 	gomailPort, err := strconv.Atoi(os.Getenv("GOMAIL_PORT"))
 	if err != nil {
 		return nil, err

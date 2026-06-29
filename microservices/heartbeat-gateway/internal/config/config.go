@@ -1,12 +1,10 @@
 package config
 
 import (
-	"log/slog"
 	"os"
 	"strconv"
 
 	pkgconfig "github.com/LeHuuHai/server-management/microservices/pkg/config"
-	"github.com/joho/godotenv"
 )
 
 type AppConfig struct {
@@ -21,11 +19,6 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load("./microservices/heartbeat-gateway/.env")
-	if err != nil {
-		slog.Warn("Error loading .env file, fallback to os env")
-	}
-
 	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
 		return nil, err

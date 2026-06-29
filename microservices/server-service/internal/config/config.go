@@ -1,13 +1,11 @@
 package config
 
 import (
-	"log/slog"
 	"os"
 	"strconv"
 	"strings"
 
 	pkgconfig "github.com/LeHuuHai/server-management/microservices/pkg/config"
-	"github.com/joho/godotenv"
 )
 
 type AppConfig struct {
@@ -23,11 +21,6 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load("./microservices/server-service/.env")
-	if err != nil {
-		slog.Warn("Error loading .env file, fallback to os env")
-	}
-
 	pgport, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
 		pgport = 5432

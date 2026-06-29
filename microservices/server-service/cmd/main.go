@@ -13,25 +13,19 @@ import (
 	"syscall"
 	"time"
 
+	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	"github.com/LeHuuHai/server-management/microservices/server-service/api"
-	"github.com/LeHuuHai/server-management/microservices/server-service/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/handler"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/postgres"
 	rt "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/runtime"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/service"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/worker"
-	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	app, err := rt.NewApp(cfg)
+	app, err := rt.NewApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize runtime: %v", err)
 	}
@@ -56,7 +50,7 @@ func main() {
 		},
 	})
 
-	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
+	addr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(app.Config.AppConfig.Port))
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: router,
