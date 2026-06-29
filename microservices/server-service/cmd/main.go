@@ -21,6 +21,7 @@ import (
 	rt "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/runtime"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/service"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/worker"
+	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,9 +49,12 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	// In the future, you could add authorization middleware here to check X-User-Role header
 	strictHandler := api.NewStrictHandler(serverHandler, nil)
-	api.RegisterHandlers(router, strictHandler)
+	api.RegisterHandlersWithOptions(router, strictHandler, api.GinServerOptions{
+		Middlewares: []api.MiddlewareFunc{
+			api.MiddlewareFunc(auth.RoleCheckMiddleware()),
+		},
+	})
 
 	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
 	srv := &http.Server{

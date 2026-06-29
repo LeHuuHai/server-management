@@ -146,8 +146,13 @@ func main() {
 	reportHandler := handler.NewReportRestHandler(reportSvc)
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
+
 	strictHandler := api.NewStrictHandler(reportHandler, nil)
-	api.RegisterHandlers(router, strictHandler)
+	api.RegisterHandlersWithOptions(router, strictHandler, api.GinServerOptions{
+		Middlewares: []api.MiddlewareFunc{
+			api.MiddlewareFunc(auth.RoleCheckMiddleware()),
+		},
+	})
 
 	httpAddr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
 	srv := &http.Server{
