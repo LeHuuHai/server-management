@@ -78,9 +78,8 @@ func Load() (*Config, error) {
 			Database: os.Getenv("DB_DBNAME"),
 		},
 		RedisConfig: &pkgconfig.RedisConfig{
-			URL:      os.Getenv("REDIS_URL"),
-			Password: pkgconfig.ReadSecret("redis_password"),
-			DB:       redisDb,
+			URL: os.Getenv("REDIS_URL"),
+			DB:  redisDb,
 		},
 		ESConfig: &pkgconfig.ElasticsearchConfig{
 			URL:   os.Getenv("ES_URL"),

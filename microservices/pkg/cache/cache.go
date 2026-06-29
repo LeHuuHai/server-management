@@ -11,9 +11,8 @@ import (
 
 func Connect(config *pkgconfig.RedisConfig) (*redis.Client, error) {
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     config.URL,
-		Password: config.Password,
-		DB:       config.DB,
+		Addr: config.URL,
+		DB:   config.DB,
 	})
 
 	ctx := context.Background()

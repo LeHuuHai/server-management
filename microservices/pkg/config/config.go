@@ -11,9 +11,8 @@ type PostgresConfig struct {
 }
 
 type RedisConfig struct {
-	URL      string
-	Password string
-	DB       int
+	URL string
+	DB  int
 }
 
 type JWTConfig struct {
@@ -36,7 +35,6 @@ func (c *PostgresConfig) LogValue() slog.Value {
 func (c *RedisConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Any("url", c.URL),
-		slog.Any("password", c.Password),
 		slog.Any("db", c.DB),
 	)
 }
