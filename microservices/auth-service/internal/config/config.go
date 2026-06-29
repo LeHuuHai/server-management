@@ -61,21 +61,21 @@ func Load() (*Config, error) {
 			CORSOrigins: strings.Split(os.Getenv("APP_CORS_ORIGIN"), ","),
 		},
 		JWTConfig: &pkgconfig.JWTConfig{
-			AccessSecret:   os.Getenv("JWT_ACCESS_SECRET"),
-			RefreshSecret:  os.Getenv("JWT_REFRESH_SECRET"),
+			AccessSecret:   pkgconfig.ReadSecret("jwt_access_secret"),
+			RefreshSecret:  pkgconfig.ReadSecret("jwt_refresh_secret"),
 			AccessExpired:  accessExpired,
 			RefreshExpired: refreshExpired,
 		},
 		DBConfig: &pkgconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),
 			Username: os.Getenv("DB_USER"),
-			Password: os.Getenv("DB_PASSWORD"),
+			Password: pkgconfig.ReadSecret("db_password"),
 			Port:     pgport,
 			Database: os.Getenv("DB_DBNAME"),
 		},
 		RedisConfig: &pkgconfig.RedisConfig{
 			URL:      os.Getenv("REDIS_URL"),
-			Password: os.Getenv("REDIS_PASSWORD"),
+			Password: pkgconfig.ReadSecret("redis_password"),
 			DB:       redisdb,
 		},
 	}

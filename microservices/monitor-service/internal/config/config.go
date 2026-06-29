@@ -96,7 +96,7 @@ func Load() (*Config, error) {
 		mailTopic = "mail"
 	}
 
-	internalAPIKey := os.Getenv("INTERNAL_API_KEY")
+	internalAPIKey := pkgconfig.ReadSecret("internal_api_key")
 	if internalAPIKey == "" {
 		internalAPIKey = "internal-secret-key"
 	}
@@ -113,19 +113,19 @@ func Load() (*Config, error) {
 		DBConfig: &pkgconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),
 			Username: os.Getenv("DB_USER"),
-			Password: os.Getenv("DB_PASSWORD"),
+			Password: pkgconfig.ReadSecret("db_password"),
 			Port:     pgport,
 			Database: os.Getenv("DB_DBNAME"),
 		},
 		RedisConfig: &pkgconfig.RedisConfig{
 			URL:      os.Getenv("REDIS_URL"),
-			Password: os.Getenv("REDIS_PASSWORD"),
+			Password: pkgconfig.ReadSecret("redis_password"),
 			DB:       redisDb,
 		},
 		ESConfig: &pkgconfig.ElasticsearchConfig{
 			URL:      os.Getenv("ES_URL"),
 			Username: os.Getenv("ES_USER"),
-			Password: os.Getenv("ES_PASSWORD"),
+			Password: pkgconfig.ReadSecret("es_password"),
 			Index:    os.Getenv("ES_INDEX"),
 		},
 		ServerEventReaderConfig: &pkgconfig.KafkaReaderConfig{

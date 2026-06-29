@@ -59,7 +59,7 @@ func Load() (*Config, error) {
 		monitorRPC = "localhost:50054"
 	}
 
-	internalAPIKey := os.Getenv("INTERNAL_API_KEY")
+	internalAPIKey := pkgconfig.ReadSecret("internal_api_key")
 	if internalAPIKey == "" {
 		internalAPIKey = "internal-secret-key"
 	}
@@ -78,7 +78,7 @@ func Load() (*Config, error) {
 			Addr:     os.Getenv("GOMAIL_ADDR"),
 			Port:     gomailPort,
 			From:     os.Getenv("GOMAIL_FROM"),
-			Password: os.Getenv("GOMAIL_PASSWORD"),
+			Password: pkgconfig.ReadSecret("gomail_password"),
 		},
 		MonitorRPC: monitorRPC,
 	}

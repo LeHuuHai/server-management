@@ -57,7 +57,7 @@ func Load() (*Config, error) {
 		DBConfig: &pkgconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),
 			Username: os.Getenv("DB_USER"),
-			Password: os.Getenv("DB_PASSWORD"),
+			Password: pkgconfig.ReadSecret("db_password"),
 			Port:     pgport,
 			Database: os.Getenv("DB_DBNAME"),
 		},
