@@ -111,3 +111,22 @@ Dự án được xây dựng với ưu tiên cao về mặt scale (khả năng 
   4. **Agent Ingestion Authentication (Heartbeat-Gateway):** Heartbeat gửi lên từ các remote agent được xác thực tại `heartbeat-gateway` bằng mã khóa API (`X-API-Key` HTTP Header) thay vì dùng vai trò hoặc tài khoản người dùng.
 - **Lý do:** Đảm bảo tính bảo mật Zero-Trust (các service tự bảo vệ chính mình thay vì chỉ tin tưởng hoàn toàn vào Gateway), phân tách rõ ràng trách nhiệm nghiệp vụ phân quyền, và đơn giản hóa xác thực cho các dịch vụ background worker không có định danh người dùng.
 
+### Quyết định 15: Cấu hình Triển khai Stateful Services trên Docker Swarm
+- **Bối cảnh:** Khi chạy các hệ thống lưu trữ có tính trạng thái (Stateful Services) như PostgreSQL, Elasticsearch, và Kafka trên Docker Swarm, Swarm có thể tùy ý điều phối (schedule) container tới bất kỳ node nào trong cluster mỗi khi khởi động lại. Điều này làm mất kết nối tới các Local Volumes chứa dữ liệu.
+- **Quyết định:** Giới hạn toàn bộ các service stateful (bao gồm cả các migration hook) chỉ được phép chạy trên một node duy nhất (Manager Node) thông qua constraint `node.role == manager` trong file `docker-stack.yml`. Sử dụng local named volumes để lưu trữ vĩnh viễn (persistent storage). 
+- **Lý do:** Đây là giải pháp đơn giản và hiệu quả nhất cho kiến trúc Swarm quy mô vừa và nhỏ để tránh rủi ro phân mảnh dữ liệu (Split-brain) mà không cần cấu hình các giải pháp network storage (NFS/Ceph) phức tạp. Các stateless microservices (Worker, Gateway, v.v.) vẫn được scale ngang trên toàn bộ các Worker Nodes.
+
+### Quyết định 16: Centralized ForwardAuth với Traefik API Gateway
+- **Bối cảnh:** Mặc dù hệ thống áp dụng Decentralized Auth ở tầng gRPC nội bộ, nhưng đối với public REST API, việc để từng microservice tự parse và kiểm tra JWT HTTP Header từ Internet sẽ tạo ra lỗ hổng bảo mật và dư thừa code.
+- **Quyết định:** Sử dụng middleware `ForwardAuth` của Traefik. Toàn bộ request từ Internet trước khi được routing tới các service nội bộ sẽ bị chặn lại và gửi một sub-request tới endpoint trung tâm `GET /auth/verify` thuộc `auth-service`. Nếu token hợp lệ, `auth-service` sẽ bóc tách JWT và trả về các header tùy chỉnh (`X-User-ID`, `X-User-Role`). Traefik sẽ gán các header này vào request gốc rồi chuyển tiếp (forward) xuống hạ tầng.
+- **Lý do:** Tập trung hóa việc giải mã Token ở duy nhất một chốt chặn biên (API Gateway). Các microservice bên trong không cần biết JWT là gì, chỉ cần đọc `X-User-ID` từ HTTP Header tĩnh, giảm thiểu rủi ro bảo mật và triệt để tuân thủ kiến trúc API Gateway Pattern.
+
+### Quyết định 17: Phân tách cấu hình hạ tầng và ứng dụng (Infra vs App Stack) để xử lý đồng bộ Migration
+- **Bối cảnh:** Khi chạy các hệ thống Microservice trên Docker Swarm, việc ứng dụng tự động chạy schema migration lúc khởi động (trong `rt.NewApp`) có thể gây ra hiện tượng crash loop nếu các container database (Postgres, Elasticsearch) khởi động chậm và chưa sẵn sàng nhận kết nối.
+- **Quyết định:** Tách cấu hình deploy thành 2 file riêng biệt: `docker-stack-infra.yml` (chứa toàn bộ Databases, Broker, Redis, API Gateway) và `docker-stack-app.yml` (chứa các microservice app). Hạ tầng (infra) sẽ được deploy trước và chờ ổn định, sau đó mới deploy tầng ứng dụng (app).
+- **Lý do:** Đây là cách tiếp cận thực dụng, rõ ràng và an toàn nhất trên Docker Swarm (vốn bỏ qua cờ `depends_on`). Tránh được việc ứng dụng liên tục crash khởi động lại và hạn chế tối đa nguy cơ Data Race khi các dịch vụ cố gắng tranh chấp lock migration đồng thời.
+
+### Quyết định 18: Loại bỏ `.env` cục bộ, sử dụng Docker Swarm Environment & Secrets
+- **Bối cảnh:** Trong quá trình phát triển (Dev), thư viện `godotenv` đọc file `.env` rất tiện lợi. Nhưng khi chuyển lên Swarm, việc hardcode đường dẫn đọc file `.env` có thể gây lỗi hoặc lộ lọt thông tin cấu hình.
+- **Quyết định:** Xóa hoàn toàn thư viện `godotenv` khỏi tất cả microservices. Hệ thống sẽ đọc trực tiếp từ `os.Getenv` và hàm đọc Secret từ `/run/secrets/`. Cấu hình biến môi trường sẽ được truyền động qua file `docker-stack-app.yml` và script `init-secrets.sh`.
+- **Lý do:** Tuân thủ chuẩn 12-Factor App, đảm bảo môi trường Production (Swarm) luôn sạch, bảo mật qua Docker Secrets và không phụ thuộc vào các file local text không có trong image docker.

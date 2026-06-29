@@ -102,3 +102,25 @@
 ### 3. Vấn đề cần giải quyết / Blocker (Nếu có)
 - Chạy Elasticsearch, Postgres hoặc Kafka trên Docker Swarm cần lưu ý vấn đề cấu hình mount Volumes (stateful data) vào đúng node. Cần lên phương án dùng label/constraints.
 - Cơ chế quản lý cấu hình (Configs/Secrets) của Docker Swarm thay thế cho các file `.env` rời rạc hiện tại.
+
+---
+
+## Ngày: 29/06/2026
+
+### 1. Trạng thái hiện tại
+- Đã hoàn tất việc thiết lập `docker-stack.yml` với các volume (Postgres, Redis, Kafka, ES) và các constraints cho Manager Node.
+- Xây dựng thành công hệ thống Migration tự động cho toàn bộ hạ tầng Microservices, loại bỏ hoàn toàn các bash script khởi tạo thủ công (`es.sh`, `kafka.sh`).
+
+### 2. Các công việc đã hoàn thành trong ngày
+- [x] Thiết lập cấu hình Traefik ForwardAuth và implement API `/auth/verify` trên `auth-service` để handle luồng xác thực qua API Gateway.
+- [x] Tích hợp thư viện `golang-migrate/migrate` bằng `//go:embed` vào `pkg/db`, cho phép tự động apply DB schema mỗi khi `auth-service` hoặc `server-service` khởi động.
+- [x] Chuyển đổi shell script khởi tạo Kafka sang Go (`pkg/mq/init.go`), tự động hóa việc tạo topics (`ping`, `mail`, `ping_res`, `heartbeat`) với retention 1 giờ.
+- [x] Chuyển đổi shell script cấu hình Elasticsearch (`es.sh`) sang Go (`pkg/es/es.go`), tự động thiết lập ILM policy, Component/Index Templates, và write alias khi `monitor-service` khởi động.
+- [x] Build và push thành công toàn bộ image cho các service trên môi trường Swarm.
+- [x] Chia tách cấu hình deploy thành 2 file riêng biệt: `docker-stack-infra.yml` và `docker-stack-app.yml` để giải quyết triệt để vấn đề đồng bộ khởi động (race condition khi app chạy migration nhưng DB chưa sẵn sàng).
+- [x] Loại bỏ hoàn toàn sự phụ thuộc vào file `.env` cục bộ (thư viện `godotenv`), chuyển đổi sang sử dụng 100% Environment Variables và Secrets chuẩn của Docker Swarm.
+- [x] Dọn dẹp cấu hình Redis (loại bỏ `redis_password`) và refactor logic khởi tạo runtime `rt.NewApp()` tinh gọn hơn.
+
+### 3. Các công việc cần làm tiếp theo (TODO)
+- [ ] Tiến hành deploy thực tế trên cluster Docker Swarm để verify toàn bộ hệ thống tự động khởi tạo.
+- [ ] Xử lý các vấn đề liên quan đến giám sát tập trung (Monitor dashboard) nếu cần thiết.
