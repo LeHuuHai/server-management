@@ -22,6 +22,9 @@ func NewApp(cfg *config.Config) (*App, error) {
 		slog.Error("Failed to connect to postgres", "err", err)
 		return nil, err
 	}
+	if err := db.RunMigrations(cfg.DBConfig); err != nil {
+		slog.Error("Failed to run DB migrations", "error", err)
+	}
 
 	kw := mq.NewWriter(cfg.KafkaConfig, mq.WithRequiredAcks(-1))
 

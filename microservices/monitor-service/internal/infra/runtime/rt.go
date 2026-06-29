@@ -42,6 +42,9 @@ func NewApp() (*App, error) {
 		slog.Error("Failed to connect to postgres in monitor-service", "err", err)
 		return nil, err
 	}
+	if err := db.RunMigrations(cfg.DBConfig); err != nil {
+		slog.Error("Failed to run DB migrations", "error", err)
+	}
 
 	// AutoMigrate local server status and metadata tables
 	err = database.AutoMigrate(&model.MonitoredServer{}, &model.LiveStatus{})
@@ -64,6 +67,13 @@ func NewAppWithDB(cfg *config.Config, database *gorm.DB) (*App, error) {
 	if err != nil {
 		slog.Error("Failed to connect to elasticsearch in monitor-service", "err", err)
 		return nil, err
+	}
+	if err := es.InitHeartbeatIndex(esClient); err != nil {
+		slog.Error("Failed to init elasticsearch heartbeat index", "err", err)
+	}
+
+	if err := mq.InitKafkaTopics(cfg.PingRequestWriterConfig.Broker); err != nil {
+		slog.Error("Failed to init kafka topics", "err", err)
 	}
 
 	// Kafka Writers

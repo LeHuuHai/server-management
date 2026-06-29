@@ -29,9 +29,12 @@ func NewApp() (*App, error) {
 
 	// infra
 	jwtProvider := jwtprovider.NewJWTProvider(cfg.JWTConfig)
-	db, err := db.Connect(cfg.DBConfig)
+	dbConn, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
+	}
+	if err := db.RunMigrations(cfg.DBConfig); err != nil {
+		slog.Error("Failed to run DB migrations", "error", err)
 	}
 	rdbClient, err := cache.Connect(cfg.RedisConfig)
 	if err != nil {
@@ -41,7 +44,7 @@ func NewApp() (*App, error) {
 	app := App{
 		Config:      cfg,
 		JWTProvider: jwtProvider,
-		DB:          db,
+		DB:          dbConn,
 		RdbClient:   rdbClient,
 	}
 	slog.Info("App initialized successfully", "app", app)
