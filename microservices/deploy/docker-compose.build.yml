@@ -1,0 +1,48 @@
+version: "3.8"
+
+services:
+  auth-service:
+    build:
+      context: ..
+      dockerfile: deploy/microservices.dockerfile
+      args:
+        SERVICE_NAME: auth-service
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-auth-service:latest
+
+  server-service:
+    build:
+      context: ..
+      dockerfile: deploy/microservices.dockerfile
+      args:
+        SERVICE_NAME: server-service
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-server-service:latest
+
+  monitor-service:
+    build:
+      context: ..
+      dockerfile: deploy/microservices.dockerfile
+      args:
+        SERVICE_NAME: monitor-service
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-monitor-service:latest
+
+  heartbeat-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/microservices.dockerfile
+      args:
+        SERVICE_NAME: heartbeat-gateway
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-heartbeat-gateway:latest
+
+  ping-worker:
+    build:
+      context: ..
+      dockerfile: deploy/microservices.dockerfile
+      args:
+        SERVICE_NAME: ping-worker
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-ping-worker:latest
+
+  mail-worker:
+    build:
+      context: ..
+      dockerfile: deploy/mail-worker.dockerfile
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:latest
