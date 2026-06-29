@@ -1,0 +1,327 @@
+version: "3.8"
+
+x-kafka-env: &kafka-env
+  KAFKA_BROKER: sm_kafka:29092
+  KAFKA_HEARTBEAT_TOPIC: heartbeat
+  KAFKA_MAIL_TOPIC: mail
+  KAFKA_PING_TOPIC: ping
+  KAFKA_PING_RES_TOPIC: ping_res
+  KAFKA_SERVER_TOPIC: server_events
+
+services:
+
+#----------------------------------------- API gateway ----------------------------------------- 
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.swarmMode=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+    ports:
+      - "80:80"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    networks:
+      - sm_network
+    deploy:
+      placement:
+        constraints:
+          - node.role == manager
+
+#----------------------------------------- Kafka ----------------------------------------- 
+  kafka:
+    image: apache/kafka:3.7.1
+    environment:
+      # KRaft
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      # Listeners
+      KAFKA_LISTENERS: CONTROLLER://:9093,INTERNAL://:29092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      # Single node
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # KRaft cluster id
+      KAFKA_CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      KAFKA_LOG_RETENTION_MS: 3600000        # Giữ message 1 giờ
+      KAFKA_LOG_RETENTION_BYTES: -1          # Không giới hạn theo dung lượng (-1 = tắt)
+      KAFKA_LOG_SEGMENT_BYTES: 104857600     # Segment 100MB (nhỏ hơn → xóa nhanh hơn)
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 60000  # Kiểm tra mỗi 1 phút
+    volumes:
+      - kafka_data:/tmp/kraft-combined-logs
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+#----------------------------------------- Auth service ----------------------------------------- 
+  auth-db:
+    image: postgres:16
+    volumes:
+      - auth_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/auth_db_password
+      POSTGRES_DB: auth_db
+    secrets:
+      - auth_db_password
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+  
+  auth-redis:
+    image: redis:7
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - auth_redis_data:/data
+    environment:
+      REDIS_DB: 0
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  auth-service:
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-auth-service:v1.0.0
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+      JWT_ACCESS_EXPIRED: 900
+      JWT_REFRESH_EXPIRED: 604800
+      DB_HOST: auth-db
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_DBNAME: auth_db
+      REDIS_URL: auth-redis:6379
+      REDIS_DB: 0
+    secrets:
+      - jwt_access_secret
+      - jwt_refresh_secret
+      - auth_db_password
+    networks:
+      - sm_network
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.auth.rule=PathPrefix(`/auth`)"
+        - "traefik.http.services.auth.loadbalancer.server.port=8080"
+        # ForwardAuth middleware for Traefik to parse JWT and inject headers
+        # NOTE: auth-service needs an endpoint at /auth/verify that validates JWT and returns X-User-Role
+        - "traefik.http.middlewares.auth-mw.forwardauth.address=http://auth-service:8080/auth/verify"
+        - "traefik.http.middlewares.auth-mw.forwardauth.trustForwardHeader=true"
+        - "traefik.http.middlewares.auth-mw.forwardauth.authResponseHeaders=X-User-Role,X-User-ID"
+
+#----------------------------------------- Server service ----------------------------------------- 
+  server-db:
+    image: postgres:16
+    volumes:
+      - server_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/server_db_password
+      POSTGRES_DB: server_db
+    secrets:
+      - server_db_password
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+  
+  server-service:
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-server-service:v1.0.0
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+      DB_HOST: server-db
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_DBNAME: server_db
+      <<: *kafka-env
+    secrets:
+      - server_db_password
+    networks:
+      - sm_network
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.server.rule=PathPrefix(`/servers`)"
+        - "traefik.http.routers.server.middlewares=auth-mw@docker"
+        - "traefik.http.services.server.loadbalancer.server.port=8080"
+
+#----------------------------------------- Monitor service ----------------------------------------- 
+  monitor-db:
+    image: postgres:16
+    volumes:
+      - monitor_db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD_FILE: /run/secrets/monitor_db_password
+      POSTGRES_DB: monitor_db
+    secrets:
+      - monitor_db_password
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  monitor-elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  monitor-redis:
+    image: redis:7
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - monitor_redis_data:/data
+    environment:
+      REDIS_DB: 0
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+
+  monitor-service:
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-monitor-service:v1.0.0
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+      CYCLE_PING: 5000
+      HEARTBEAT_TIMEOUT: 10000
+      AD_MAIL: hai.lh03.work@gmail.com
+      DB_HOST: monitor-db
+      DB_PORT: 5432
+      DB_USER: admin
+      DB_DBNAME: monitor_db
+      ES_URL: http://monitor-elasticsearch:9200
+      ES_INDEX: heartbeat
+      REDIS_URL: monitor-redis:6379
+      REDIS_DB: 0
+      <<: *kafka-env
+      KAFKA_CONSUMER_GROUP: monitor-group
+    secrets:
+      - monitor_db_password
+      - download_report_api_key
+    networks:
+      - sm_network
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.monitor.rule=PathPrefix(`/servers/reports`)"
+        - "traefik.http.routers.monitor.middlewares=auth-mw@docker"
+        - "traefik.http.services.monitor.loadbalancer.server.port=8080"
+
+#----------------------------------------- Heartbeat gateway ----------------------------------------- 
+  heartbeat-gateway:
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-heartbeat-gateway:v1.0.0
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8080
+      <<: *kafka-env
+    secrets:
+      - heartbeat_api_key
+    networks:
+      - sm_network
+    deploy:
+      labels:
+        - "traefik.enable=true"
+        - "traefik.http.routers.heartbeat.rule=PathPrefix(`/heartbeat`)"
+        - "traefik.http.services.heartbeat.loadbalancer.server.port=8080"
+
+#----------------------------------------- Ping worker ----------------------------------------- 
+  ping-worker:
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-ping-worker:v1.0.0
+    environment:
+      APP_NUM_THREAD: 500
+      <<: *kafka-env
+      KAFKA_CONSUMER_GROUP: ping-group
+    networks:
+      - sm_network
+    deploy:
+      replicas: 2
+
+#----------------------------------------- Mail worker ----------------------------------------- 
+  mail-worker:
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:v1.0.0
+    environment:
+      REPORT_REPO_ADDR:
+      <<: *kafka-env
+      KAFKA_CONSUMER_GROUP: mail-group
+      GOMAIL_ADDR: smtp.gmail.com
+      GOMAIL_PORT: 587
+      GOMAIL_FROM: le31052003@gmail.com
+    secrets:
+      - gomail_password
+      - download_report_api_key
+    networks:
+      - sm_network
+    deploy:
+      replicas: 1
+
+networks:
+  sm_network:
+    external: true
+    name: sm_network      # cluster's network
+
+secrets:
+  auth_db_password:
+    external: true
+  jwt_access_secret:
+    external: true
+  jwt_refresh_secret:
+    external: true
+  server_db_password:
+    external: true
+  monitor_db_password:
+    external: true
+  download_report_api_key:
+    external: true
+  heartbeat_api_key:
+    external: true
+  gomail_password:
+    external: true
+
+volumes:
+  kafka_data:
+  auth_db_data:
+  auth_redis_data:
+  server_db_data:
+  monitor_db_data:
+  es_data:
+  monitor_redis_data:
