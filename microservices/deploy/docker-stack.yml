@@ -1,7 +1,7 @@
 version: "3.8"
 
 x-kafka-env: &kafka-env
-  KAFKA_BROKER: sm_kafka:29092
+  KAFKA_BROKER: kafka:29092
   KAFKA_HEARTBEAT_TOPIC: heartbeat
   KAFKA_MAIL_TOPIC: mail
   KAFKA_PING_TOPIC: ping
