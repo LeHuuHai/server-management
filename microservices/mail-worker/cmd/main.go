@@ -5,7 +5,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/LeHuuHai/server-management/microservices/mail-worker/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/mail-worker/internal/infra/kafka"
 	"github.com/LeHuuHai/server-management/microservices/mail-worker/internal/infra/mail"
 	rt "github.com/LeHuuHai/server-management/microservices/mail-worker/internal/infra/runtime"
@@ -17,12 +16,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	app, err := rt.NewApp(cfg)
+	app, err := rt.NewApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize runtime: %v", err)
 	}
@@ -33,7 +27,7 @@ func main() {
 	conn, err := grpc.NewClient(
 		app.Config.AppConfig.ReportRepoAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithStreamInterceptor(auth.APIKeyBindStreamGRPCInterceptor(cfg.AppConfig.InternalAPIKey)),
+		grpc.WithStreamInterceptor(auth.APIKeyBindStreamGRPCInterceptor(app.Config.AppConfig.InternalAPIKey)),
 	)
 	if err != nil {
 		log.Fatalf("Failed to connect to report-repo: %v", err)
@@ -42,7 +36,7 @@ func main() {
 
 	// Dependency Injection Wiring
 	mailConsumer := kafka.NewMailConsumer(app.MailReader)
-	gomailSender := mail.NewGomailSender(app.GomailDialer, cfg.SenderConfig.From)
+	gomailSender := mail.NewGomailSender(app.GomailDialer, app.Config.SenderConfig.From)
 	downloadService := service.NewDownloadService(conn)
 
 	mailWorker := worker.NewMailWorker(mailConsumer, gomailSender, downloadService)

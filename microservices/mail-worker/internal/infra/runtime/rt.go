@@ -1,7 +1,10 @@
 package rt
 
 import (
+	"fmt"
+
 	"github.com/LeHuuHai/server-management/microservices/mail-worker/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	"github.com/segmentio/kafka-go"
 	"gopkg.in/gomail.v2"
@@ -13,7 +16,13 @@ type App struct {
 	GomailDialer *gomail.Dialer
 }
 
-func NewApp(cfg *config.Config) (*App, error) {
+func NewApp() (*App, error) {
+	// load config
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
+	}
+
 	// Initialize Kafka Reader
 	mailReader := mq.NewReader(cfg.MailReaderConfig)
 

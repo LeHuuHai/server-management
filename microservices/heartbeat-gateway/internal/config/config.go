@@ -28,28 +28,17 @@ func Load() (*Config, error) {
 
 	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
-		appPort = 50053
+		return nil, err
 	}
-
-	broker := os.Getenv("KAFKA_BROKER")
-	if broker == "" {
-		broker = "localhost:9092"
-	}
-
-	topic := os.Getenv("KAFKA_HEARTBEAT_TOPIC")
-	if topic == "" {
-		topic = "heartbeat"
-	}
-
 	cfg := Config{
 		AppConfig: &AppConfig{
 			Port:         appPort,
 			Host:         os.Getenv("APP_HOST"),
-			HeartbeatKey: os.Getenv("APP_HEARTBEAT_KEY"),
+			HeartbeatKey: pkgconfig.ReadSecret("heartbeat_api_key"),
 		},
 		KafkaConfig: &pkgconfig.KafkaWriterConfig{
-			Broker: broker,
-			Topic:  topic,
+			Broker: os.Getenv("KAFKA_BROKER"),
+			Topic:  os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
 		},
 	}
 	return &cfg, nil

@@ -1,10 +1,12 @@
 package runtime
 
 import (
+	"fmt"
 	"log/slog"
 
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/model"
+	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/db"
 	"github.com/LeHuuHai/server-management/microservices/pkg/es"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
@@ -28,7 +30,13 @@ type App struct {
 	MailWriter         *kafka.Writer
 }
 
-func NewApp(cfg *config.Config) (*App, error) {
+func NewApp() (*App, error) {
+	// load config
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
+	}
+
 	database, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		slog.Error("Failed to connect to postgres in monitor-service", "err", err)

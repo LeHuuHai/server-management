@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/api"
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/handler"
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/infra/kafka"
 	rt "github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/infra/runtime"
@@ -24,12 +23,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	app, err := rt.NewApp(cfg)
+	app, err := rt.NewApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize runtime: %v", err)
 	}
@@ -43,12 +37,12 @@ func main() {
 	router := gin.Default()
 
 	// Register API Key Middleware and Strict API Handlers
-	router.Use(middleware.NewAPIKeyMiddleware(cfg.AppConfig.HeartbeatKey))
-	
+	router.Use(middleware.NewAPIKeyMiddleware(app.Config.AppConfig.HeartbeatKey))
+
 	strictHandler := api.NewStrictHandler(httpHandler, nil)
 	api.RegisterHandlers(router, strictHandler)
 
-	addr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
+	addr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(app.Config.AppConfig.Port))
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: router,

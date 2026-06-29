@@ -5,7 +5,6 @@ import (
 	"log"
 	"sync"
 
-	"github.com/LeHuuHai/server-management/microservices/ping-worker/internal/config"
 	"github.com/LeHuuHai/server-management/microservices/ping-worker/internal/infra/kafka"
 	rt "github.com/LeHuuHai/server-management/microservices/ping-worker/internal/infra/runtime"
 	"github.com/LeHuuHai/server-management/microservices/ping-worker/internal/infra/service"
@@ -13,12 +12,7 @@ import (
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	app, err := rt.NewApp(cfg)
+	app, err := rt.NewApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize runtime: %v", err)
 	}
@@ -30,7 +24,7 @@ func main() {
 	pingResponseWriter := kafka.NewPingResponsePublisher(app.PingResponseWriter)
 	svc := service.NewPingService()
 
-	workerPool := worker.NewPingWorkerPool(cfg.AppConfig.NumThread, pingRequestConsumer, pingResponseWriter, svc)
+	workerPool := worker.NewPingWorkerPool(app.Config.AppConfig.NumThread, pingRequestConsumer, pingResponseWriter, svc)
 
 	var wg sync.WaitGroup
 	wg.Add(1)

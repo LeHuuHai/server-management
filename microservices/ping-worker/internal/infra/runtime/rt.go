@@ -1,7 +1,10 @@
 package rt
 
 import (
+	"fmt"
+
 	"github.com/LeHuuHai/server-management/microservices/ping-worker/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	"github.com/segmentio/kafka-go"
 )
@@ -12,7 +15,13 @@ type App struct {
 	PingResponseWriter *kafka.Writer
 }
 
-func NewApp(cfg *config.Config) (*App, error) {
+func NewApp() (*App, error) {
+	// load config
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
+	}
+
 	// Initialize Kafka Reader and Writer
 	pingReader := mq.NewReader(cfg.PingRequestReaderConfig)
 	pingWriter := mq.NewWriter(cfg.PingResponseWriterConfig, mq.WithRequiredAcks(0))

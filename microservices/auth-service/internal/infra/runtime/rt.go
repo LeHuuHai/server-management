@@ -20,7 +20,7 @@ type App struct {
 	RdbClient   *redis.Client
 }
 
-func NewApp(cfg *config.Config) (*App, error) {
+func NewApp() (*App, error) {
 	// load config
 	cfg, err := config.Load()
 	if err != nil {

@@ -1,13 +1,11 @@
 package config
 
 import (
-	"log/slog"
 	"os"
 	"strconv"
 	"strings"
 
 	pkgconfig "github.com/LeHuuHai/server-management/microservices/pkg/config"
-	"github.com/joho/godotenv"
 )
 
 type AppConfig struct {
@@ -24,34 +22,29 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	err := godotenv.Load("./microservices/auth-service/.env")
-	if err != nil {
-		slog.Warn("Error loading .env file, fallback to os env")
-	}
-
 	accessExpired, err := strconv.Atoi(os.Getenv("JWT_ACCESS_EXPIRED"))
 	if err != nil {
-		accessExpired = 3600
+		return nil, err
 	}
 
 	refreshExpired, err := strconv.Atoi(os.Getenv("JWT_REFRESH_EXPIRED"))
 	if err != nil {
-		refreshExpired = 86400
+		return nil, err
 	}
 
 	pgport, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
-		pgport = 5432
+		return nil, err
 	}
 
 	redisdb, err := strconv.Atoi(os.Getenv("REDIS_DB"))
 	if err != nil {
-		redisdb = 0
+		return nil, err
 	}
 
 	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
-		appPort = 8081
+		return nil, err
 	}
 
 	cfg := Config{

@@ -25,7 +25,6 @@ type Config struct {
 	AppConfig        *AppConfig
 	MailReaderConfig *pkgconfig.KafkaReaderConfig
 	SenderConfig     *SenderConfig
-	MonitorRPC       string
 }
 
 func Load() (*Config, error) {
@@ -36,43 +35,18 @@ func Load() (*Config, error) {
 
 	gomailPort, err := strconv.Atoi(os.Getenv("GOMAIL_PORT"))
 	if err != nil {
-		gomailPort = 587
-	}
-
-	broker := os.Getenv("KAFKA_BROKER")
-	if broker == "" {
-		broker = "localhost:9092"
-	}
-
-	group := os.Getenv("KAFKA_CONSUMER_GROUP")
-	if group == "" {
-		group = "mail-worker-group"
-	}
-
-	mailTopic := os.Getenv("KAFKA_MAIL_TOPIC")
-	if mailTopic == "" {
-		mailTopic = "mail"
-	}
-
-	monitorRPC := os.Getenv("MONITOR_RPC")
-	if monitorRPC == "" {
-		monitorRPC = "localhost:50054"
-	}
-
-	internalAPIKey := pkgconfig.ReadSecret("internal_api_key")
-	if internalAPIKey == "" {
-		internalAPIKey = "internal-secret-key"
+		return nil, err
 	}
 
 	cfg := Config{
 		AppConfig: &AppConfig{
 			ReportRepoAddr: os.Getenv("REPORT_REPO_ADDR"),
-			InternalAPIKey: internalAPIKey,
+			InternalAPIKey: pkgconfig.ReadSecret("download_report_api_key"),
 		},
 		MailReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     broker,
-			Topic:      mailTopic,
-			ConsumerID: group,
+			Broker:     os.Getenv("KAFKA_BROKER"),
+			Topic:      os.Getenv("KAFKA_MAIL_TOPIC"),
+			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
 		},
 		SenderConfig: &SenderConfig{
 			Addr:     os.Getenv("GOMAIL_ADDR"),
@@ -80,7 +54,6 @@ func Load() (*Config, error) {
 			From:     os.Getenv("GOMAIL_FROM"),
 			Password: pkgconfig.ReadSecret("gomail_password"),
 		},
-		MonitorRPC: monitorRPC,
 	}
 
 	return &cfg, nil

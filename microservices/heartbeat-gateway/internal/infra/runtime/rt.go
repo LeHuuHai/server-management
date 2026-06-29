@@ -1,7 +1,10 @@
 package rt
 
 import (
+	"fmt"
+
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	"github.com/segmentio/kafka-go"
 )
@@ -11,7 +14,13 @@ type App struct {
 	KafkaWriter *kafka.Writer
 }
 
-func NewApp(cfg *config.Config) (*App, error) {
+func NewApp() (*App, error) {
+	// load config
+	cfg, err := config.Load()
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
+	}
+
 	kw := mq.NewWriter(cfg.KafkaConfig, mq.WithRequiredAcks(0))
 
 	return &App{

@@ -38,67 +38,27 @@ func Load() (*Config, error) {
 
 	appPort, err := strconv.Atoi(os.Getenv("APP_PORT"))
 	if err != nil {
-		appPort = 50054
+		return nil, err
 	}
 
 	cyclePing, err := strconv.Atoi(os.Getenv("CYCLE_PING"))
 	if err != nil {
-		cyclePing = 5000
+		return nil, err
 	}
 
 	hbTimeout, err := strconv.Atoi(os.Getenv("HEARTBEAT_TIMEOUT"))
 	if err != nil {
-		hbTimeout = 10000
+		return nil, err
 	}
 
 	pgport, err := strconv.Atoi(os.Getenv("DB_PORT"))
 	if err != nil {
-		pgport = 5432
+		return nil, err
 	}
 
 	redisDb, err := strconv.Atoi(os.Getenv("REDIS_DB"))
 	if err != nil {
-		redisDb = 0
-	}
-
-	broker := os.Getenv("KAFKA_BROKER")
-	if broker == "" {
-		broker = "localhost:9092"
-	}
-
-	group := os.Getenv("KAFKA_CONSUMER_GROUP")
-	if group == "" {
-		group = "monitor-service-group"
-	}
-
-	serverTopic := os.Getenv("KAFKA_SERVER_TOPIC")
-	if serverTopic == "" {
-		serverTopic = "server_events"
-	}
-
-	hbTopic := os.Getenv("KAFKA_HEARTBEAT_TOPIC")
-	if hbTopic == "" {
-		hbTopic = "heartbeat"
-	}
-
-	pingTopic := os.Getenv("KAFKA_PING_TOPIC")
-	if pingTopic == "" {
-		pingTopic = "ping"
-	}
-
-	pingResTopic := os.Getenv("KAFKA_PING_RES_TOPIC")
-	if pingResTopic == "" {
-		pingResTopic = "ping_res"
-	}
-
-	mailTopic := os.Getenv("KAFKA_MAIL_TOPIC")
-	if mailTopic == "" {
-		mailTopic = "mail"
-	}
-
-	internalAPIKey := pkgconfig.ReadSecret("internal_api_key")
-	if internalAPIKey == "" {
-		internalAPIKey = "internal-secret-key"
+		return nil, err
 	}
 
 	cfg := Config{
@@ -108,7 +68,7 @@ func Load() (*Config, error) {
 			CyclePing:        cyclePing,
 			HeartbeatTimeout: hbTimeout,
 			AdMail:           os.Getenv("AD_MAIL"),
-			InternalAPIKey:   internalAPIKey,
+			InternalAPIKey:   pkgconfig.ReadSecret("download_report_api_key"),
 		},
 		DBConfig: &pkgconfig.PostgresConfig{
 			Host:     os.Getenv("DB_HOST"),
@@ -123,33 +83,31 @@ func Load() (*Config, error) {
 			DB:       redisDb,
 		},
 		ESConfig: &pkgconfig.ElasticsearchConfig{
-			URL:      os.Getenv("ES_URL"),
-			Username: os.Getenv("ES_USER"),
-			Password: pkgconfig.ReadSecret("es_password"),
-			Index:    os.Getenv("ES_INDEX"),
+			URL:   os.Getenv("ES_URL"),
+			Index: os.Getenv("ES_INDEX"),
 		},
 		ServerEventReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     broker,
-			Topic:      serverTopic,
-			ConsumerID: group + "-lifecycle",
+			Broker:     os.Getenv("KAFKA_BROKER"),
+			Topic:      os.Getenv("KAFKA_SERVER_TOPIC"),
+			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
 		},
 		HeartbeatReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     broker,
-			Topic:      hbTopic,
-			ConsumerID: group + "-heartbeat",
+			Broker:     os.Getenv("KAFKA_BROKER"),
+			Topic:      os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
+			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
 		},
 		PingResponseReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     broker,
-			Topic:      pingResTopic,
-			ConsumerID: group + "-ping-res",
+			Broker:     os.Getenv("KAFKA_BROKER"),
+			Topic:      os.Getenv("KAFKA_PING_RES_TOPIC"),
+			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
 		},
 		PingRequestWriterConfig: &pkgconfig.KafkaWriterConfig{
-			Broker: broker,
-			Topic:  pingTopic,
+			Broker: os.Getenv("KAFKA_BROKER"),
+			Topic:  os.Getenv("KAFKA_PING_TOPIC"),
 		},
 		MailWriterConfig: &pkgconfig.KafkaWriterConfig{
-			Broker: broker,
-			Topic:  mailTopic,
+			Broker: os.Getenv("KAFKA_BROKER"),
+			Topic:  os.Getenv("KAFKA_MAIL_TOPIC"),
 		},
 	}
 

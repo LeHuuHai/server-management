@@ -9,7 +9,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/config"
+	"errors"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+
 	domainservice "github.com/LeHuuHai/server-management/microservices/monitor-service/internal/domain/service"
 	esagg "github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/elasticsearch"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/kafka"
@@ -19,28 +24,18 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/service"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/worker"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/model"
-	"errors"
-	"net/http"
-	"os"
-	"os/signal"
-	"syscall"
 
-	"github.com/gin-gonic/gin"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/api"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/infra/handler"
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/rpc"
 	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	pb "github.com/LeHuuHai/server-management/microservices/pkg/pb/monitor"
+	"github.com/gin-gonic/gin"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	cfg, err := config.Load()
-	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
-	}
-
-	app, err := rt.NewApp(cfg)
+	app, err := rt.NewApp()
 	if err != nil {
 		log.Fatalf("Failed to initialize runtime: %v", err)
 	}
@@ -58,8 +53,8 @@ func main() {
 	// Repositories & Clients
 	liveStatusRepo := pg.NewLiveStatusRepository(app.DB)
 	monitoredServerRepo := pg.NewMonitoredServerRepository(app.DB)
-	esWriter := esagg.NewESWriter[model.StatusLog](app.ESClient, cfg.ESConfig.Index)
-	esAggregator := esagg.NewESAggregator(app.ESClient, cfg.ESConfig.Index)
+	esWriter := esagg.NewESWriter[model.StatusLog](app.ESClient, app.Config.ESConfig.Index)
+	esAggregator := esagg.NewESAggregator(app.ESClient, app.Config.ESConfig.Index)
 	redisCache := rdb.NewDailyReportRedisCache(app.RedisClient)
 	cachedAggregator := esagg.NewCachedAggregator(esAggregator, redisCache)
 
@@ -77,8 +72,8 @@ func main() {
 		monitoredServerRepo,
 		liveStatusRepo,
 		pingRequestPublisher,
-		cfg.AppConfig.CyclePing,
-		cfg.AppConfig.HeartbeatTimeout,
+		app.Config.AppConfig.CyclePing,
+		app.Config.AppConfig.HeartbeatTimeout,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -117,19 +112,19 @@ func main() {
 	}()
 	go func() {
 		defer wg.Done()
-		Report(ctx, cfg.AppConfig.AdMail, reportSvc)
+		Report(ctx, app.Config.AppConfig.AdMail, reportSvc)
 	}()
 
 	// Start gRPC Server (Internal File Transfer only)
 	grpcTransferHandler := rpc.NewTransferHandler()
 	grpcServer := grpc.NewServer(
-		grpc.StreamInterceptor(auth.APIKeyCheckStreamGRPCInterceptor(cfg.AppConfig.InternalAPIKey)),
+		grpc.StreamInterceptor(auth.APIKeyCheckStreamGRPCInterceptor(app.Config.AppConfig.InternalAPIKey)),
 	)
 	pb.RegisterInternalFileTransferServiceServer(grpcServer, grpcTransferHandler)
 
 	// We use Port + 100 for internal gRPC
-	grpcPort := cfg.AppConfig.Port + 100
-	grpcAddr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(grpcPort))
+	grpcPort := app.Config.AppConfig.Port + 100
+	grpcAddr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(grpcPort))
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		log.Fatalf("Failed to listen on tcp: %v", err)
@@ -154,7 +149,7 @@ func main() {
 		},
 	})
 
-	httpAddr := net.JoinHostPort(cfg.AppConfig.Host, strconv.Itoa(cfg.AppConfig.Port))
+	httpAddr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(app.Config.AppConfig.Port))
 	srv := &http.Server{
 		Addr:    httpAddr,
 		Handler: router,

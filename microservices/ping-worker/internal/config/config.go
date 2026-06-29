@@ -14,9 +14,9 @@ type AppConfig struct {
 }
 
 type Config struct {
-	AppConfig                 *AppConfig
-	PingRequestReaderConfig   *pkgconfig.KafkaReaderConfig
-	PingResponseWriterConfig  *pkgconfig.KafkaWriterConfig
+	AppConfig                *AppConfig
+	PingRequestReaderConfig  *pkgconfig.KafkaReaderConfig
+	PingResponseWriterConfig *pkgconfig.KafkaWriterConfig
 }
 
 func Load() (*Config, error) {
@@ -27,27 +27,7 @@ func Load() (*Config, error) {
 
 	numThread, err := strconv.Atoi(os.Getenv("APP_NUM_THREAD"))
 	if err != nil {
-		numThread = 10
-	}
-
-	broker := os.Getenv("KAFKA_BROKER")
-	if broker == "" {
-		broker = "localhost:9092"
-	}
-
-	group := os.Getenv("KAFKA_CONSUMER_GROUP")
-	if group == "" {
-		group = "ping-worker-group"
-	}
-
-	pingTopic := os.Getenv("KAFKA_PING_TOPIC")
-	if pingTopic == "" {
-		pingTopic = "ping"
-	}
-
-	pingResTopic := os.Getenv("KAFKA_PING_RES_TOPIC")
-	if pingResTopic == "" {
-		pingResTopic = "ping_res"
+		return nil, err
 	}
 
 	cfg := Config{
@@ -55,13 +35,13 @@ func Load() (*Config, error) {
 			NumThread: numThread,
 		},
 		PingRequestReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     broker,
-			Topic:      pingTopic,
-			ConsumerID: group,
+			Broker:     os.Getenv("KAFKA_BROKER"),
+			Topic:      os.Getenv("KAFKA_PING_TOPIC"),
+			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
 		},
 		PingResponseWriterConfig: &pkgconfig.KafkaWriterConfig{
-			Broker: broker,
-			Topic:  pingResTopic,
+			Broker: os.Getenv("KAFKA_BROKER"),
+			Topic:  os.Getenv("KAFKA_PING_RES_TOPIC"),
 		},
 	}
 
