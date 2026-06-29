@@ -65,6 +65,27 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
   
+  /auth/verify:
+    get:
+      summary: Verify token
+      operationId: Verify
+      tags:
+        - auth
+      responses:
+        '200':
+          description: Token is valid
+          headers:
+            X-User-ID:
+              schema:
+                type: string
+            X-User-Role:
+              schema:
+                type: string
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /auth/logout:
     post:
       summary: Logout

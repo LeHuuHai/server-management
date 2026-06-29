@@ -79,6 +79,9 @@ type ServerInterface interface {
 	// Refresh token
 	// (POST /auth/refresh)
 	RefreshToken(c *gin.Context)
+	// Verify token
+	// (GET /auth/verify)
+	Verify(c *gin.Context)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -135,6 +138,21 @@ func (siw *ServerInterfaceWrapper) RefreshToken(c *gin.Context) {
 	siw.Handler.RefreshToken(c)
 }
 
+// Verify operation middleware
+func (siw *ServerInterfaceWrapper) Verify(c *gin.Context) {
+
+	c.Set(BearerAuthScopes, []string{})
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		middleware(c)
+		if c.IsAborted() {
+			return
+		}
+	}
+
+	siw.Handler.Verify(c)
+}
+
 // GinServerOptions provides options for the Gin server.
 type GinServerOptions struct {
 	BaseURL      string
@@ -165,6 +183,7 @@ func RegisterHandlersWithOptions(router gin.IRouter, si ServerInterface, options
 	router.POST(options.BaseURL+"/auth/login", wrapper.Login)
 	router.POST(options.BaseURL+"/auth/logout", wrapper.Logout)
 	router.POST(options.BaseURL+"/auth/refresh", wrapper.RefreshToken)
+	router.GET(options.BaseURL+"/auth/verify", wrapper.Verify)
 }
 
 type InternalErrorJSONResponse ErrorResponse
@@ -275,6 +294,47 @@ func (response RefreshToken500JSONResponse) VisitRefreshTokenResponse(w http.Res
 	return json.NewEncoder(w).Encode(response)
 }
 
+type VerifyRequestObject struct {
+}
+
+type VerifyResponseObject interface {
+	VisitVerifyResponse(w http.ResponseWriter) error
+}
+
+type Verify200ResponseHeaders struct {
+	XUserID   string
+	XUserRole string
+}
+
+type Verify200Response struct {
+	Headers Verify200ResponseHeaders
+}
+
+func (response Verify200Response) VisitVerifyResponse(w http.ResponseWriter) error {
+	w.Header().Set("X-User-ID", fmt.Sprint(response.Headers.XUserID))
+	w.Header().Set("X-User-Role", fmt.Sprint(response.Headers.XUserRole))
+	w.WriteHeader(200)
+	return nil
+}
+
+type Verify401JSONResponse struct{ UnauthorizedJSONResponse }
+
+func (response Verify401JSONResponse) VisitVerifyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(401)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type Verify500JSONResponse struct{ InternalErrorJSONResponse }
+
+func (response Verify500JSONResponse) VisitVerifyResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(500)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// Login
@@ -286,6 +346,9 @@ type StrictServerInterface interface {
 	// Refresh token
 	// (POST /auth/refresh)
 	RefreshToken(ctx context.Context, request RefreshTokenRequestObject) (RefreshTokenResponseObject, error)
+	// Verify token
+	// (GET /auth/verify)
+	Verify(ctx context.Context, request VerifyRequestObject) (VerifyResponseObject, error)
 }
 
 type StrictHandlerFunc = strictgin.StrictGinHandlerFunc
@@ -399,20 +462,46 @@ func (sh *strictHandler) RefreshToken(ctx *gin.Context) {
 	}
 }
 
+// Verify operation middleware
+func (sh *strictHandler) Verify(ctx *gin.Context) {
+	var request VerifyRequestObject
+
+	handler := func(ctx *gin.Context, request interface{}) (interface{}, error) {
+		return sh.ssi.Verify(ctx, request.(VerifyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "Verify")
+	}
+
+	response, err := handler(ctx, request)
+
+	if err != nil {
+		ctx.Error(err)
+		ctx.Status(http.StatusInternalServerError)
+	} else if validResponse, ok := response.(VerifyResponseObject); ok {
+		if err := validResponse.VisitVerifyResponse(ctx.Writer); err != nil {
+			ctx.Error(err)
+		}
+	} else if response != nil {
+		ctx.Error(fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/8xWTW/bMAz9K4a2oxG76wYUvnXABmTYoWg77FAEheowsTpb9CiqQxb4vw+U3CRu4yKH",
-	"fuxmi+Qj9R5Je61KbFq0YNmpYq0IXIvWQXiZWgayuv5ChCQHJVoGy/Ko27Y2pWaDNrt1aOXMlRU0Wp7e",
-	"EyxUod5lW/QsWl0W0M77PKrrulTNwZVkWgFTxSZt4oDugBII6btU/bDac4Vk/sL89coZZBVzHynAw+Bi",
-	"rVrCFohNJLDEeTjlVQuqUI7J2KXcpAHn9HK/jeC3B8fXZr7H3KX3J3hzCyVLwHdcGnseox7X0Grn/iAF",
-	"sAVSo1kV28P0cX7vhP0G9meX6gwJ/1dbz3QLOBsvcIwlXZbg3DXjL7AjjCwIXDXqMUIKeh5l5QDI3ZsO",
-	"3ffd8Tx6XIrDa2WVXoTSk+HVhfRkTHIDmoBOPVfbt6/3wn/7ean6DhakaN12QcXcxhkwdoESP5yF07Np",
-	"skBKGm310thlIqMBlvvREyDDtSBJ/uQC6M6UkJyeTVWq7oBchDma5JNcWMMWrG6NKtTxJJ8ch0biKlwj",
-	"E+isltYJRGIkVOgMuaZzVcTOUpuZ+Yzz1bMthsFYdUNtmDyEg51t+SHPnzv3+FIKDonzYXQWvhYyP+ZH",
-	"Y7ibQrPhNkvVp1j100HDD0HoO980mlY7ErBeOmlagVcz8dkoiJ6flFDsL6bhzhY4XMRHZKPnt2S7n3JV",
-	"XA3n+2rWzR6IEckcU6NfKeNy7O6xFxJl36r83+YrFJf0bEXt3ma8erIS7gV5KOwB3RH+olyweqr7LV9k",
-	"WY2lrit0XJzkJ7kS3x59reIPQMzSzbp/AQAA//+uNo7IJwoAAA==",
+	"H4sIAAAAAAAC/8xW0W+bTgz+V9D9fo800HWTKt46bZMy7aFK221SFVVXMHAd3DGfyZRF/O+T72gSllDl",
+	"oW32Bmf7s+/7bMNKpKZujAZNViQrgWAboy24l6kmQC2rj4gG+SA1mkATP8qmqVQqSRkdPVij+cymJdSS",
+	"n/5HyEUi/os26JG32sihzfo8ouu6UGRgU1QNg4lknTawgAvAAFz6LhQ3WrZUGlS/IXu9cgZZ2dxHMvAw",
+	"OFmJBk0DSMoTmJrMndKyAZEIS6h0wTepwVpZ7Lch/GzB0p3K9pi78PHE3D9AShzwxRRKz3zUbg2NtPaX",
+	"QQeWG6wliWRzGO7mby2zX8P+7FydQub/duMZbgDn4wWOsSTTFKy9I/MD9AgjOYItRz1GSDEtjbJyAOT2",
+	"TYfu++448x7X7PBaWbkXIW1R0fKKe9InuQeJgBctlZu3T4/Cf/52LfoOZiRv3XRBSdT4GVA6Nxw/nIWL",
+	"y2mQGwxqqWWhdBHwaICmfvQYSFHFSJw/uAJcqBSCi8upCMUC0HqY00k8iZk104CWjRKJOJvEkzPXSFS6",
+	"a0QMHVXcOo5I4wllOl2uaSYS31liPTPvTbZ8tsUwGKtuqA1hC+5ga1u+iePnzj2+lJxDYFs3OnlbMZlv",
+	"49Mx3HWh0XCbheKdr/rpoOGHwPVdW9cSl1sSkCwsNy3Dizn7rBU0LT0pIdtfTMOtLXC4iDtkm5aOyXY/",
+	"5SK5Hc737byb/yWGJ3NMjX6ljMuxvcdeSJR9q/Jfmy9XXNCz5bU7znj1ZAXUCzIm7AJQ5U6jAvbI+tWb",
+	"D+l2f3Vlg4WsFP8hlCAzQBfw/eTGAp5MPwyp3v2M9Y4zU8HTrt3RmPWUjBJ7wNi531PrrC1W/ecziaLK",
+	"pLIqjaXkPD6PBfv26Cvh/6x8lm7e/QkAAP//pZvYYYALAAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file

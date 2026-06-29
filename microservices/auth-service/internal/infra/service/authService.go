@@ -108,3 +108,13 @@ func (s *AuthService) Logout(ctx context.Context, refreshToken string) error {
 	}
 	return nil
 }
+
+func (s *AuthService) VerifyAccessToken(ctx context.Context, accessToken string) (*jwtprovider.AccessClaims, error) {
+	claims, err := s.jwtProvider.ParseAccessToken(accessToken)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", apperr.ErrInvalidToken, err)
+	}
+
+	return claims, nil
+}
+

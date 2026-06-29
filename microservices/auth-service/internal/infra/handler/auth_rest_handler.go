@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/LeHuuHai/server-management/microservices/auth-service/api"
@@ -108,4 +109,38 @@ func (handler *AuthRestHandler) Logout(ctx context.Context, request api.LogoutRe
 	slog.Info("handler: logout success")
 
 	return api.Logout200Response{}, nil
+}
+
+// Verify token
+// (GET /auth/verify)
+func (handler *AuthRestHandler) Verify(ctx context.Context, request api.VerifyRequestObject) (api.VerifyResponseObject, error) {
+	// NOTE: In a strict handler, to get the Authorization header if it's not in VerifyRequestObject,
+	// you typically need to access the underlying HTTP request or Gin context.
+	// If you added `security: - bearerAuth: []` back and use a middleware to extract it to context:
+	token, ok := ctx.Value("bearerAuth.Token").(string)
+	if !ok || token == "" {
+		// Fallback: you might need to extract it manually from the gin context if you have a middleware for it.
+		// For now, we will return 401 if it's missing (this is a placeholder for your actual token extraction).
+		return api.Verify401JSONResponse{
+			UnauthorizedJSONResponse: Unauthorized(errors.New("missing or invalid token in context")),
+		}, nil
+	}
+
+	claims, err := handler.authService.VerifyAccessToken(ctx, token)
+	if err != nil {
+		slog.Warn("invalid access token in verify", slog.Any("err", err))
+		return api.Verify401JSONResponse{
+			UnauthorizedJSONResponse: Unauthorized(err),
+		}, nil
+	}
+
+	slog.Info("handler: verify success", slog.Uint64("user_id", uint64(claims.UserID)))
+
+	// Return 200 with X-User-ID and X-User-Role headers
+	return api.Verify200Response{
+		Headers: api.Verify200ResponseHeaders{
+			XUserID:   fmt.Sprintf("%d", claims.UserID),
+			XUserRole: string(claims.Role),
+		},
+	}, nil
 }
