@@ -7,7 +7,7 @@ services:
       dockerfile: deploy/microservices.dockerfile
       args:
         SERVICE_NAME: auth-service
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-auth-service:latest
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-auth-service:v1.0.0
 
   server-service:
     build:
@@ -15,7 +15,7 @@ services:
       dockerfile: deploy/microservices.dockerfile
       args:
         SERVICE_NAME: server-service
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-server-service:latest
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-server-service:v1.0.0
 
   monitor-service:
     build:
@@ -23,7 +23,7 @@ services:
       dockerfile: deploy/microservices.dockerfile
       args:
         SERVICE_NAME: monitor-service
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-monitor-service:latest
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-monitor-service:v1.0.0
 
   heartbeat-gateway:
     build:
@@ -31,7 +31,7 @@ services:
       dockerfile: deploy/microservices.dockerfile
       args:
         SERVICE_NAME: heartbeat-gateway
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-heartbeat-gateway:latest
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-heartbeat-gateway:v1.0.0
 
   ping-worker:
     build:
@@ -39,10 +39,10 @@ services:
       dockerfile: deploy/microservices.dockerfile
       args:
         SERVICE_NAME: ping-worker
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-ping-worker:latest
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-ping-worker:v1.0.0
 
   mail-worker:
     build:
       context: ..
       dockerfile: deploy/mail-worker.dockerfile
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:latest
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:v1.0.0
