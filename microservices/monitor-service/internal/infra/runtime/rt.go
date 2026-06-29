@@ -1,11 +1,11 @@
 package runtime
 
 import (
+	"embed"
 	"fmt"
 	"log/slog"
 
 	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/config"
-	"github.com/LeHuuHai/server-management/microservices/monitor-service/internal/model"
 	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/db"
 	"github.com/LeHuuHai/server-management/microservices/pkg/es"
@@ -17,6 +17,9 @@ import (
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 )
+
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
 
 type App struct {
 	Config             *config.Config
@@ -37,32 +40,24 @@ func NewApp() (*App, error) {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
 
+	// db
 	database, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		slog.Error("Failed to connect to postgres in monitor-service", "err", err)
 		return nil, err
 	}
-	if err := db.RunMigrations(cfg.DBConfig); err != nil {
+	if err := db.RunMigrations(cfg.DBConfig, migrationsFS, "migrations"); err != nil {
 		slog.Error("Failed to run DB migrations", "error", err)
 	}
 
-	// AutoMigrate local server status and metadata tables
-	err = database.AutoMigrate(&model.MonitoredServer{}, &model.LiveStatus{})
-	if err != nil {
-		slog.Error("Failed to auto migrate database schemas", "err", err)
-		return nil, err
-	}
-
-	return NewAppWithDB(cfg, database)
-}
-
-func NewAppWithDB(cfg *config.Config, database *gorm.DB) (*App, error) {
+	// rdb
 	redisClient, err := rdb.Connect(cfg.RedisConfig)
 	if err != nil {
 		slog.Error("Failed to connect to redis in monitor-service", "err", err)
 		return nil, err
 	}
 
+	// es
 	esClient, err := es.Connect(cfg.ESConfig)
 	if err != nil {
 		slog.Error("Failed to connect to elasticsearch in monitor-service", "err", err)
@@ -72,6 +67,7 @@ func NewAppWithDB(cfg *config.Config, database *gorm.DB) (*App, error) {
 		slog.Error("Failed to init elasticsearch heartbeat index", "err", err)
 	}
 
+	// kafka
 	if err := mq.InitKafkaTopics(cfg.PingRequestWriterConfig.Broker); err != nil {
 		slog.Error("Failed to init kafka topics", "err", err)
 	}

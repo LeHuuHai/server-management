@@ -13,14 +13,11 @@ import (
 	"gorm.io/gorm"
 )
 
-//go:embed migrations/*.sql
-var migrationsFS embed.FS
-
-func RunMigrations(config *pkgconfig.PostgresConfig) error {
+func RunMigrations(config *pkgconfig.PostgresConfig, fs embed.FS, path string) error {
 	dsn := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=disable",
 		config.Username, config.Password, config.Host, config.Port, config.Database)
 
-	sourceDriver, err := iofs.New(migrationsFS, "migrations")
+	sourceDriver, err := iofs.New(fs, path)
 	if err != nil {
 		return fmt.Errorf("failed to create source driver: %v", err)
 	}

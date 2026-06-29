@@ -1,6 +1,7 @@
 package rt
 
 import (
+	"embed"
 	"log/slog"
 
 	"github.com/LeHuuHai/server-management/microservices/pkg/db"
@@ -9,6 +10,9 @@ import (
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 )
+
+//go:embed migrations/*.sql
+var migrationsFS embed.FS
 
 type App struct {
 	Config            *config.Config
@@ -22,7 +26,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 		slog.Error("Failed to connect to postgres", "err", err)
 		return nil, err
 	}
-	if err := db.RunMigrations(cfg.DBConfig); err != nil {
+	if err := db.RunMigrations(cfg.DBConfig, migrationsFS, "migrations"); err != nil {
 		slog.Error("Failed to run DB migrations", "error", err)
 	}
 

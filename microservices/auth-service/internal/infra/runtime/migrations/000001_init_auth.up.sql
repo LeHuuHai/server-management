@@ -1,14 +1,3 @@
-create table servers (
-    server_id text primary key,
-    server_name text not null unique,
-    ipv4 text not null,
-    status text not null,
-    created_at timestamp,
-    metadata_updated_at timestamp,
-    last_ping_at timestamp,
-    is_deleted boolean
-);
-
 create table users (
     id serial primary key,
     full_name varchar(255) not null,
