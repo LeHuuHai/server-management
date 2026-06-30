@@ -60,7 +60,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.server.rule=PathPrefix(`/servers`)"
-        - "traefik.http.routers.server.middlewares=auth-mw@docker"
+        - "traefik.http.routers.server.middlewares=auth-mw"
         - "traefik.http.services.server.loadbalancer.server.port=8080"
 
 #----------------------------------------- Monitor service ----------------------------------------- 
@@ -91,7 +91,7 @@ services:
       labels:
         - "traefik.enable=true"
         - "traefik.http.routers.monitor.rule=PathPrefix(`/servers/reports`)"
-        - "traefik.http.routers.monitor.middlewares=auth-mw@docker"
+        - "traefik.http.routers.monitor.middlewares=auth-mw"
         - "traefik.http.services.monitor.loadbalancer.server.port=8080"
 
 #----------------------------------------- Heartbeat gateway ----------------------------------------- 
