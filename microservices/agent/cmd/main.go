@@ -13,7 +13,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/LeHuuHai/server-management/microservices/agent/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/agent/config"
 	"github.com/LeHuuHai/server-management/microservices/agent/internal/model"
 )
 
@@ -65,7 +65,7 @@ func main() {
 	<-sigChan
 	slog.Info("Shutdown signal received, stopping agent gracefully...")
 	cancel()
-	
+
 	// Give the goroutine a small moment to exit cleanly
 	time.Sleep(100 * time.Millisecond)
 	slog.Info("Agent stopped successfully")

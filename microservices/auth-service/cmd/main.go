@@ -14,11 +14,11 @@ import (
 	"time"
 
 	"github.com/LeHuuHai/server-management/microservices/auth-service/api"
-	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/handler"
+	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/handler"
 	pg "github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/postgres"
 	rdb "github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/redis"
 	rt "github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/runtime"
-	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/infra/service"
+	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/service"
 	"github.com/gin-gonic/gin"
 )
 

@@ -17,8 +17,8 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/handler"
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/infra/kafka"
 	rt "github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/infra/runtime"
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/infra/service"
 	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/middleware"
+	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/service"
 	"github.com/gin-gonic/gin"
 )
 

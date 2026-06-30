@@ -3,7 +3,7 @@ package rt
 import (
 	"fmt"
 
-	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/heartbeat-gateway/config"
 	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	"github.com/segmentio/kafka-go"

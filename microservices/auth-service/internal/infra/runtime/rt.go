@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/LeHuuHai/server-management/microservices/auth-service/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/auth-service/config"
 	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/cache"
 	"github.com/LeHuuHai/server-management/microservices/pkg/db"

@@ -8,7 +8,7 @@ import (
 	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/db"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
-	"github.com/LeHuuHai/server-management/microservices/server-service/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/server-service/config"
 	"github.com/segmentio/kafka-go"
 	"gorm.io/gorm"
 )

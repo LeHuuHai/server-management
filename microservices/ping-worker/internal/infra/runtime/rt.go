@@ -3,7 +3,7 @@ package rt
 import (
 	"fmt"
 
-	"github.com/LeHuuHai/server-management/microservices/ping-worker/internal/config"
+	"github.com/LeHuuHai/server-management/microservices/ping-worker/config"
 	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
 	"github.com/LeHuuHai/server-management/microservices/pkg/mq"
 	"github.com/segmentio/kafka-go"
