@@ -15,6 +15,8 @@ import (
 
 	auth "github.com/LeHuuHai/server-management/microservices/pkg/auth"
 	"github.com/LeHuuHai/server-management/microservices/server-service/api"
+	xlsximport "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/file/deserialize"
+	xlsxexport "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/file/export"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/handler"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/kafka"
 	pg "github.com/LeHuuHai/server-management/microservices/server-service/internal/infra/postgres"
@@ -38,7 +40,7 @@ func main() {
 
 	serverSvc := service.NewServerService(txManager, serverRepo, outboxRepo)
 
-	serverHandler := handler.NewServerRestHandler(serverSvc)
+	serverHandler := handler.NewServerRestHandler(serverSvc, xlsxexport.NewServerXLSXExporter(), xlsximport.NewServerXLSXImporter())
 
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
