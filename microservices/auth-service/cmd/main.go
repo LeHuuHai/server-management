@@ -41,7 +41,27 @@ func main() {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.Default()
 
-	strictHandler := api.NewStrictHandler(authHandler, nil)
+	mwTokenExtraction := func(f api.StrictHandlerFunc, operationID string) api.StrictHandlerFunc {
+		return func(c *gin.Context, request interface{}) (interface{}, error) {
+			// Only apply token extraction to endpoints that require it
+			if operationID == "Verify" {
+				authHeader := c.GetHeader("Authorization")
+				slog.Info(authHeader)
+				if authHeader != "" && len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+					token := authHeader[7:]
+					slog.Info(token)
+					c.Set("bearerAuth.Token", token)
+					slog.Info("Token extracted and injected to context", "operation", operationID)
+				} else {
+					slog.Warn("Authorization header missing or invalid format", "operation", operationID)
+				}
+			} else {
+				slog.Info("Operation skipped by token middleware", "operationID", operationID)
+			}
+			return f(c, request)
+		}
+	}
+	strictHandler := api.NewStrictHandler(authHandler, []api.StrictMiddlewareFunc{mwTokenExtraction})
 	api.RegisterHandlers(router, strictHandler)
 
 	addr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(app.Config.AppConfig.Port))
