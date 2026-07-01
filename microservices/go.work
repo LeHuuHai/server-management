@@ -1,6 +1,7 @@
 go 1.25.3
 
 use (
+	./agent
 	./auth-service
 	./heartbeat-gateway
 	./mail-worker

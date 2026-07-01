@@ -46,3 +46,11 @@ services:
       context: ..
       dockerfile: deploy/mail-worker.dockerfile
     image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:v1.0.0
+
+  agent:
+    build:
+      context: ..
+      dockerfile: deploy/microservices.dockerfile
+      args:
+        SERVICE_NAME: agent
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-agent:v1.0.0
