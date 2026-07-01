@@ -127,9 +127,7 @@ func main() {
 	)
 	pb.RegisterInternalFileTransferServiceServer(grpcServer, grpcTransferHandler)
 
-	// We use Port + 100 for internal gRPC
-	grpcPort := app.Config.AppConfig.Port + 100
-	grpcAddr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(grpcPort))
+	grpcAddr := net.JoinHostPort(app.Config.AppConfig.Host, strconv.Itoa(app.Config.AppConfig.GRPCPort))
 	lis, err := net.Listen("tcp", grpcAddr)
 	if err != nil {
 		log.Fatalf("Failed to listen on tcp: %v", err)
