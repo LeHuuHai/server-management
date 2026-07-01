@@ -43,9 +43,9 @@ func Load() (*Config, error) {
 			NumThread: numThread,
 		},
 		PingRequestReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     os.Getenv("KAFKA_BROKER"),
-			Topic:      os.Getenv("KAFKA_PING_TOPIC"),
-			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
+			Broker:  os.Getenv("KAFKA_BROKER"),
+			Topic:   os.Getenv("KAFKA_PING_TOPIC"),
+			GroupID: os.Getenv("KAFKA_PING_REQ_GROUP_ID"),
 		},
 		PingResponseWriterConfig: &pkgconfig.KafkaWriterConfig{
 			Broker: os.Getenv("KAFKA_BROKER"),

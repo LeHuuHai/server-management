@@ -10,6 +10,7 @@ import (
 
 type AppConfig struct {
 	Port             int
+	GRPCPort         int
 	Host             string
 	CyclePing        int // in milliseconds
 	HeartbeatTimeout int // in milliseconds
@@ -20,6 +21,7 @@ type AppConfig struct {
 func (c *AppConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.Any("port", c.Port),
+		slog.Any("grpc_port", c.GRPCPort),
 		slog.Any("host", c.Host),
 		slog.Any("cycle ping", c.CyclePing),
 		slog.Any("heartbeat timeout", c.HeartbeatTimeout),
@@ -60,6 +62,11 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	appGrpcPort, err := strconv.Atoi(os.Getenv("APP_GRPC_PORT"))
+	if err != nil {
+		return nil, err
+	}
+
 	cyclePing, err := strconv.Atoi(os.Getenv("CYCLE_PING"))
 	if err != nil {
 		return nil, err
@@ -83,6 +90,7 @@ func Load() (*Config, error) {
 	cfg := Config{
 		AppConfig: &AppConfig{
 			Port:             appPort,
+			GRPCPort:         appGrpcPort,
 			Host:             os.Getenv("APP_HOST"),
 			CyclePing:        cyclePing,
 			HeartbeatTimeout: hbTimeout,
@@ -105,19 +113,19 @@ func Load() (*Config, error) {
 			Index: os.Getenv("ES_INDEX"),
 		},
 		ServerEventReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     os.Getenv("KAFKA_BROKER"),
-			Topic:      os.Getenv("KAFKA_SERVER_TOPIC"),
-			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
+			Broker:  os.Getenv("KAFKA_BROKER"),
+			Topic:   os.Getenv("KAFKA_SERVER_TOPIC"),
+			GroupID: os.Getenv("KAFKA_SERVER_EVENT_GROUP_ID"),
 		},
 		HeartbeatReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     os.Getenv("KAFKA_BROKER"),
-			Topic:      os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
-			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
+			Broker:  os.Getenv("KAFKA_BROKER"),
+			Topic:   os.Getenv("KAFKA_HEARTBEAT_TOPIC"),
+			GroupID: os.Getenv("KAFKA_HEARTBEAT_GROUP_ID"),
 		},
 		PingResponseReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     os.Getenv("KAFKA_BROKER"),
-			Topic:      os.Getenv("KAFKA_PING_RES_TOPIC"),
-			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
+			Broker:  os.Getenv("KAFKA_BROKER"),
+			Topic:   os.Getenv("KAFKA_PING_RES_TOPIC"),
+			GroupID: os.Getenv("KAFKA_PING_RES_GROUP_ID"),
 		},
 		PingRequestWriterConfig: &pkgconfig.KafkaWriterConfig{
 			Broker: os.Getenv("KAFKA_BROKER"),

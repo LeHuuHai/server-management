@@ -62,9 +62,9 @@ func Load() (*Config, error) {
 			InternalAPIKey: pkgconfig.ReadSecret("download_report_api_key"),
 		},
 		MailReaderConfig: &pkgconfig.KafkaReaderConfig{
-			Broker:     os.Getenv("KAFKA_BROKER"),
-			Topic:      os.Getenv("KAFKA_MAIL_TOPIC"),
-			ConsumerID: os.Getenv("KAFKA_CONSUMER_GROUP"),
+			Broker:  os.Getenv("KAFKA_BROKER"),
+			Topic:   os.Getenv("KAFKA_MAIL_TOPIC"),
+			GroupID: os.Getenv("KAFKA_MAIL_GROUP_ID"),
 		},
 		SenderConfig: &SenderConfig{
 			Addr:     os.Getenv("GOMAIL_ADDR"),

@@ -12,7 +12,7 @@ services:
 
 #----------------------------------------- Auth service ----------------------------------------- 
   auth-service:
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-auth-service:v1.0.0
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-auth-service:v1.0.1
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 8080
@@ -43,7 +43,7 @@ services:
 
 #----------------------------------------- Server service ----------------------------------------- 
   server-service:
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-server-service:v1.0.0
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-server-service:v1.0.11
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 8080
@@ -65,10 +65,11 @@ services:
 
 #----------------------------------------- Monitor service ----------------------------------------- 
   monitor-service:
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-monitor-service:v1.0.0
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-monitor-service:v1.0.12
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 8080
+      APP_GRPC_PORT: 8180
       CYCLE_PING: 5000
       HEARTBEAT_TIMEOUT: 10000
       AD_MAIL: hai.lh03.work@gmail.com
@@ -81,7 +82,9 @@ services:
       REDIS_URL: monitor-redis:6379
       REDIS_DB: 0
       <<: *kafka-env
-      KAFKA_CONSUMER_GROUP: monitor-group
+      KAFKA_SERVER_EVENT_GROUP_ID: monitor-server-event-group
+      KAFKA_HEARTBEAT_GROUP_ID: monitor-heartbeat-group
+      KAFKA_PING_RES_GROUP_ID: monitor-ping-res-group
     secrets:
       - monitor_db_password
       - download_report_api_key
@@ -90,13 +93,13 @@ services:
     deploy:
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.monitor.rule=PathPrefix(`/servers/reports`)"
+        - "traefik.http.routers.monitor.rule=PathPrefix(`/servers/report`)"
         - "traefik.http.routers.monitor.middlewares=auth-mw"
         - "traefik.http.services.monitor.loadbalancer.server.port=8080"
 
 #----------------------------------------- Heartbeat gateway ----------------------------------------- 
   heartbeat-gateway:
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-heartbeat-gateway:v1.0.0
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-heartbeat-gateway:v1.0.1
     environment:
       APP_HOST: 0.0.0.0
       APP_PORT: 8080
@@ -113,11 +116,11 @@ services:
 
 #----------------------------------------- Ping worker ----------------------------------------- 
   ping-worker:
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-ping-worker:v1.0.0
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-ping-worker:v1.0.1
     environment:
       APP_NUM_THREAD: 500
       <<: *kafka-env
-      KAFKA_CONSUMER_GROUP: ping-group
+      KAFKA_PING_REQ_GROUP_ID: worker-ping-req-group
     networks:
       - sm_network
     deploy:
@@ -125,11 +128,11 @@ services:
 
 #----------------------------------------- Mail worker ----------------------------------------- 
   mail-worker:
-    image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:v1.0.0
+    image: ${DOCKER_REGISTRY:-hariii31}/server-management-mail-worker:v1.0.1
     environment:
-      REPORT_REPO_ADDR:
+      REPORT_REPO_ADDR: monitor-service:8180
       <<: *kafka-env
-      KAFKA_CONSUMER_GROUP: mail-group
+      KAFKA_MAIL_GROUP_ID: worker-mail-group
       GOMAIL_ADDR: smtp.gmail.com
       GOMAIL_PORT: 587
       GOMAIL_FROM: le31052003@gmail.com

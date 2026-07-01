@@ -25,7 +25,7 @@ func InitKafkaTopics(brokerURL string) error {
 	}
 	defer controllerConn.Close()
 
-	topics := []string{"ping", "mail", "ping_res", "heartbeat"}
+	topics := []string{"ping", "mail", "ping_res", "heartbeat", "server_events"}
 	var topicConfigs []kafka.TopicConfig
 	for _, topic := range topics {
 		topicConfigs = append(topicConfigs, kafka.TopicConfig{

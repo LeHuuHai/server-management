@@ -61,16 +61,16 @@ func (c *KafkaWriterConfig) LogValue() slog.Value {
 }
 
 type KafkaReaderConfig struct {
-	Broker     string
-	Topic      string
-	ConsumerID string
+	Broker  string
+	Topic   string
+	GroupID string
 }
 
 func (c *KafkaReaderConfig) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("broker", c.Broker),
 		slog.String("topic", c.Topic),
-		slog.String("consumerID", c.ConsumerID),
+		slog.String("consumerID", c.GroupID),
 	)
 }
 

@@ -52,7 +52,7 @@ func NewReader(cfg *config.KafkaReaderConfig, opts ...ReaderOption) *kafka.Reade
 	rc := kafka.ReaderConfig{
 		Brokers:  strings.Split(cfg.Broker, ","),
 		Topic:    cfg.Topic,
-		GroupID:  cfg.ConsumerID,
+		GroupID:  cfg.GroupID,
 		MinBytes: 10e3, // default 10KB
 		MaxBytes: 10e6, // default 10MB
 	}
