@@ -2,6 +2,7 @@ package rt
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/LeHuuHai/server-management/microservices/ping-worker/config"
 	"github.com/LeHuuHai/server-management/microservices/pkg/apperr"
@@ -21,6 +22,7 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
+	slog.Info("runtime: config loaded", "cfg", cfg.LogValue())
 
 	// Initialize Kafka Reader and Writer
 	pingReader := mq.NewReader(cfg.PingRequestReaderConfig)

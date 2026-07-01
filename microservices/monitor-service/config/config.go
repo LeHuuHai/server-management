@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -16,6 +17,17 @@ type AppConfig struct {
 	InternalAPIKey   string
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("port", c.Port),
+		slog.Any("host", c.Host),
+		slog.Any("cycle ping", c.CyclePing),
+		slog.Any("heartbeat timeout", c.HeartbeatTimeout),
+		slog.Any("admin mail", c.AdMail),
+		slog.Any("internal api key", c.InternalAPIKey),
+	)
+}
+
 type Config struct {
 	AppConfig                *AppConfig
 	DBConfig                 *pkgconfig.PostgresConfig
@@ -26,6 +38,20 @@ type Config struct {
 	PingResponseReaderConfig *pkgconfig.KafkaReaderConfig
 	PingRequestWriterConfig  *pkgconfig.KafkaWriterConfig
 	MailWriterConfig         *pkgconfig.KafkaWriterConfig
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app config", c.AppConfig),
+		slog.Any("db config", c.DBConfig),
+		slog.Any("redis config", c.RedisConfig),
+		slog.Any("es config", c.ESConfig),
+		slog.Any("server event reader config", c.ServerEventReaderConfig),
+		slog.Any("heartbeat reader config", c.HeartbeatReaderConfig),
+		slog.Any("ping response reader config", c.PingResponseReaderConfig),
+		slog.Any("ping request writer config", c.PingRequestWriterConfig),
+		slog.Any("mail writer config", c.MailWriterConfig),
+	)
 }
 
 func Load() (*Config, error) {

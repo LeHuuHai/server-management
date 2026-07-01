@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -11,10 +12,24 @@ type AppConfig struct {
 	NumThread int
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("num thread", c.NumThread),
+	)
+}
+
 type Config struct {
 	AppConfig                *AppConfig
 	PingRequestReaderConfig  *pkgconfig.KafkaReaderConfig
 	PingResponseWriterConfig *pkgconfig.KafkaWriterConfig
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app config", c.AppConfig),
+		slog.Any("ping request reader config", c.PingRequestReaderConfig),
+		slog.Any("ping response writer config", c.PingResponseWriterConfig),
+	)
 }
 
 func Load() (*Config, error) {

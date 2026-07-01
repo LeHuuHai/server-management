@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -14,11 +15,27 @@ type AppConfig struct {
 	CORSOrigins []string
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("host", c.Host),
+		slog.Any("port", c.Port),
+	)
+}
+
 type Config struct {
 	AppConfig   *AppConfig
 	JWTConfig   *pkgconfig.JWTConfig
 	DBConfig    *pkgconfig.PostgresConfig
 	RedisConfig *pkgconfig.RedisConfig
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app config", c.AppConfig),
+		slog.Any("db config", c.DBConfig),
+		slog.Any("redis config", c.RedisConfig),
+		slog.Any("jwt config", c.JWTConfig),
+	)
 }
 
 func Load() (*Config, error) {

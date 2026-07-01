@@ -39,6 +39,7 @@ func NewApp() (*App, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", apperr.ErrAppBuild, err)
 	}
+	slog.Info("runtime: config loaded", "cfg", cfg.LogValue())
 
 	// db
 	database, err := db.Connect(cfg.DBConfig)

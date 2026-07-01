@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -13,9 +14,24 @@ type AppConfig struct {
 	HeartbeatKey string
 }
 
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("host", c.Host),
+		slog.Any("port", c.Port),
+		slog.Any("heartbeat key", c.HeartbeatKey),
+	)
+}
+
 type Config struct {
 	AppConfig   *AppConfig
 	KafkaConfig *pkgconfig.KafkaWriterConfig
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app config", c.AppConfig),
+		slog.Any("kafka config", c.KafkaConfig),
+	)
 }
 
 func Load() (*Config, error) {

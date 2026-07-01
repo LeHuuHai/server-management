@@ -1,6 +1,7 @@
 package config
 
 import (
+	"log/slog"
 	"os"
 	"strconv"
 
@@ -14,15 +15,39 @@ type SenderConfig struct {
 	Password string
 }
 
+func (c *SenderConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("addr", c.Addr),
+		slog.Any("port", c.Port),
+		slog.Any("from", c.From),
+		slog.Any("password", c.Password),
+	)
+}
+
 type AppConfig struct {
 	ReportRepoAddr string
 	InternalAPIKey string
+}
+
+func (c *AppConfig) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("report repo addr", c.ReportRepoAddr),
+		slog.Any("internal api key", c.InternalAPIKey),
+	)
 }
 
 type Config struct {
 	AppConfig        *AppConfig
 	MailReaderConfig *pkgconfig.KafkaReaderConfig
 	SenderConfig     *SenderConfig
+}
+
+func (c *Config) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Any("app config", c.AppConfig),
+		slog.Any("mail reader config", c.MailReaderConfig),
+		slog.Any("sender config", c.SenderConfig),
+	)
 }
 
 func Load() (*Config, error) {
