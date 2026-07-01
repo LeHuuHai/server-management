@@ -44,7 +44,7 @@ func (c *ActiveChecker) Start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-			start := time.Now()
+			//start := time.Now()
 			servers, err := c.monitoredServerRepo.List(ctx)
 			if err != nil {
 				slog.Error("ActiveChecker failed to list monitored servers from Postgres", "err", err)
@@ -85,8 +85,8 @@ func (c *ActiveChecker) Start(ctx context.Context) {
 				}
 			}
 
-			elapse := time.Since(start)
-			slog.Info("ActiveChecker check cycle completed", "published_pings", cnt, "elapse", elapse)
+			//elapse := time.Since(start)
+			//slog.Info("ActiveChecker check cycle completed", "published_pings", cnt, "elapse", elapse)
 		}
 	}
 }

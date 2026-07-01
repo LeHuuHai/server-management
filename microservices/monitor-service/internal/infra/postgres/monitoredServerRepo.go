@@ -31,6 +31,9 @@ func (r *MonitoredServerRepo) Update(ctx context.Context, s *model.MonitoredServ
 			"ipv4":        s.IPv4,
 			"version":     s.Version,
 		})
+	if res.RowsAffected == 0 {
+		return errors.New("no rows updated, possibly due to versioning conflict")
+	}
 	if res.Error != nil {
 		return res.Error
 	}

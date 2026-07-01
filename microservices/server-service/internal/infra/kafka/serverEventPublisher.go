@@ -3,6 +3,7 @@ package kafka
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
@@ -34,7 +35,7 @@ func (p *serverEventPublisher) publish(ctx context.Context, eventType pkgmodel.S
 	if err != nil {
 		return err
 	}
-
+	slog.Info("Publishing event to Kafka", "eventType", eventType, "serverID", server.ServerID, "serverName", server.ServerName, "IPv4", server.IPv4, "Version", server.Version)
 	err = p.writer.WriteMessages(ctx, kafka.Message{
 		Key:   []byte(server.ServerID),
 		Value: bytes,
@@ -42,6 +43,9 @@ func (p *serverEventPublisher) publish(ctx context.Context, eventType pkgmodel.S
 			{Key: "event_type", Value: []byte(eventType)},
 		},
 	})
+	if err != nil {
+		slog.Error("Failed to publish event to Kafka", "error", err)
+	}
 	return err
 }
 

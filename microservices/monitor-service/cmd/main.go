@@ -95,22 +95,27 @@ func main() {
 	// Start Background Consumers, Checker & Daily Report
 	wg.Add(5)
 	go func() {
+		slog.Info("Starting sync lifecycle consumer")
 		defer wg.Done()
 		serverLifecycleHandler.Start(ctx)
 	}()
 	go func() {
+		slog.Info("Starting heartbeat consumer")
 		defer wg.Done()
 		heartbeatHandler.Start(ctx)
 	}()
 	go func() {
+		slog.Info("Starting ping result consumer")
 		defer wg.Done()
 		pingResultHandler.Start(ctx)
 	}()
 	go func() {
+		slog.Info("Starting active checker")
 		defer wg.Done()
 		activeChecker.Start(ctx)
 	}()
 	go func() {
+		slog.Info("Starting daily report generation")
 		defer wg.Done()
 		Report(ctx, app.Config.AppConfig.AdMail, reportSvc)
 	}()

@@ -32,7 +32,7 @@ func (c *LifecycleConsumer) Start(ctx context.Context) {
 				continue
 			}
 		}
-
+		slog.Info("Received server lifecycle event", "action", action, "server_id", event.ServerID, "server_name", event.ServerName, "ipv4", event.IPv4, "version", event.Version)
 		err = c.svc.SyncServerLifecycle(ctx, event, action)
 		if err != nil {
 			slog.Error("Failed to sync server lifecycle event", "action", action, "server_id", event.ServerID, "err", err)
