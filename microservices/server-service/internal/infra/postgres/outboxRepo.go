@@ -38,5 +38,13 @@ func (r *OutboxRepo) DeleteEvents(ctx context.Context, ids []string) error {
 		return nil
 	}
 	db := getDB(ctx, r.db)
-	return db.WithContext(ctx).Where("id IN ?", ids).Delete(&model.OutboxEvent{}).Error
+	return db.WithContext(ctx).Model(&model.OutboxEvent{}).Where("id IN ?", ids).Delete(&model.OutboxEvent{}).Error
+}
+
+func (r *OutboxRepo) MarkEventsDone(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	db := getDB(ctx, r.db)
+	return db.WithContext(ctx).Model(&model.OutboxEvent{}).Where("id IN ?", ids).Update("status", model.OutboxStatusDone).Error
 }

@@ -66,9 +66,9 @@ func (s *MonitorService) ProcessPingResult(ctx context.Context, res pkgmodel.Res
 	return nil
 }
 
-func (s *MonitorService) SyncServerLifecycle(ctx context.Context, event pkgmodel.ServerEvent, action string) error {
+func (s *MonitorService) SyncServerLifecycle(ctx context.Context, event pkgmodel.ServerEvent, action pkgmodel.ServerActionType) error {
 	switch action {
-	case "Create":
+	case pkgmodel.ServerCreateAction:
 		srv := &model.MonitoredServer{
 			ServerID:   event.ServerID,
 			ServerName: event.ServerName,
@@ -85,7 +85,7 @@ func (s *MonitorService) SyncServerLifecycle(ctx context.Context, event pkgmodel
 		}
 		return s.liveStatusRepo.Create(ctx, status)
 
-	case "Update":
+	case pkgmodel.ServerUpdateAction:
 		srv := &model.MonitoredServer{
 			ServerID:   event.ServerID,
 			ServerName: event.ServerName,
@@ -94,7 +94,7 @@ func (s *MonitorService) SyncServerLifecycle(ctx context.Context, event pkgmodel
 		}
 		return s.monitoredServerRepo.Update(ctx, srv)
 
-	case "Delete":
+	case pkgmodel.ServerDeleteAction:
 		if err := s.monitoredServerRepo.Delete(ctx, event.ServerID); err != nil {
 			return err
 		}

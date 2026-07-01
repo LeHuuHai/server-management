@@ -19,7 +19,7 @@ func NewLifecycleConsumer(r *kafka.Reader) mq.LifecycleConsumerInterface {
 	}
 }
 
-func (c *LifecycleConsumer) Read(ctx context.Context) (pkgmodel.ServerEvent, string, func(context.Context) error, error) {
+func (c *LifecycleConsumer) Read(ctx context.Context) (pkgmodel.ServerEvent, pkgmodel.ServerActionType, func(context.Context) error, error) {
 	msg, err := c.reader.FetchMessage(ctx)
 	if err != nil {
 		return pkgmodel.ServerEvent{}, "", nil, err
@@ -39,14 +39,15 @@ func (c *LifecycleConsumer) Read(ctx context.Context) (pkgmodel.ServerEvent, str
 		}
 	}
 
-	action := "Update"
-	if eventType == "ServerCreated" {
-		action = "Create"
-	} else if eventType == "ServerDeleted" {
-		action = "Delete"
+	action := pkgmodel.ServerUpdateAction
+	switch pkgmodel.ServerEventType(eventType) {
+	case pkgmodel.ServerCreateEvent:
+		action = pkgmodel.ServerCreateAction
+	case pkgmodel.ServerDeleteEvent:
+		action = pkgmodel.ServerDeleteAction
 	}
 
-	return event, action, func(ctx context.Context) error {
+	return event, pkgmodel.ServerActionType(action), func(ctx context.Context) error {
 		return c.reader.CommitMessages(ctx, msg)
 	}, nil
 }

@@ -7,6 +7,6 @@ import (
 )
 
 type LifecycleConsumerInterface interface {
-	Read(ctx context.Context) (event pkgmodel.ServerEvent, action string, commitFunc func(context.Context) error, err error)
+	Read(ctx context.Context) (event pkgmodel.ServerEvent, action pkgmodel.ServerActionType, commitFunc func(context.Context) error, err error)
 	Close() error
 }

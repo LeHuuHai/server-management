@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"time"
 
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/publisher"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/repo"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
-	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 )
 
 type OutboxPoller struct {
@@ -60,20 +60,20 @@ func (p *OutboxPoller) processBatch(ctx context.Context) {
 		}
 
 		var pubErr error
-		switch ev.Topic {
-		case "server_created":
+		switch pkgmodel.ServerEventType(ev.Topic) {
+		case pkgmodel.ServerCreateEvent:
 			pubErr = p.publisher.PublishServerCreated(ctx, &model.ServerProfile{
 				ServerID:   serverEvent.ServerID,
 				ServerName: serverEvent.ServerName,
 				IPv4:       serverEvent.IPv4,
 			})
-		case "server_updated":
+		case pkgmodel.ServerUpdateEvent:
 			pubErr = p.publisher.PublishServerUpdated(ctx, &model.ServerProfile{
 				ServerID:   serverEvent.ServerID,
 				ServerName: serverEvent.ServerName,
 				IPv4:       serverEvent.IPv4,
 			})
-		case "server_deleted":
+		case pkgmodel.ServerDeleteEvent:
 			pubErr = p.publisher.PublishServerDeleted(ctx, serverEvent.ServerID)
 		default:
 			slog.Warn("Unknown topic in outbox event", "topic", ev.Topic)
@@ -90,8 +90,8 @@ func (p *OutboxPoller) processBatch(ctx context.Context) {
 	}
 
 	if len(successfulIDs) > 0 {
-		if err := p.outboxRepo.DeleteEvents(ctx, successfulIDs); err != nil {
-			slog.Error("Failed to delete published outbox events", "error", err)
+		if err := p.outboxRepo.MarkEventsDone(ctx, successfulIDs); err != nil {
+			slog.Error("Failed to mark outbox events as done", "error", err)
 		}
 	}
 }

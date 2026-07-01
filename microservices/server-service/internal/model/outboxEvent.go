@@ -1,6 +1,10 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/LeHuuHai/server-management/microservices/pkg/model"
+)
 
 const (
 	OutboxStatusPending = "PENDING"
@@ -9,9 +13,9 @@ const (
 
 // OutboxEvent represents an event that needs to be published to a message broker.
 type OutboxEvent struct {
-	ID        string    `gorm:"primaryKey;type:varchar(36)" json:"id"`
-	Topic     string    `gorm:"type:varchar(255);not null" json:"topic"`
-	Payload   []byte    `gorm:"type:jsonb;not null" json:"payload"`
-	Status    string    `gorm:"type:varchar(50);not null;default:'PENDING'" json:"status"`
-	CreatedAt time.Time `gorm:"not null" json:"created_at"`
+	ID        string                `gorm:"primaryKey;type:varchar(36)" json:"id"`
+	Topic     model.ServerEventType `gorm:"type:varchar(255);not null" json:"topic"`
+	Payload   []byte                `gorm:"type:jsonb;not null" json:"payload"`
+	Status    string                `gorm:"type:varchar(50);not null;default:'PENDING'" json:"status"`
+	CreatedAt time.Time             `gorm:"not null" json:"created_at"`
 }

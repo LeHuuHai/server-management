@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"time"
 
+	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/domain/publisher"
 	"github.com/LeHuuHai/server-management/microservices/server-service/internal/model"
-	pkgmodel "github.com/LeHuuHai/server-management/microservices/pkg/model"
 	"github.com/segmentio/kafka-go"
 )
 
@@ -21,7 +21,7 @@ func NewServerEventPublisher(w *kafka.Writer) publisher.EventPublisherInterface 
 	}
 }
 
-func (p *serverEventPublisher) publish(ctx context.Context, eventType string, server *model.ServerProfile) error {
+func (p *serverEventPublisher) publish(ctx context.Context, eventType pkgmodel.ServerEventType, server *model.ServerProfile) error {
 	event := pkgmodel.ServerEvent{
 		ServerID:   server.ServerID,
 		ServerName: server.ServerName,
@@ -46,11 +46,11 @@ func (p *serverEventPublisher) publish(ctx context.Context, eventType string, se
 }
 
 func (p *serverEventPublisher) PublishServerCreated(ctx context.Context, server *model.ServerProfile) error {
-	return p.publish(ctx, "ServerCreated", server)
+	return p.publish(ctx, pkgmodel.ServerCreateEvent, server)
 }
 
 func (p *serverEventPublisher) PublishServerUpdated(ctx context.Context, server *model.ServerProfile) error {
-	return p.publish(ctx, "ServerUpdated", server)
+	return p.publish(ctx, pkgmodel.ServerUpdateEvent, server)
 }
 
 func (p *serverEventPublisher) PublishServerDeleted(ctx context.Context, serverID string) error {
@@ -59,5 +59,5 @@ func (p *serverEventPublisher) PublishServerDeleted(ctx context.Context, serverI
 	dummyServer := &model.ServerProfile{
 		ServerID: serverID,
 	}
-	return p.publish(ctx, "ServerDeleted", dummyServer)
+	return p.publish(ctx, pkgmodel.ServerDeleteEvent, dummyServer)
 }

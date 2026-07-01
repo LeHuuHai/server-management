@@ -45,7 +45,7 @@ func (s *ServerService) CreateServer(ctx context.Context, server *model.ServerAd
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
 			ID:        uuid.New().String(),
-			Topic:     "server_created",
+			Topic:     pkgmodel.ServerCreateEvent,
 			Payload:   payload,
 			Status:    model.OutboxStatusPending,
 			CreatedAt: time.Now(),
@@ -109,7 +109,7 @@ func (s *ServerService) UpdateServer(ctx context.Context, server *model.ServerAd
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
 			ID:        uuid.New().String(),
-			Topic:     "server_updated",
+			Topic:     pkgmodel.ServerUpdateEvent,
 			Payload:   payload,
 			Status:    model.OutboxStatusPending,
 			CreatedAt: time.Now(),
@@ -136,7 +136,7 @@ func (s *ServerService) DeleteServer(ctx context.Context, serverID string) error
 
 		return s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
 			ID:        uuid.New().String(),
-			Topic:     "server_deleted",
+			Topic:     pkgmodel.ServerDeleteEvent,
 			Payload:   payload,
 			Status:    model.OutboxStatusPending,
 			CreatedAt: time.Now(),
@@ -161,52 +161,23 @@ func (s *ServerService) ImportServer(ctx context.Context, serversData []model.Se
 		})
 	}
 
-	var res *model.CreateBatchServerResult
-
-	err := s.txManager.WithTx(ctx, func(txCtx context.Context) error {
-		var err error
-		res, err = s.repo.CreateBatch(txCtx, valid)
-		if err != nil {
-			return err
-		}
-
-		isSuccess := make(map[string]bool)
-		for _, serverID := range res.Success {
-			isSuccess[serverID] = true
-		}
-
-		for _, data := range serversData {
-			if isSuccess[data.ServerID] {
-				payload, _ := json.Marshal(pkgmodel.ServerEvent{
-					ServerID:   data.ServerID,
-					ServerName: data.ServerName,
-					IPv4:       data.IPv4,
-					Timestamp:  time.Now(),
-					Version:    1,
-				})
-
-				err := s.outboxRepo.CreateEvent(txCtx, &model.OutboxEvent{
-					ID:        uuid.New().String(),
-					Topic:     "server_created",
-					Payload:   payload,
-					Status:    model.OutboxStatusPending,
-					CreatedAt: time.Now(),
-				})
-				if err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	})
-
-	if err != nil {
-		return nil, err
+	var res *model.CreateBatchServerResult = &model.CreateBatchServerResult{
+		Success:    make([]string, 0),
+		Failed:     make([]string, 0),
+		SuccessCnt: 0,
+		FailedCnt:  0,
 	}
 
-	res.Failed = append(res.Failed, invalid...)
-	res.FailedCnt += len(invalid)
-
+	for _, saddress := range serversData {
+		_, err := s.CreateServer(ctx, &saddress)
+		if err != nil {
+			res.Failed = append(res.Failed, saddress.ServerID)
+			res.FailedCnt++
+		} else {
+			res.Success = append(res.Success, saddress.ServerID)
+			res.SuccessCnt++
+		}
+	}
 	return res, nil
 }
 
