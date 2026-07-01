@@ -27,10 +27,8 @@ func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data 
 	f.SetCellValue(sheet, "B1", "ServerID")
 	f.SetCellValue(sheet, "C1", "ServerName")
 	f.SetCellValue(sheet, "D1", "Ipv4")
-	f.SetCellValue(sheet, "E1", "Status")
-	f.SetCellValue(sheet, "F1", "CreateAt")
-	f.SetCellValue(sheet, "G1", "UpdatedAt")
-	f.SetCellValue(sheet, "H1", "LastPingAt")
+	f.SetCellValue(sheet, "E1", "CreateAt")
+	f.SetCellValue(sheet, "F1", "UpdatedAt")
 
 	for idx, item := range data {
 		row := strconv.Itoa(idx + 2)
@@ -38,10 +36,8 @@ func (e *serverXLSXExporter) Export(ctx context.Context, writer io.Writer, data 
 		f.SetCellValue(sheet, "B"+row, item.ServerID)
 		f.SetCellValue(sheet, "C"+row, item.ServerName)
 		f.SetCellValue(sheet, "D"+row, item.IPv4)
-		f.SetCellValue(sheet, "E"+row, "UNKNOWN")
-		f.SetCellValue(sheet, "F"+row, item.CreatedAt.Format("2006-01-02 15:04:05"))
-		f.SetCellValue(sheet, "G"+row, item.UpdatedAt.Format("2006-01-02 15:04:05"))
-		f.SetCellValue(sheet, "H"+row, "")
+		f.SetCellValue(sheet, "E"+row, item.CreatedAt.Format("2006-01-02 15:04:05"))
+		f.SetCellValue(sheet, "F"+row, item.UpdatedAt.Format("2006-01-02 15:04:05"))
 	}
 
 	return f.Write(writer)
